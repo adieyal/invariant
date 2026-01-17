@@ -1,0 +1,35 @@
+# Invariant
+
+> A provider-agnostic analytics kernel for statistical data exploration. Enforces semantic correctness—blocking naive indicator aggregation, checking dataset comparability, managing versioned reference systems with crosswalks—while producing disclosures that explain why operations succeed or fail.
+
+Invariant is a business layer, not a stack. It runs in-memory with fake repositories. No database, no ETL, no visualization—just validation, planning, and normalized results.
+
+## Core Concepts
+
+- [Project Scope](00-project-scope/): What the kernel is (and isn't)
+- [Conceptual Model](01-conceptual-model/): Universes, reference systems, variables, indicators
+- [Glossary](02-glossary/): Term definitions
+- [Architecture](03-architecture/): Clean Architecture layers, ports, data flow
+
+## Developer Guide
+
+- [Developer Index](developer/index/): Entry point for integrators
+- [Quickstart](developer/quickstart/): Getting started guide
+- [Core Concepts](developer/concepts/): Key concepts for developers
+- [Implementing Ports](developer/integrating/): How to implement ports
+- [Use Cases](developer/use-cases/): Working with use cases
+- [Validation Rules](developer/validation-rules/): Understanding validation
+
+## API & Implementation
+
+- [Data Model](05-data-model/): Domain entities and relationships
+- [Application Layer](06-application-layer/): Use cases, DTOs, ports
+- [API Contracts](07-api-contracts/): Public interfaces
+- [Capability Examples](08-capability-examples/): Code patterns
+
+## Optional
+
+- [Generated Glossary](generated/glossary/): Auto-generated from code
+- [Validation Rules Reference](generated/validation-rules/): Rule reference
+- [Aggregation Rules](generated/aggregation-rules/): Aggregation reference
+- [Examples](generated/examples/): Valid and invalid query patterns

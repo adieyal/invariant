@@ -6,6 +6,7 @@ This script extracts documentation from:
 2. Domain enums (for constraint documentation)
 3. Validation rules (for rule documentation)
 4. Example YAML files (for executable examples)
+5. LLM context files (llms.txt and llms-full.txt)
 
 Usage:
     python scripts/generate_docs.py
@@ -15,6 +16,8 @@ Output:
     docs/generated/examples.md
     docs/generated/validation-rules.md
     docs/generated/aggregation-rules.md
+    docs/llms.txt
+    docs/llms-full.txt
 """
 
 from __future__ import annotations
@@ -475,6 +478,143 @@ def generate_examples() -> str:
     return "\n".join(lines)
 
 
+# Documentation structure for llms.txt generation
+# Each entry: (title, relative_path_in_docs, description)
+LLMS_CORE_DOCS = [
+    ("Project Scope", "00-project-scope.md", "What the kernel is (and isn't)"),
+    (
+        "Conceptual Model",
+        "01-conceptual-model.md",
+        "Universes, reference systems, variables, indicators",
+    ),
+    ("Glossary", "02-glossary.md", "Term definitions"),
+    (
+        "Architecture",
+        "03-architecture.md",
+        "Clean Architecture layers, ports, data flow",
+    ),
+]
+
+LLMS_DEVELOPER_DOCS = [
+    ("Developer Index", "developer/index.md", "Entry point for integrators"),
+    ("Quickstart", "developer/quickstart.md", "Getting started guide"),
+    ("Core Concepts", "developer/concepts.md", "Key concepts for developers"),
+    ("Implementing Ports", "developer/integrating.md", "How to implement ports"),
+    ("Use Cases", "developer/use-cases.md", "Working with use cases"),
+    ("Validation Rules", "developer/validation-rules.md", "Understanding validation"),
+]
+
+LLMS_API_DOCS = [
+    ("Data Model", "05-data-model.md", "Domain entities and relationships"),
+    ("Application Layer", "06-application-layer.md", "Use cases, DTOs, ports"),
+    ("API Contracts", "07-api-contracts.md", "Public interfaces"),
+    ("Capability Examples", "08-capability-examples.md", "Code patterns"),
+]
+
+LLMS_REFERENCE_DOCS = [
+    ("Generated Glossary", "generated/glossary.md", "Auto-generated from code"),
+    ("Validation Rules Reference", "generated/validation-rules.md", "Rule reference"),
+    ("Aggregation Rules", "generated/aggregation-rules.md", "Aggregation reference"),
+    ("Examples", "generated/examples.md", "Valid and invalid query patterns"),
+]
+
+
+def generate_llms_txt() -> str:
+    """Generate llms.txt with links to documentation."""
+    lines = [
+        "# Invariant",
+        "",
+        "> A provider-agnostic analytics kernel for statistical data exploration. "
+        "Enforces semantic correctness—blocking naive indicator aggregation, checking "
+        "dataset comparability, managing versioned reference systems with crosswalks—"
+        "while producing disclosures that explain why operations succeed or fail.",
+        "",
+        "Invariant is a business layer, not a stack. It runs in-memory with fake "
+        "repositories. No database, no ETL, no visualization—just validation, "
+        "planning, and normalized results.",
+        "",
+        "## Core Concepts",
+        "",
+    ]
+
+    for title, path, desc in LLMS_CORE_DOCS:
+        # Convert .md to / for mkdocs URL structure
+        url = path.replace(".md", "/")
+        lines.append(f"- [{title}]({url}): {desc}")
+    lines.append("")
+
+    lines.append("## Developer Guide")
+    lines.append("")
+    for title, path, desc in LLMS_DEVELOPER_DOCS:
+        url = path.replace(".md", "/")
+        lines.append(f"- [{title}]({url}): {desc}")
+    lines.append("")
+
+    lines.append("## API & Implementation")
+    lines.append("")
+    for title, path, desc in LLMS_API_DOCS:
+        url = path.replace(".md", "/")
+        lines.append(f"- [{title}]({url}): {desc}")
+    lines.append("")
+
+    lines.append("## Optional")
+    lines.append("")
+    for title, path, desc in LLMS_REFERENCE_DOCS:
+        url = path.replace(".md", "/")
+        lines.append(f"- [{title}]({url}): {desc}")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def generate_llms_full_txt() -> str:
+    """Generate llms-full.txt with full content from all documentation."""
+    lines = [
+        "# Invariant - Full Documentation Context",
+        "",
+        "> A provider-agnostic analytics kernel for statistical data exploration. "
+        "Enforces semantic correctness—blocking naive indicator aggregation, checking "
+        "dataset comparability, managing versioned reference systems with crosswalks—"
+        "while producing disclosures that explain why operations succeed or fail.",
+        "",
+        "Invariant is a business layer, not a stack. It runs in-memory with fake "
+        "repositories. No database, no ETL, no visualization—just validation, "
+        "planning, and normalized results.",
+        "",
+        "---",
+        "",
+    ]
+
+    all_docs = [
+        ("Core Concepts", LLMS_CORE_DOCS),
+        ("Developer Guide", LLMS_DEVELOPER_DOCS),
+        ("API & Implementation", LLMS_API_DOCS),
+        ("Reference", LLMS_REFERENCE_DOCS),
+    ]
+
+    for section_title, docs in all_docs:
+        lines.append(f"# {section_title}")
+        lines.append("")
+
+        for title, path, _desc in docs:
+            doc_path = DOCS_DIR / path
+            if doc_path.exists():
+                content = doc_path.read_text().strip()
+                lines.append(f"## {title}")
+                lines.append(f"*Source: {path}*")
+                lines.append("")
+                lines.append(content)
+                lines.append("")
+                lines.append("---")
+                lines.append("")
+            else:
+                lines.append(f"## {title}")
+                lines.append(f"*Source: {path} (not found)*")
+                lines.append("")
+
+    return "\n".join(lines)
+
+
 def main() -> None:
     """Generate all documentation files."""
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
@@ -503,7 +643,20 @@ def main() -> None:
     examples_path.write_text(examples)
     print(f"Generated: {examples_path}")
 
+    # Generate llms.txt (links only)
+    llms_txt = generate_llms_txt()
+    llms_path = DOCS_DIR / "llms.txt"
+    llms_path.write_text(llms_txt)
+    print(f"Generated: {llms_path}")
+
+    # Generate llms-full.txt (full content)
+    llms_full = generate_llms_full_txt()
+    llms_full_path = DOCS_DIR / "llms-full.txt"
+    llms_full_path.write_text(llms_full)
+    print(f"Generated: {llms_full_path}")
+
     print(f"\nAll generated docs written to: {GENERATED_DIR}")
+    print(f"LLM context files written to: {DOCS_DIR}")
 
 
 if __name__ == "__main__":

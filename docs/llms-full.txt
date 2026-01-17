@@ -1,0 +1,5661 @@
+# Invariant - Full Documentation Context
+
+> A provider-agnostic analytics kernel for statistical data exploration. Enforces semantic correctness—blocking naive indicator aggregation, checking dataset comparability, managing versioned reference systems with crosswalks—while producing disclosures that explain why operations succeed or fail.
+
+Invariant is a business layer, not a stack. It runs in-memory with fake repositories. No database, no ETL, no visualization—just validation, planning, and normalized results.
+
+---
+
+# Core Concepts
+
+## Project Scope
+*Source: 00-project-scope.md*
+
+# Project Scope
+
+This document defines what the Invariant analytics kernel is (and isn't). Use it to evaluate whether work belongs in the kernel.
+
+---
+
+## Purpose
+
+A provider-agnostic analytics kernel for statistical data exploration: it models datasets, geographies, semantics, and query plans; validates comparability and aggregation; and returns normalized results with disclosures—while exposing extension points for stricter rules (universes, crosswalks, suppression, indicator recomputation).
+
+---
+
+## Core Philosophy
+
+**Rigour as gates.** Every questionable operation is either blocked, warned, or requires acknowledgment. Nothing "magically works" without the kernel being able to explain why.
+
+**Business layer, not a stack.** The kernel should run in-memory with fake repositories. If it requires specific infrastructure to function, scope has been violated.
+
+---
+
+## Reference Systems Abstraction
+
+A **ReferenceSystem** is a system of "units" you can group by. The kernel cares about unit identifiers and versions, not shapes or physical attributes.
+
+### Core Concept
+
+| Property | Description |
+|----------|-------------|
+| Units | A set of identifiable entities (geo units, facilities, schools, programs, orgs) |
+| Versioning | Optional validity periods for the unit set |
+| Crosswalks | Optional mappings between versions |
+
+### GeographySystem Profile
+
+`GeographySystem` is a specialization of `ReferenceSystem` with geography-specific semantics:
+
+| Extension | Description |
+|-----------|-------------|
+| Geometry type | `POLYGON` \| `POINT` \| `MIXED` (for presentation hints) |
+| Hierarchy | Optional parent-child relationships between levels |
+| Map presentation | Choropleth vs point display semantics |
+
+**Crucially:** geometry itself stays out of the kernel. The kernel knows a geography has a type (polygon/point) for presentation purposes, but never stores or processes shapes.
+
+This design gives you:
+- Rich geography support (the most common use case)
+- An escape hatch for non-geo unit systems later (facilities, schools, orgs)
+- Comparability and crosswalk logic that works across reference system types
+
+---
+
+## The Constitution (Opinionated Business Rules)
+
+These are non-negotiable. If the kernel isn't strict here, it's pointless.
+
+### Catalog Primitives
+
+The kernel owns definitions for:
+- Study, Dataset, DataProduct, Variable
+- ReferenceSystem, ReferenceSystemVersion, Crosswalk
+- GeographySystem (profile of ReferenceSystem with geo-specific semantics)
+- Universe, Concept
+- IndicatorDefinition, SuppressionPolicy
+
+### Meaning Constraints
+
+| Constraint | Enforcement |
+|------------|-------------|
+| Grain keys define row meaning | Strict |
+| Indicator aggregation rules (recompute/allowlist/not aggregatable) | Strict |
+| Dataset comparability is explicit and reportable (FULL/PARTIAL/NONE + reasons) | Strict |
+| Suppression is policy-driven and explainable (disclosures) | Strict |
+
+### Query Contract
+
+- Queries are expressed as `QueryPlan` (select ops + combine ops + presentation spec)
+- Validation produces `ValidationResult` with:
+  - Issues
+  - Remediations
+  - Disclosures
+  - Optional rewritten plan
+
+---
+
+## Minimal Product Boundary
+
+The kernel is complete when it delivers these three capabilities:
+
+### A. Catalog Management
+- Create/update studies, datasets, data products, variables, geo versions, universes, concepts, indicator definitions, suppression policies
+- Provide catalog snapshots optimized for validation/execution
+
+### B. Query Lifecycle
+1. Accept a `QueryPlan` (or higher-level request that becomes one)
+2. Validate it through rules pipeline
+3. Produce: validated/rewritten plan, issues, remediations, disclosures
+4. Execute via provider-agnostic port
+5. Return normalized results
+
+### C. Cross-Dataset Rigor Hooks
+- Comparability checks
+- Crosswalk resolution (optional, but hook is core)
+- Indicator recomputation (optional, but hook is core)
+- Suppression application (optional, but hook is core)
+
+---
+
+## Port Definitions
+
+These interfaces belong in the application layer. Domain stays clean.
+
+| Port | Responsibility |
+|------|----------------|
+| `CatalogRepository` | Load/save catalog entities; provide snapshot |
+| `QueryExecutor` | Execute validated plan against some backend |
+| `CrosswalkProvider` | Given reference system versions, supply mapping or report missing |
+| `IndicatorEngine` | Given `IndicatorDefinition`, produce recomputation logic or rewrite plan |
+| `SuppressionEngine` | Apply suppression + attach disclosures |
+| `AuditLogger` | (Optional) Record query, issues, acknowledgments |
+
+No Postgres. No dbt. No tiles. No geometry.
+
+---
+
+## Extensibility Model: Rigor Plugins
+
+Rigor is additive and composable, not abstract soup.
+
+### Plugin Types
+
+1. **Validation rules** - Can be strict or lenient
+2. **Plan rewriters** - Transform forbidden operations into valid alternatives (e.g., rewrite forbidden AVG into recomputation plan when numerator/denominator are defined)
+3. **Execution strategies**:
+   - Basic aggregation strategy for measures
+   - Recomputation strategy for indicators
+   - Crosswalk strategy for geography mismatches
+   - Suppression strategy for small cells
+
+### Deployment Profiles
+
+**Simple deployment:**
+- Only facts (no indicators)
+- No crosswalks
+- Minimal validation rules
+
+**Serious deployment:**
+- Universes required
+- Crosswalk mandatory for geo mismatch
+- Suppression enforced
+- Indicator recomputation
+
+Same kernel. Different rule packs.
+
+---
+
+## Scope Boundary
+
+### In Scope
+
+**Core kernel:**
+- Versioned reference systems + crosswalks
+- Semantic variables + safe aggregation/validation
+- Query planning + validation + disclosures
+- Comparability assessment
+- Extension points for crosswalks, suppression, indicator recomputation
+- Provider-agnostic execution contract + normalized results
+
+**Geography profile (built-in):**
+- Geometry type enums (polygon/point/mixed)
+- Choropleth/point map presentation formats
+- Optional hierarchy helpers
+
+### Out of Scope (Infrastructure)
+
+The kernel must not choose or implement:
+
+- Storage engines (Postgres, BigQuery, DuckDB, parquet, OLAP cubes)
+- Geo formats, tiling, rendering, polygon math, spatial storage
+- Auth, tenancy, caching
+- Job runners / orchestration (Celery, Airflow, dbt, cron)
+- UI, HTTP framework, GraphQL
+
+---
+
+## Anti-Scope-Creep Checklist
+
+If any of these appear in the business layer, scope has been violated:
+
+| Item | Status |
+|------|--------|
+| Ingestion pipelines (ETL/ELT) beyond metadata definitions | OUT |
+| Schema inference, file parsing, OCR, scraping | OUT |
+| Geometry storage, polygon math, spatial queries | OUT |
+| Map rendering, tiling, styling, legend logic | OUT |
+| User management & permissions beyond `is_public` flags | OUT |
+| "Smart" auto-join discovery across datasets | OUT (postpone) |
+
+These may be supported via ports/events, but never implemented in the kernel.
+
+---
+
+## Scope Evaluation Questions
+
+When evaluating whether work belongs in the kernel, ask:
+
+1. **Does it enforce meaning?** → In scope
+2. **Does it validate rigor?** → In scope
+3. **Does it choose infrastructure?** → Out of scope
+4. **Can the kernel run without it in-memory with fakes?** → If no, out of scope
+5. **Is it plumbing?** → Out of scope
+
+---
+
+## Related Documents
+
+- [Conceptual Model](01-conceptual-model.md) — foundational concepts (universes, variables, indicators)
+- [Architecture](03-architecture.md) — two planes + gate design
+- [Capability Matrix](04-capability-matrix.md) — user actions, checks, UI behavior
+- [Capability Examples](08-capability-examples.md) — concrete code patterns
+
+---
+
+## Conceptual Model
+*Source: 01-conceptual-model.md*
+
+# Conceptual Model
+
+## The Statistical Universe
+
+Every dataset implicitly answers the question: "about what population are these numbers true?"
+
+This is the **Universe**.
+
+A universe is not optional metadata; it is foundational.
+
+### Examples
+
+- "All residents of Nigeria as of the 2023 census"
+- "Children aged 6–10 attending public primary schools in Lagos State"
+- "Patients visiting health facilities in Q2 2022"
+
+**Key principle:** If two datasets don't share the same universe, aggregation or comparison is suspect by default.
+
+---
+
+## Reference Systems
+
+A **Reference System** is any collection of identifiable units you can group data by. Your `geography_code` or `facility_id` column is not a variable in the same sense as `age` or `sex`—it's a reference into a unit system.
+
+| Concept | Description |
+|---------|-------------|
+| **Reference Unit** | An identifiable entity (geo area, facility, school, program, org) |
+| **Reference System** | The catalogue of those units with optional versioning |
+| **Reference System Version** | A snapshot of units valid for a time period |
+| **Crosswalk** | A mapping between versions (when units change) |
+
+**Key idea:** Reference systems index observations; they are not themselves observed.
+
+### Geography as a Specialized Reference System
+
+Geography is the most common reference system in statistical data applications. It extends the base concept with:
+
+| Extension | Description |
+|-----------|-------------|
+| **Geometry Type** | `POLYGON` (choropleth), `POINT` (facilities), or `MIXED` |
+| **Hierarchy** | Parent-child relationships (country → province → district) |
+| **Map Presentation** | Hints for visualization (choropleth vs. marker maps) |
+
+**Crucially:** The kernel knows about geometry *types* for presentation hints, but never stores or processes actual shapes. Geometry storage and spatial operations belong outside the kernel.
+
+### Why This Matters
+
+This abstraction enables:
+- **Versioned boundaries:** When admin boundaries change, you track it
+- **Non-geo unit systems:** Facility registries, school networks, program hierarchies
+- **Unified crosswalk logic:** Same comparability rules work across all reference systems
+- **Code reuse prevention:** When codes get reassigned to new units
+
+---
+
+## Variable Types
+
+Variables split cleanly into three types:
+
+### 1. Dimensions (Classificatory Variables)
+
+Used to slice and filter.
+
+**Examples:**
+- `sex` ∈ {male, female, other}
+- `age_group` ∈ {1–5, 6–10, …}
+- `disability_type` ∈ {learning, physical}
+
+**Properties:**
+- Finite domain
+- Not additive
+- Often hierarchical or ordinal
+
+### 2. Measures (Additive Facts)
+
+Things you can sum.
+
+**Examples:**
+- `count`
+- `population`
+- `number_of_visits`
+
+**Properties:**
+- Numeric
+- Meaningful under aggregation
+- Depend on universe and dimensions
+
+A fact table contains counts indexed by geography × sex × age_group.
+
+### 3. Indicators (Derived Measures)
+
+Computed values that should not be naively aggregated.
+
+**Examples:**
+- Percentage of children with learning difficulties
+- Average household size
+- Prevalence rate
+
+**Properties:**
+- Derived from underlying measures
+- Aggregation requires recomputation, not summation
+- Often tied to a specific methodology
+
+**This is where most systems quietly lie.**
+
+---
+
+## Observations vs Aggregates
+
+Individual observations and derived values are different layers.
+
+### Microdata (Observations)
+One row = one unit of observation (person, visit, household)
+
+### Aggregated Data
+One row = a group defined by dimensions
+
+Both can exist in the same system, but:
+- Aggregates must declare how they were produced
+- Indicators must reference the measures they derive from
+
+**Never pretend indicators are raw facts.**
+
+---
+
+## Dataset, Study, and Instrument
+
+These are distinct concepts:
+
+| Concept | Description |
+|---------|-------------|
+| **Instrument** | The mechanism of data collection (questionnaire, form, sensor spec) |
+| **Study** | A data collection effort with a universe, methodology, and time frame. May involve multiple instruments. |
+| **Dataset** | A concrete table produced by a study, usually at a specific level of aggregation |
+
+Multiple datasets can:
+- Share a study
+- Share an instrument
+- Partially overlap in universe
+
+But they are not interchangeable.
+
+---
+
+## Time as a First-Class Axis
+
+Time must be modeled as:
+
+| Concept | Description |
+|---------|-------------|
+| **Reference Date** | What the data describes |
+| **Collection Period** | When it was gathered |
+| **Release Date** | When it became available |
+
+Without this, longitudinal analysis becomes interpretive fiction.
+
+---
+
+## Considerations for Long-Term Integrity
+
+### 1. Reference System Drift and Versioning
+
+Reference units change over time:
+- Names change (geographic areas renamed, facilities rebranded)
+- Boundaries change (admin area splits/merges)
+- Codes get reused (old facility code assigned to new facility)
+- Units appear/disappear (new schools open, programs discontinued)
+
+You need:
+- Versioned reference systems
+- Explicit validity periods
+- Crosswalks between versions
+
+Otherwise historical comparisons rot quietly.
+
+### 2. Explicit Denominators
+
+Indicators without explicit denominators are propaganda.
+
+"% with learning difficulties" means nothing unless:
+- The denominator is defined
+- Exclusions are documented
+- Missing data handling is specified
+
+Model denominators as first-class references, not comments.
+
+### 3. Suppression and Disclosure Risk
+
+Policy data often hides small counts.
+
+You need rules for:
+- Minimum cell sizes
+- Suppression logic
+- Secondary suppression
+
+This affects what can be vended publicly.
+
+### 4. Statistical Confidence
+
+Counts look authoritative; many aren't.
+
+Surveys require:
+- Margins of error
+- Confidence intervals
+- Weighting metadata
+
+Ignoring this creates false certainty.
+
+### 5. Semantic Drift in Variables
+
+"Age 6–10" in one study may not match another:
+- Inclusive vs exclusive
+- Age at last birthday vs age at survey
+
+Variables need semantic identifiers, not just names.
+
+### 6. Legitimate Aggregation Paths
+
+Not all dimensions aggregate cleanly across reference systems.
+
+`Facilities → municipality` ≠ `population → municipality`
+`School enrollments → district` ≠ `program budgets → district`
+
+Aggregation rules must be declared, not assumed.
+
+### 7. Vending Intent
+
+Data "for research" and data "for dashboards" are not the same product.
+
+The system should distinguish:
+- Raw analytical datasets
+- Curated indicators
+- Narrative-safe outputs
+
+Otherwise users will misuse it.
+
+---
+
+## Summary
+
+What we are designing is not a database.
+
+**It's a semantic contract between data producers and data consumers.**
+
+If you get the language right, the system enforces sanity almost automatically.
+If you get it wrong, no amount of schema design will save you.
+
+---
+
+## Glossary
+*Source: 02-glossary.md*
+
+# Glossary
+
+A disciplined vocabulary for the data platform.
+
+## Core Concepts
+
+| Term | Definition |
+|------|------------|
+| **Universe** | The total population or phenomenon to which a dataset's values apply. |
+| **Reference Unit** | An identifiable entity used to index data (e.g., geo area, facility, school, program). |
+| **Reference System** | A versioned catalogue of reference units with optional crosswalks. |
+| **Reference System Version** | A snapshot of units valid for a time period. |
+| **Geographic Unit** | A reference unit with spatial identity (polygon or point). |
+| **Geography System** | A reference system specialized for geographic units, with geometry type and hierarchy. |
+| **Dimension** | A categorical variable used to classify or filter data (e.g., age group, sex). |
+| **Measure** | A numeric variable that is additive across dimensions (e.g., count, population). |
+| **Indicator** | A derived value computed from one or more measures using a defined methodology. |
+| **Observation (Microdata)** | A single recorded instance of data collection (e.g., one person, one visit). |
+| **Aggregate** | A summary computed by grouping observations along dimensions. |
+| **Dataset** | A structured collection of data values with shared dimensions, measures, and metadata. |
+| **Study** | A bounded data collection effort defined by universe, methodology, and time frame. |
+| **Instrument** | The tool or protocol used to collect data (e.g., questionnaire, survey form). |
+| **Domain** | The allowed set of values for a variable. |
+| **Methodology** | The formal description of how data was collected, processed, and validated. |
+| **Provenance** | The origin, ownership, and transformation history of a dataset. |
+| **Comparability** | The degree to which two datasets can be meaningfully compared. |
+| **Data Product** | The unit dashboards consume; a dataset at a specific grain with declared variables. |
+| **Grain** | What one row means (e.g., geography × sex × age_group × year). |
+| **Crosswalk** | A mapping between two reference system versions (e.g., boundary changes, facility registry updates). |
+| **Suppression** | The hiding of small counts to protect privacy or prevent disclosure risk. |
+
+---
+
+## Semantic Enforcement
+
+| Term | Definition |
+|------|------------|
+| **Semantic Claim** | A statement about meaning that is true or false in context, can be checked, and has consequences if violated. Claims unify indicator rules, comparability, suppression, quality guarantees, and universe semantics. |
+| **Semantic Check** | A rule that evaluates one or more claims against a QueryPlan, Dataset, or DataProduct, producing a structured CheckResult. |
+| **Check Result** | The structured outcome of a semantic check: severity, message, attributions, impacts, remediation actions, and disclosures. |
+| **Severity** | The enforcement level for an issue: `ALLOW` (silent pass), `WARN` (visible disclaimer), `REQUIRE_ACK` (must acknowledge), `BLOCK` (cannot proceed). |
+| **Attribution** | Dimensionality diagnosis: identifies which segment (dimension value) caused or contributed to a problem. |
+| **Impact** | Meaning-level blast radius: what other entities (queries, indicators, datasets) would be affected by a change or violation. |
+| **Remediation Action** | A typed, bounded, auditable action that can resolve an issue. Examples: `REWRITE_PLAN`, `APPLY_CROSSWALK`, `ACK_ONLY`, `UPDATE_CATALOG`. |
+| **Disclosure** | A statement that must be shown to the user when results are returned (e.g., "Data suppressed for cells < 5"). |
+
+---
+
+## Policy & Configuration
+
+| Term | Definition |
+|------|------------|
+| **Ruleset Pack** | A versioned bundle that declares which checks are enabled, default severities, rewrite strategies, and required acknowledgments. Enables "same kernel, different rigor." |
+| **Deployment Profile** | A configuration mode for the kernel: minimal (prototyping), standard (production), strict (research/regulated). |
+| **Quality Rule** | A semantic guarantee about data quality (NOT_NULL, RANGE, ENUM, FRESHNESS). Definitions are in scope; ingestion-time checking is not. |
+| **Freshness Guarantee** | A claim that a dataset's data will be no more than N hours stale. The kernel validates against metadata provided via port. |
+
+---
+
+## Tool Contracts (AI/LLM Integration)
+
+| Term | Definition |
+|------|------------|
+| **Tool Contract** | A schema describing a semantic operation the kernel supports (name, parameters, returns). Used by AI agents or UIs to understand available actions. |
+| **Context Slice** | A compact, LLM-safe projection of kernel results (validation summary, indicator explanation, comparability report). Avoids bloated outputs. |
+
+---
+
+## Architecture
+*Source: 03-architecture.md*
+
+# Architecture
+
+> **See also:** [Project Scope](00-project-scope.md) for what's in/out of scope and the extensibility model.
+
+## Design Philosophy
+
+Build a **dashboard-first warehouse** with a **semantic execution kernel** that can graduate from permissive to strict.
+
+**Opt-in rigor with guardrails that tighten when the user does dangerous things.**
+
+The kernel turns data meaning into machine-enforceable contracts that humans, queries, and AI agents must obey.
+
+The trap to avoid: building a "future-proof" semantic cathedral that no one uses.
+
+---
+
+## Core Design: Two Planes + A Gate
+
+### Plane A: Fast Dashboard Plane (Always Works)
+
+This is what most users touch.
+
+- **Fact tables** (additive measures): count, sum, etc.
+- **Indicator tables** (non-additive outputs): rate, percent, mean, etc.
+- **Standard dimensions**: geography, time, sex, age_group, etc.
+
+Everything here is "easy mode": slice, filter, chart.
+
+### Plane B: Rigor Plane (Only Matters When Needed)
+
+This is metadata and rules that shadow Plane A.
+
+- Universe definitions
+- Variable semantics (what "age_group" actually means)
+- Denominator definitions for indicators
+- Methodology / instrument references
+- Reference system versioning (geography versions, facility registry versions, etc.)
+- Comparability constraints
+
+### The Gate: Policy Engine for "Questionable Moves"
+
+When someone tries to:
+- Compare across studies
+- Aggregate indicators
+- Mix different universe definitions
+- Trend across reference system versions (boundary changes, registry updates)
+
+You don't block by default—you either **warn**, **require acknowledgement**, or **require additional metadata**.
+
+The product stays frictionless until it must become honest.
+
+---
+
+## How Rigor Becomes Optional But Enforceable
+
+### 1. Data Products as the Consumption Unit
+
+Every dataset produces one or more "Data Products".
+
+Each Data Product declares:
+- **Grain**: what one row means
+- **Kind**: `FACT` or `INDICATOR`
+- **Measures/Indicators** included
+- **Allowed aggregations** (or "requires recompute")
+
+If users only do dashboards within one data product, life is easy.
+
+### 2. Explicit Comparability Layer
+
+Don't bake comparability logic into scattered code.
+
+Create a **Comparability Profile** attached to datasets or variables:
+- Universe tags
+- Population constraints (age range, inclusion/exclusion rules)
+- Methodology tags (survey, administrative, modeled)
+- Reference system version (boundary set, facility registry version, etc. + valid time range)
+- Time semantics (reference date vs collection period)
+
+Comparisons become a join + rule check, not a philosophical debate.
+
+### 3. Progressive Variable Semantics
+
+**Start permissive:**
+Variable name + domain is enough for most dashboards.
+
+**Graduate to strict when cross-dataset ops happen:**
+Introduce a Variable Definition object with:
+- Concept (what it measures)
+- Unit
+- Domain meaning
+- Collection method
+- Known caveats
+
+Light onboarding, serious mode when needed.
+
+---
+
+## Severity Levels
+
+Each rule resolves to one of:
+
+| Level | Behavior |
+|-------|----------|
+| `ALLOW` | Silent pass |
+| `WARN` | Allow, but attach visible disclaimer + tooltip |
+| `REQUIRE_ACK` | Modal: "You're comparing unlike things" |
+| `BLOCK` | Must add metadata or choose a safe alternative |
+
+Store as config so strictness can be tuned per deployment.
+
+---
+
+## Progressive Metadata Ladder
+
+### Minimum (to ingest & dashboard)
+- Dataset name, source, license, year, geography reference used
+- Column list: dimension vs measure vs indicator (infer with heuristics + user confirm)
+
+### Recommended (unlocks safer cross-dataset)
+- Universe tag (even coarse)
+- Time semantics (reference vs collection)
+- Geography version ID
+
+### Strict (unlocks comparisons with high confidence)
+- Universe definition text + inclusion/exclusion
+- Indicator definitions with denominator/numerator or formula
+- Variable semantic IDs (concept + unit)
+- Crosswalks with methods
+
+---
+
+## Rulesets
+
+Define explicit rulesets for different contexts:
+
+| Ruleset | Description |
+|---------|-------------|
+| **Dashboard** (default) | Warn often, block rarely (except indicator summing) |
+| **Policy/Public** | Stricter labeling, suppression enforcement |
+| **Research** | Requires universe + concept bindings for cross-dataset comparisons |
+
+Same system, different knobs.
+
+---
+
+## Operations That Trigger the Gate
+
+Explicit list of "danger ops":
+
+1. Mixing data products
+2. Comparing indicators across datasets
+3. Aggregating indicators
+4. Trending across reference system versions (boundary changes, registry updates)
+5. Joining datasets with different universe tags
+
+Everything else stays frictionless.
+
+---
+
+## Semantic Enforcement Model
+
+The gate is implemented through **semantic claims** and **semantic checks**.
+
+### Semantic Claims
+
+A claim is a statement about meaning that:
+- Is true or false in context
+- Can be checked
+- Has consequences if violated
+
+Claims unify what were previously separate concepts:
+- Indicator aggregation rules
+- Comparability constraints
+- Suppression policies
+- Quality guarantees
+- Universe semantics
+
+Claims may be **explicit** (authored in catalog) or **derived** (generated from existing entities like IndicatorDefinition).
+
+### Semantic Checks
+
+A check evaluates one or more claims against a QueryPlan, Dataset, or DataProduct.
+
+Each check produces a **CheckResult** with:
+- Severity (ALLOW/WARN/REQUIRE_ACK/BLOCK)
+- Message (human-readable explanation)
+- Attributions (which segment caused the problem)
+- Impacts (what else would break)
+- Remediation Actions (what can fix it)
+- Disclosures (what user must see in results)
+
+### The Semantic Loop
+
+```
+QueryPlan
+    ↓
+[Load Claims from Catalog]
+    ↓
+[Run Semantic Checks]
+    ↓
+CheckResults
+    ↓
+[Enrich with Attributions] (optional, via port)
+    ↓
+[Analyze Impacts]
+    ↓
+ValidationResult
+    ↓
+[Acknowledge / Rewrite / Block]
+    ↓
+Execute or Reject
+```
+
+This single loop covers:
+- AI correctness (agents get structured feedback)
+- Governance (violations are explainable)
+- Quality (guarantees are enforced at query time)
+- Comparability (mismatches are detected)
+- Trust (disclosures are attached to results)
+- Automation safety (remediations are bounded)
+
+---
+
+## AI/LLM Integration
+
+The kernel exposes **tool contracts** that describe available semantic operations.
+
+### Tool Contracts
+
+A contract is a schema describing what an operation does:
+- Name and description
+- Parameters with types
+- Return type
+- Examples
+
+AI agents can:
+1. Discover available tools via ToolRegistry
+2. Call tools via ExecuteTool use case
+3. Receive structured results (not prose)
+4. Get compact context via ContextSliceProjector
+
+### Context Slices
+
+Results are projected into LLM-safe, bounded outputs:
+- Validation summaries (not full issue trees)
+- Indicator explanations (not full catalog dumps)
+- Comparability reports (not raw constraint graphs)
+
+This keeps context windows manageable and responses focused.
+
+### Remediation Actions
+
+AI agents can request changes via typed, bounded actions:
+- `REWRITE_PLAN` - Transform query to valid form
+- `APPLY_CROSSWALK` - Use a specific crosswalk
+- `ACK_ONLY` - Acknowledge risk and proceed
+- `UPDATE_CATALOG` - Modify catalog entity (audited)
+
+Actions are **not** free-form mutations. The kernel controls what's possible.
+
+### Scope Boundary
+
+| In Scope | Out of Scope |
+|----------|--------------|
+| Tool contracts (schemas) | HTTP/MCP transport |
+| ExecuteTool use case | JSON-RPC implementation |
+| ContextSliceProjector | WebSocket handlers |
+| RemediationAction types | AI model integration |
+
+The kernel defines *what tools exist* and *what they mean*. Transport is infrastructure.
+
+---
+
+# Developer Guide
+
+## Developer Index
+*Source: developer/index.md*
+
+# Integration Guide
+
+This section covers how to integrate Invariant into your application.
+
+## Overview
+
+Invariant uses Clean Architecture with ports and adapters. The kernel defines abstract interfaces (ports) that you implement with concrete adapters for your infrastructure.
+
+```
+Your Application
+    │
+    ├── CLI / API / UI
+    │       │
+    │       ▼
+    ├── Use Cases (application layer)
+    │       │
+    │       ▼
+    ├── Domain (business rules)
+    │       │
+    │       ▼
+    └── Ports ◄──── Your Adapters
+            │
+            ▼
+        Your Infrastructure
+        (Postgres, DuckDB, S3, etc.)
+```
+
+## Required Ports
+
+These must be implemented:
+
+| Port | Responsibility |
+|------|----------------|
+| `CatalogStore` | Load/save catalog entities (studies, datasets, data products, variables) |
+| `QueryEngine` | Execute validated query plans against your data store |
+| `IdGenerator` | Generate unique IDs for entities |
+
+## Optional Ports
+
+These enable advanced features:
+
+| Port | Responsibility |
+|------|----------------|
+| `CrosswalkService` | Map data between reference system versions |
+| `IndicatorEngine` | Recompute indicators during aggregation |
+| `SuppressionEngine` | Apply suppression policies to protect small cells |
+| `AuditLog` | Record queries and acknowledgments |
+
+## Integration Path
+
+1. **[Quickstart](quickstart.md)** — Run the sample project to understand the flow
+2. **[Core Concepts](concepts.md)** — Learn the domain model
+3. **[Implementing Ports](integrating.md)** — Build adapters for your infrastructure
+4. **[Use Cases](use-cases.md)** — Understand the application layer entry points
+5. **[Validation Rules](validation-rules.md)** — Configure rule strictness
+6. **[CLI Patterns](cli-patterns.md)** — Build command-line tools
+
+## Sample Project
+
+The best way to understand integration is to study the [sample project](../../examples/sample-project/):
+
+```
+examples/sample-project/
+├── data/
+│   ├── catalog.json              # Metadata definitions
+│   └── *.parquet                 # Sample data files
+└── src/census_explorer/
+    ├── cli.py                    # CLI commands
+    └── infrastructure/
+        ├── json_catalog.py       # CatalogStore implementation
+        └── duckdb_engine.py      # QueryEngine implementation
+```
+
+## Minimal Integration
+
+A minimal integration needs:
+
+```python
+from invariant.application.use_cases.validate_query import ValidateQueryUseCase
+
+# Your implementations
+catalog_store = YourCatalogStore(...)
+id_generator = YourIdGenerator()
+
+# Create use case
+validate = ValidateQueryUseCase(
+    catalog_store=catalog_store,
+    id_generator=id_generator,
+)
+
+# Validate a query
+result = validate.execute(query_request)
+
+if result.status == "ALLOW":
+    # Safe to execute
+    ...
+elif result.status == "BLOCK":
+    # Show issues to user
+    for issue in result.issues:
+        print(f"{issue.code}: {issue.message}")
+```
+
+## Next Steps
+
+- [Implementing Ports](integrating.md) — Detailed port interface documentation
+- [Use Cases](use-cases.md) — All available use cases
+- [Architecture](../03-architecture.md) — Design philosophy and the validation gate
+
+---
+
+## Quickstart
+*Source: developer/quickstart.md*
+
+# Quickstart
+
+Get Invariant running with real data in under 10 minutes.
+
+## Prerequisites
+
+- Python 3.12+
+- pip or uv
+
+## Step 1: Clone and Install
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/invariant.git
+cd invariant
+
+# Install invariant
+pip install -e .
+
+# Install the sample project
+cd examples/sample-project
+pip install -e .
+```
+
+## Step 2: Explore the Catalog
+
+The sample project includes South African census-style data. Start by exploring what's available:
+
+```bash
+# List studies (data collection efforts)
+census-explorer list-studies
+```
+
+Output:
+```
+┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ ID         ┃ Name                                  ┃ Organization             ┃ License   ┃
+┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ 550e8400… │ South Africa Census 2021              │ Statistics South Africa  │ CC-BY-4.0 │
+│ 550e8400… │ Quarterly Labour Force Survey 2023    │ Statistics South Africa  │ CC-BY-4.0 │
+└────────────┴───────────────────────────────────────┴──────────────────────────┴───────────┘
+```
+
+```bash
+# List data products (queryable tables)
+census-explorer list-data-products
+```
+
+Output:
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┓
+┃ ID                                     ┃ Name                                   ┃ Kind      ┃ Variables ┃ Public ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━┩
+│ aa0e8400-e29b-41d4-a716-446655440001   │ Population by Geography and            │ FACT      │ 5         │ Yes    │
+│                                        │ Demographics                           │           │           │        │
+│ aa0e8400-e29b-41d4-a716-446655440002   │ Labour Force Indicators                │ INDICATOR │ 5         │ Yes    │
+└────────────────────────────────────────┴────────────────────────────────────────┴───────────┴───────────┴────────┘
+```
+
+Note the **Kind** column: `FACT` products contain measures you can aggregate; `INDICATOR` products contain derived values with special rules.
+
+## Step 3: Examine a Data Product
+
+```bash
+census-explorer show-data-product aa0e8400-e29b-41d4-a716-446655440001
+```
+
+Output:
+```
+Population by Geography and Demographics
+ID: aa0e8400-e29b-41d4-a716-446655440001
+Kind: FACT
+Public: Yes
+
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Name            ┃ Role      ┃ Type   ┃ Description                                 ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ geography_code  │ DIMENSION │ STRING │ Geographic area code (province or           │
+│                 │           │        │ municipality)                               │
+│ geography_name  │ DIMENSION │ STRING │ Geographic area name                        │
+│ age_group       │ DIMENSION │ STRING │ Five-year age group                         │
+│ sex             │ DIMENSION │ STRING │ Sex                                         │
+│ population      │ MEASURE   │ INT    │ Number of persons                           │
+└─────────────────┴───────────┴────────┴─────────────────────────────────────────────┘
+```
+
+The `population` variable has role **MEASURE** — it can be summed.
+
+## Step 4: Validate a Query
+
+Before executing, let's validate:
+
+```bash
+# Valid: SUM a measure
+census-explorer validate aa0e8400-e29b-41d4-a716-446655440001 \
+    -m population:SUM \
+    -d geography_code
+
+# Output:
+# Query ID: q-a1b2c3d4
+# Status: ALLOW
+# Can Execute: Yes
+```
+
+Now try an invalid query on the indicator product:
+
+```bash
+# Invalid: SUM an indicator
+census-explorer validate aa0e8400-e29b-41d4-a716-446655440002 \
+    -m unemployment_rate:SUM \
+    -d geography_code
+```
+
+Output:
+```
+Query ID: q-e5f6g7h8
+Status: BLOCK
+Can Execute: No
+
+Issues:
+  [INDICATOR_AGG_NOT_ALLOWED] Cannot SUM indicator 'unemployment_rate' because
+  it is a derived value. Indicators require recomputation, not naive aggregation.
+    -> Define numerator/denominator so the system can recompute safely
+    -> Use NONE (display as-is) or a safe aggregation
+```
+
+The kernel blocked the query and explained why. This is the core value of Invariant.
+
+## Step 5: Execute a Valid Query
+
+```bash
+census-explorer query aa0e8400-e29b-41d4-a716-446655440001 \
+    -m population:SUM \
+    -d geography_code \
+    -d sex
+```
+
+Output:
+```
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━┓
+┃ geography_code  ┃ sex    ┃ population  ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━┩
+│ EC              │ Female │ 3218642     │
+│ EC              │ Male   │ 3107521     │
+│ FS              │ Female │ 1436289     │
+│ FS              │ Male   │ 1398745     │
+│ GP              │ Female │ 7412356     │
+│ GP              │ Male   │ 7298412     │
+│ ...             │ ...    │ ...         │
+└─────────────────┴────────┴─────────────┘
+
+Execution time: 12ms
+```
+
+## Step 6: Query the Indicator Product (Correctly)
+
+You can query indicators without aggregation:
+
+```bash
+census-explorer query aa0e8400-e29b-41d4-a716-446655440002 \
+    -m unemployment_rate:NONE \
+    -m labour_force:SUM \
+    -d geography_code
+```
+
+This returns the unemployment rate at its stored grain (province level) alongside the labour force totals.
+
+## What Just Happened?
+
+1. **Catalog loaded** — The JSON file defined studies, datasets, data products, and variables
+2. **Query validated** — The kernel checked aggregation rules against variable roles
+3. **Query executed** — DuckDB ran SQL against parquet files
+4. **Results returned** — With disclosures if any transformations occurred
+
+The validation step is where Invariant adds value. Without it, you'd need to encode aggregation rules in every query path manually.
+
+## Next Steps
+
+- **[Core Concepts](concepts.md)** — Understand the domain model
+- **[Architecture](architecture.md)** — See how the layers fit together
+- **[Implementing Ports](integrating.md)** — Build your own adapters
+
+## Files in the Sample Project
+
+```
+examples/sample-project/
+├── data/
+│   ├── catalog.json              # Metadata definitions
+│   ├── census_demographics.parquet   # 306 rows of population data
+│   └── labour_force.parquet          # 9 rows of employment data
+└── src/census_explorer/
+    ├── cli.py                    # CLI commands
+    └── infrastructure/
+        ├── json_catalog.py       # CatalogStore implementation
+        └── duckdb_engine.py      # QueryEngine implementation
+```
+
+The catalog.json file is the interesting part — it defines:
+- 2 studies
+- 2 universes (population definitions)
+- 2 datasets
+- 2 data products with their variables
+- 1 indicator definition (for unemployment_rate)
+
+Open it to see how metadata is structured.
+
+---
+
+## Core Concepts
+*Source: developer/concepts.md*
+
+# Core Concepts
+
+This guide explains the key concepts in Invariant's domain model. Understanding these concepts is essential for using the library effectively.
+
+## Catalog Hierarchy
+
+Invariant organizes statistical data in a hierarchy:
+
+```
+Study
+  └── Dataset
+        └── DataProduct
+              └── Variable
+```
+
+### Study
+
+A **Study** is a data collection effort with methodology. It's the top-level organizational unit.
+
+```python
+Study(
+    id=StudyId(...),
+    name="South Africa Census 2021",
+    owner_org="Statistics South Africa",
+    methodology_summary="Full enumeration of all households",
+)
+```
+
+A study may produce multiple datasets (e.g., demographic tables, housing tables, economic tables).
+
+### Dataset
+
+A **Dataset** is a concrete table produced by a study at a specific level of aggregation.
+
+```python
+Dataset(
+    id=DatasetId(...),
+    study_id=study.id,
+    name="Census 2021 Demographics",
+    reference_date=date(2021, 10, 10),
+    universe_id=universe.id,  # Links to population definition
+    reference_system_version_id=geo_version.id,  # Links to geography version
+)
+```
+
+Key properties:
+- **reference_date** — What point in time the data describes
+- **collection_start/end** — When data was gathered
+- **universe_id** — Which population this data represents
+- **reference_system_version_id** — Which version of the unit system (geography, facilities, etc.)
+
+### DataProduct
+
+A **DataProduct** is what users actually query. It defines the grain and available variables.
+
+```python
+DataProduct(
+    id=DataProductId(...),
+    dataset_id=dataset.id,
+    name="Population by Geography and Demographics",
+    kind=DataProductKind.FACT,  # or INDICATOR
+    grain=GrainSpec(keys=[geo_var.id, age_var.id, sex_var.id]),
+    variables=[geo_var, age_var, sex_var, population_var],
+)
+```
+
+Two kinds:
+- **FACT** — Contains measures (counts, sums) that can be aggregated
+- **INDICATOR** — Contains derived values (rates, percentages) with special aggregation rules
+
+### Variable
+
+A **Variable** is a column in a data product with semantic meaning.
+
+```python
+Variable(
+    id=VariableId(...),
+    data_product_id=dp.id,
+    name="population",
+    role=VariableRole.MEASURE,  # or DIMENSION, INDICATOR
+    data_type=DataType.INT,
+    unit="persons",
+)
+```
+
+Three roles:
+- **DIMENSION** — Used to slice and filter (geography, age_group, sex)
+- **MEASURE** — Additive facts that can be summed (population, count)
+- **INDICATOR** — Derived values that need special handling (rate, percentage)
+
+---
+
+## Variable Types
+
+Understanding variable types is critical because they determine what operations are valid.
+
+### Dimensions
+
+Dimensions are classificatory variables used to slice data.
+
+| Property | Example |
+|----------|---------|
+| Finite domain | `sex` ∈ {Male, Female} |
+| Not additive | You can't sum "Male + Female" to get a number |
+| Often hierarchical | Country → Province → District |
+
+Dimensions go in `GROUP BY` clauses.
+
+### Measures
+
+Measures are additive facts you can sum.
+
+| Property | Example |
+|----------|---------|
+| Numeric | `population = 1234567` |
+| Meaningful under SUM | Total population = sum of all cells |
+| May support MIN/MAX | Smallest population in a ward |
+
+Measures are safe to aggregate across dimensions.
+
+### Indicators
+
+Indicators are derived values that cannot be naively aggregated.
+
+| Property | Example |
+|----------|---------|
+| Derived from measures | `unemployment_rate = unemployed / labour_force` |
+| NOT additive | You can't sum 30% + 40% to get 70% |
+| Require recomputation | To aggregate, sum numerator and denominator separately, then divide |
+
+**This is where Invariant adds the most value.** It prevents users from accidentally averaging percentages or summing rates.
+
+---
+
+## Universes
+
+A **Universe** defines the population to which data values apply.
+
+```python
+Universe(
+    id=UniverseId(...),
+    label="All Residents",
+    definition="All persons resident in South Africa at the time of enumeration",
+    inclusions=["Citizens", "Permanent residents", "Temporary residents present on census night"],
+    exclusions=["Diplomatic personnel", "Foreign military"],
+)
+```
+
+Universes matter because:
+- Datasets with different universes may not be comparable
+- "Unemployment rate among all persons" ≠ "Unemployment rate among working-age persons"
+- Cross-dataset operations check universe compatibility
+
+---
+
+## Reference Systems
+
+A **Reference System** is any set of units you can group data by. Geography is the most common, but the concept is broader.
+
+### What Counts as a Reference System
+
+| Type | Examples |
+|------|----------|
+| Geography | Provinces, districts, wards |
+| Facilities | Hospitals, clinics, schools |
+| Organizations | Departments, agencies |
+| Programs | Social programs, funding streams |
+
+### Why Reference Systems Matter
+
+Reference systems change over time:
+- Geographic boundaries are redrawn
+- Facilities open and close
+- Codes get reassigned
+
+Invariant tracks **versions** of reference systems and supports **crosswalks** for mapping between versions.
+
+```python
+ReferenceSystemVersion(
+    id=ReferenceSystemVersionId(...),
+    reference_system_id=geo_system.id,
+    label="2021 Boundaries",
+    valid_from=date(2021, 1, 1),
+)
+
+Crosswalk(
+    id=CrosswalkId(...),
+    from_version_id=geo_2011.id,
+    to_version_id=geo_2021.id,
+    method=CrosswalkMethod.AREA_WEIGHTED,
+)
+```
+
+When comparing data across versions, the kernel checks if a crosswalk exists and how to apply it.
+
+---
+
+## Indicator Definitions
+
+An **IndicatorDefinition** specifies how an indicator variable is computed and can be aggregated.
+
+```python
+IndicatorDefinition(
+    variable_id=unemployment_rate_var.id,
+    indicator_type=IndicatorType.PERCENT,
+    aggregation_policy=AggregationPolicy.RECOMPUTE,
+    numerator_ref=VariableRef(dp_id, unemployed_var.id),
+    denominator_ref=VariableRef(dp_id, labour_force_var.id),
+    formula="unemployed / labour_force * 100",
+)
+```
+
+### Aggregation Policies
+
+| Policy | Meaning | Example |
+|--------|---------|---------|
+| `NOT_AGGREGATABLE` | Cannot be aggregated at all | Gini coefficient |
+| `RECOMPUTE` | Can aggregate by recomputing from components | Unemployment rate |
+| `ALLOW_LIST` | Only specific aggregations allowed | MIN/MAX for thresholds |
+
+When a query tries to SUM or AVG an indicator:
+1. Kernel checks the aggregation_policy
+2. If `RECOMPUTE`, it can substitute the computation using numerator/denominator
+3. If `NOT_AGGREGATABLE`, it blocks the query
+4. If `ALLOW_LIST`, it checks if the requested aggregation is allowed
+
+---
+
+## The Validation Gate
+
+Every query passes through a validation gate that produces one of four statuses:
+
+| Status | Meaning | User Experience |
+|--------|---------|-----------------|
+| `ALLOW` | Query is valid | Execute immediately |
+| `WARN` | Valid but with caveats | Execute with visible disclaimer |
+| `REQUIRE_ACK` | Valid after user acknowledges risk | Modal: "You're comparing unlike things" |
+| `BLOCK` | Invalid, cannot execute | Error with remediation suggestions |
+
+The gate checks:
+- Aggregation rules (can this variable be summed?)
+- Comparability (are these datasets comparable?)
+- Reference system alignment (same geography version?)
+- Universe compatibility (same population?)
+
+---
+
+## Disclosures
+
+Every query result can include **disclosures** — messages about data provenance and transformations.
+
+```python
+Disclosure(
+    disclosure_type="data_source",
+    text="Census 2021, Statistics South Africa",
+)
+
+Disclosure(
+    disclosure_type="crosswalk",
+    text="2011 data redistributed to 2021 boundaries using area-weighted interpolation",
+)
+
+Disclosure(
+    disclosure_type="suppression",
+    text="3 cells suppressed per census-standard policy",
+)
+```
+
+Disclosures are accumulated through the query lifecycle and returned with results. They enable transparency about what happened to the data.
+
+---
+
+## Query Plans
+
+A **QueryPlan** is the normalized representation of a query that the kernel validates and executes.
+
+```python
+QueryPlan(
+    query_id="q-abc123",
+    intent=QueryIntent.TABLE,
+    operations=[
+        SelectOp(
+            data_product_id=dp.id,
+            dimension_ids=[geo_var.id, sex_var.id],
+            metrics=[Metric(population_var.id, AggregationType.SUM)],
+            filters=[],
+            group_by_ids=[geo_var.id, sex_var.id],
+        )
+    ],
+    presentation=PresentationSpec(format=PresentationFormat.TABLE),
+)
+```
+
+Query plans use **VariableId** references (not names) for stability when variables are renamed.
+
+---
+
+## Summary
+
+| Concept | Purpose |
+|---------|---------|
+| Study | Organizational unit for data collection efforts |
+| Dataset | Concrete table with temporal and universe metadata |
+| DataProduct | Queryable unit with grain and variables |
+| Variable | Column with semantic role (dimension/measure/indicator) |
+| Universe | Population definition for comparability |
+| ReferenceSystem | Unit system (geography, facilities) with versioning |
+| IndicatorDefinition | How derived values are computed and aggregated |
+| ValidationResult | Gate output with status and disclosures |
+| Disclosure | Provenance information attached to results |
+
+For formal definitions of all terms, see the [generated glossary](../generated/glossary.md).
+
+---
+
+## Implementing Ports
+*Source: developer/integrating.md*
+
+# Implementing Ports
+
+This guide shows how to implement the port interfaces to connect Invariant to your infrastructure.
+
+## Overview
+
+Ports are abstract interfaces defined in `invariant.application.ports`. You provide concrete implementations (adapters) for your specific technology stack.
+
+| Port | Responsibility | Required? |
+|------|----------------|-----------|
+| `CatalogStore` | Load/save catalog entities | Yes |
+| `QueryEngine` | Execute validated plans | Yes |
+| `IdGenerator` | Generate entity IDs | Yes |
+| `CrosswalkService` | Reference system mappings | Optional |
+| `IndicatorEngine` | Indicator recomputation | Optional |
+| `SuppressionEngine` | Suppression policies | Optional |
+| `AuditLog` | Query logging | Optional |
+| `Clock` | Time abstraction | Optional |
+
+---
+
+## CatalogStore
+
+The `CatalogStore` port handles all catalog entity persistence.
+
+### Interface
+
+```python
+class CatalogStore(Protocol):
+    # Studies
+    def get_study(self, study_id: StudyId) -> Study | None: ...
+    def save_study(self, study: Study) -> None: ...
+    def list_studies(self) -> list[Study]: ...
+
+    # Datasets
+    def get_dataset(self, dataset_id: DatasetId) -> Dataset | None: ...
+    def save_dataset(self, dataset: Dataset) -> None: ...
+    def list_datasets(self, study_id: StudyId | None = None) -> list[Dataset]: ...
+
+    # Data Products
+    def get_data_product(self, dp_id: DataProductId) -> DataProduct | None: ...
+    def save_data_product(self, dp: DataProduct) -> None: ...
+    def list_data_products(self, dataset_id: DatasetId | None = None) -> list[DataProduct]: ...
+
+    # Variables
+    def get_variable(self, variable_id: VariableId) -> Variable | None: ...
+
+    # Indicator Definitions
+    def get_indicator_definition(self, variable_id: VariableId) -> IndicatorDefinition | None: ...
+    def save_indicator_definition(self, definition: IndicatorDefinition) -> None: ...
+
+    # Universes
+    def get_universe(self, universe_id: UniverseId) -> Universe | None: ...
+    def save_universe(self, universe: Universe) -> None: ...
+    def list_universes(self) -> list[Universe]: ...
+
+    # Reference System Versions
+    def get_reference_system_version(self, version_id: ReferenceSystemVersionId) -> ReferenceSystemVersion | None: ...
+
+    # Crosswalks
+    def get_crosswalk_between(
+        self,
+        source_version_id: ReferenceSystemVersionId,
+        target_version_id: ReferenceSystemVersionId,
+    ) -> Crosswalk | None: ...
+
+    # Snapshot for validation
+    def get_catalog_snapshot(self, dp_ids: set[DataProductId]) -> CatalogSnapshot: ...
+```
+
+### Example: PostgreSQL Implementation
+
+```python
+from dataclasses import dataclass
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
+
+@dataclass
+class PostgresCatalogStore:
+    connection_string: str
+
+    def __post_init__(self):
+        self.engine = create_engine(self.connection_string)
+
+    def get_study(self, study_id: StudyId) -> Study | None:
+        with Session(self.engine) as session:
+            row = session.execute(
+                select(StudyTable).where(StudyTable.id == str(study_id.value))
+            ).scalar_one_or_none()
+
+            if row is None:
+                return None
+
+            return Study(
+                id=StudyId(UUID(row.id)),
+                name=row.name,
+                owner_org=row.owner_org,
+                description=row.description,
+            )
+
+    def get_catalog_snapshot(self, dp_ids: set[DataProductId]) -> CatalogSnapshot:
+        # Optimized query to load all needed data in one round-trip
+        with Session(self.engine) as session:
+            dp_id_strs = [str(dp_id.value) for dp_id in dp_ids]
+
+            # Load data products with variables
+            products = session.execute(
+                select(DataProductTable)
+                .where(DataProductTable.id.in_(dp_id_strs))
+                .options(joinedload(DataProductTable.variables))
+            ).unique().scalars().all()
+
+            # Load indicator definitions for indicator variables
+            # ... build and return CatalogSnapshot
+```
+
+### Key Method: get_catalog_snapshot
+
+The `get_catalog_snapshot` method is critical for performance. It returns a read-optimized snapshot containing:
+
+- Data products being queried
+- All indicator definitions for those products
+- Associated datasets
+
+This allows validation to run without repeated database queries.
+
+---
+
+## QueryEngine
+
+The `QueryEngine` port executes validated query plans against your data store.
+
+### Interface
+
+```python
+class QueryEngine(Protocol):
+    def execute(self, plan: QueryPlan) -> RawQueryResult: ...
+    def estimate_cost(self, plan: QueryPlan) -> CostEstimate: ...
+
+@dataclass
+class RawQueryResult:
+    columns: list[str]
+    rows: list[tuple[object, ...]]
+    row_count: int
+    execution_time_ms: int
+
+@dataclass(frozen=True)
+class CostEstimate:
+    estimated_rows: int
+    estimated_bytes: int
+    estimated_ms: int
+```
+
+### Example: DuckDB Implementation
+
+```python
+import duckdb
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+@dataclass
+class DuckDBQueryEngine:
+    data_dir: Path
+    catalog_store: CatalogStore
+
+    def execute(self, plan: QueryPlan) -> RawQueryResult:
+        start = time.time()
+
+        # Build SQL from plan
+        sql = self._build_sql(plan)
+
+        # Execute
+        conn = duckdb.connect()
+        result = conn.execute(sql).fetchall()
+        columns = [desc[0] for desc in conn.description]
+        conn.close()
+
+        return RawQueryResult(
+            columns=columns,
+            rows=[tuple(row) for row in result],
+            row_count=len(result),
+            execution_time_ms=int((time.time() - start) * 1000),
+        )
+
+    def _build_sql(self, plan: QueryPlan) -> str:
+        op = plan.operations[0]
+
+        # Get data product to resolve variable names
+        dp = self.catalog_store.get_data_product(op.data_product_id)
+        var_id_to_name = {v.id: v.name for v in dp.variables}
+
+        # Build SELECT
+        select_parts = []
+        for dim_id in op.dimension_ids:
+            select_parts.append(var_id_to_name[dim_id])
+
+        for metric in op.metrics:
+            name = var_id_to_name[metric.variable_id]
+            agg = self._agg_to_sql(metric.agg, name)
+            select_parts.append(f"{agg} AS {name}")
+
+        # Build FROM (map data product to table)
+        table_path = self._get_table_path(op.data_product_id)
+
+        # Build GROUP BY
+        group_by = [var_id_to_name[gid] for gid in op.group_by_ids]
+
+        sql = f"SELECT {', '.join(select_parts)} FROM read_parquet('{table_path}')"
+        if group_by:
+            sql += f" GROUP BY {', '.join(group_by)}"
+
+        return sql
+```
+
+### Translating QueryPlan to Your Query Language
+
+The `QueryPlan` contains:
+
+| Component | SQL Equivalent |
+|-----------|----------------|
+| `operations[0].dimension_ids` | SELECT columns |
+| `operations[0].metrics` | SELECT with aggregation |
+| `operations[0].filters` | WHERE clause |
+| `operations[0].group_by_ids` | GROUP BY clause |
+| `plan.combine` | JOIN or UNION |
+
+Your implementation translates this abstract plan into your storage's query language (SQL, BigQuery, DataFrame operations, etc.).
+
+---
+
+## IdGenerator
+
+The `IdGenerator` port creates unique IDs for entities.
+
+### Interface
+
+```python
+class IdGenerator(Protocol):
+    def generate_study_id(self) -> StudyId: ...
+    def generate_dataset_id(self) -> DatasetId: ...
+    def generate_data_product_id(self) -> DataProductId: ...
+    def generate_variable_id(self) -> VariableId: ...
+    def generate_universe_id(self) -> UniverseId: ...
+    def generate_concept_id(self) -> ConceptId: ...
+    def generate_reference_system_id(self) -> ReferenceSystemId: ...
+    def generate_reference_system_version_id(self) -> ReferenceSystemVersionId: ...
+    def generate_crosswalk_id(self) -> CrosswalkId: ...
+    def generate_query_id(self) -> str: ...
+```
+
+### Example: UUID Implementation
+
+```python
+from uuid import uuid4
+from dataclasses import dataclass
+
+@dataclass
+class UUIDIdGenerator:
+    def generate_study_id(self) -> StudyId:
+        return StudyId(uuid4())
+
+    def generate_dataset_id(self) -> DatasetId:
+        return DatasetId(uuid4())
+
+    def generate_query_id(self) -> str:
+        return f"q-{uuid4().hex[:8]}"
+
+    # ... other methods follow the same pattern
+```
+
+### Example: Deterministic Implementation (for testing)
+
+```python
+@dataclass
+class FakeIdGenerator:
+    _counter: int = 0
+
+    def generate_study_id(self) -> StudyId:
+        self._counter += 1
+        return StudyId(UUID(f"{self._counter:032x}"))
+
+    def generate_query_id(self) -> str:
+        self._counter += 1
+        return f"test-query-{self._counter}"
+```
+
+---
+
+## Optional Ports
+
+### CrosswalkService
+
+Provides mappings between reference system versions.
+
+```python
+class CrosswalkService(Protocol):
+    def get_crosswalk(
+        self,
+        from_version: ReferenceSystemVersionId,
+        to_version: ReferenceSystemVersionId,
+    ) -> Crosswalk | None: ...
+
+    def apply_crosswalk(
+        self,
+        data: RawQueryResult,
+        crosswalk: Crosswalk,
+    ) -> tuple[RawQueryResult, list[Disclosure]]: ...
+```
+
+### IndicatorEngine
+
+Handles indicator recomputation during aggregation.
+
+```python
+class IndicatorEngine(Protocol):
+    def recompute(
+        self,
+        indicator_def: IndicatorDefinition,
+        data: RawQueryResult,
+    ) -> RawQueryResult: ...
+```
+
+### SuppressionEngine
+
+Applies suppression policies to protect small cells.
+
+```python
+class SuppressionEngine(Protocol):
+    def apply(
+        self,
+        data: RawQueryResult,
+        policy: SuppressionPolicy | None,
+    ) -> tuple[RawQueryResult, list[Disclosure]]: ...
+```
+
+### AuditLog
+
+Records queries and acknowledgments.
+
+```python
+class AuditLog(Protocol):
+    def record_query(
+        self,
+        query_id: str,
+        plan: QueryPlan,
+        validation: ValidationResult,
+        acknowledged: bool = False,
+    ) -> None: ...
+
+    def record_acknowledgment(
+        self,
+        query_id: str,
+        acknowledged_issues: list[str],
+        user_id: str | None = None,
+    ) -> None: ...
+
+    def record_execution(
+        self,
+        query_id: str,
+        success: bool,
+        error: str | None = None,
+        row_count: int | None = None,
+    ) -> None: ...
+
+    def is_acknowledged(self, query_id: str) -> bool: ...
+```
+
+---
+
+## Wiring It Together
+
+Here's how to wire your implementations into a use case:
+
+```python
+from invariant.application.use_cases.validate_query import ValidateQueryUseCase
+from invariant.application.dto.query_request import QueryRequest
+
+# Create your implementations
+catalog_store = PostgresCatalogStore(connection_string="postgresql://...")
+id_generator = UUIDIdGenerator()
+
+# Create use case
+validate_use_case = ValidateQueryUseCase(
+    catalog_store=catalog_store,
+    id_generator=id_generator,
+)
+
+# Use it
+request = QueryRequest(
+    intent="TABLE",
+    selections=[...],
+)
+result = validate_use_case.execute(request)
+```
+
+For execution:
+
+```python
+from invariant.application.use_cases.execute_query import ExecuteQueryUseCase
+
+query_engine = DuckDBQueryEngine(data_dir=Path("./data"), catalog_store=catalog_store)
+audit_log = PostgresAuditLog(connection_string="postgresql://...")
+
+execute_use_case = ExecuteQueryUseCase(
+    catalog_store=catalog_store,
+    query_engine=query_engine,
+    audit_log=audit_log,
+)
+```
+
+---
+
+## Testing Your Implementations
+
+Use the fake implementations in `tests/unit/application/fakes.py` as references:
+
+```python
+from tests.unit.application.fakes import FakeCatalogStore, FakeIdGenerator
+
+def test_my_catalog_store():
+    # Create a reference fake
+    fake = FakeCatalogStore()
+    fake.save_study(make_test_study())
+
+    # Test your implementation produces same results
+    mine = MyCatalogStore(...)
+    mine.save_study(make_test_study())
+
+    assert fake.get_study(study_id) == mine.get_study(study_id)
+```
+
+The fakes provide:
+- `FakeCatalogStore` — In-memory catalog
+- `FakeQueryEngine` — Returns pre-configured results
+- `FakeIdGenerator` — Deterministic IDs
+- `FakeAuditLog` — Records to dict
+- `FakeClock` — Controllable time
+- `FakeSuppressionEngine` — Configurable suppression
+
+---
+
+## Use Cases
+*Source: developer/use-cases.md*
+
+# Use Cases Reference
+
+The application layer exposes use cases as the primary entry points for interacting with the kernel. Each use case represents a single user action.
+
+## Overview
+
+| Use Case | Purpose | Input | Output |
+|----------|---------|-------|--------|
+| `ValidateQueryUseCase` | Validate a query request | `QueryRequest` | `ValidationResultDTO` |
+| `ExecuteQueryUseCase` | Execute a validated plan | `QueryPlan` | `QueryResultDTO` |
+| `CreateStudyUseCase` | Register a new study | `CreateStudyRequest` | `StudyId` |
+| `AcknowledgeIssuesUseCase` | Accept warnings | `AcknowledgmentRequest` | `AcknowledgmentResultDTO` |
+
+---
+
+## ValidateQueryUseCase
+
+Validates a query request against catalog metadata and domain rules.
+
+### Location
+
+`invariant.application.use_cases.validate_query`
+
+### Dependencies
+
+| Port | Purpose |
+|------|---------|
+| `CatalogStore` | Load data products and indicator definitions |
+| `IdGenerator` | Generate query ID |
+
+### Input: QueryRequest
+
+```python
+from invariant.application.dto.query_request import (
+    QueryRequest,
+    DataProductSelectionRequest,
+    MetricRequest,
+    FilterRequest,
+)
+
+request = QueryRequest(
+    intent="TABLE",  # or "NUMBER", "CHART", "MAP"
+    selections=[
+        DataProductSelectionRequest(
+            data_product_id="aa0e8400-e29b-41d4-a716-446655440001",
+            dimensions=["geography_code", "sex"],
+            metrics=[
+                MetricRequest(variable="population", aggregation="SUM"),
+            ],
+            filters=[
+                FilterRequest(variable="sex", op="EQ", values=["Female"]),
+            ],
+        )
+    ],
+    combine=None,  # For multi-selection queries
+    presentation=None,  # Optional presentation hints
+)
+```
+
+### Output: ValidationResultDTO
+
+```python
+@dataclass(frozen=True)
+class ValidationResultDTO:
+    query_id: str              # Generated ID for this query
+    status: SeverityLevel      # "ALLOW", "WARN", "REQUIRE_ACK", "BLOCK"
+    issues: tuple[IssueDTO, ...]
+    disclosures: tuple[DisclosureDTO, ...]
+    can_execute: bool          # True if status is not BLOCK
+    requires_acknowledgment: bool  # True if status is REQUIRE_ACK
+```
+
+### Example
+
+```python
+from invariant.application.use_cases.validate_query import ValidateQueryUseCase
+
+use_case = ValidateQueryUseCase(
+    catalog_store=catalog_store,
+    id_generator=id_generator,
+)
+
+result = use_case.execute(request)
+
+if result.can_execute:
+    print(f"Query {result.query_id} is valid")
+else:
+    print("Validation failed:")
+    for issue in result.issues:
+        print(f"  [{issue.code}] {issue.message}")
+```
+
+### Error Conditions
+
+| Exception | Cause |
+|-----------|-------|
+| `DataProductNotFoundError` | Data product ID doesn't exist |
+| `VariableNotFoundError` | Variable name not in data product |
+
+---
+
+## ExecuteQueryUseCase
+
+Executes a validated query plan and returns results.
+
+### Location
+
+`invariant.application.use_cases.execute_query`
+
+### Dependencies
+
+| Port | Purpose |
+|------|---------|
+| `CatalogStore` | Load suppression policies |
+| `QueryEngine` | Execute the plan |
+| `SuppressionEngine` | Apply suppression (optional) |
+| `AuditLog` | Record execution (optional) |
+
+### Input: QueryPlan
+
+The `ExecuteQueryUseCase` takes a `QueryPlan` rather than a `QueryRequest`. Use the `QueryPlanBuilder` to convert:
+
+```python
+from invariant.application.services.query_plan_builder import build_query_plan
+
+# After validation
+snapshot = catalog_store.get_catalog_snapshot(dp_ids)
+plan = build_query_plan(request, validation_result.query_id, snapshot)
+```
+
+### Output: QueryResultDTO
+
+```python
+@dataclass
+class QueryResultDTO:
+    query_id: str
+    columns: list[str]
+    rows: list[tuple[object, ...]]
+    row_count: int
+    execution_time_ms: int
+    disclosures: list[DisclosureDTO]
+```
+
+### Example
+
+```python
+from invariant.application.use_cases.execute_query import ExecuteQueryUseCase
+
+execute_use_case = ExecuteQueryUseCase(
+    catalog_store=catalog_store,
+    query_engine=query_engine,
+    suppression_engine=suppression_engine,  # optional
+    audit_log=audit_log,  # optional
+)
+
+result = execute_use_case.execute(plan)
+
+for row in result.rows:
+    print(row)
+
+for disclosure in result.disclosures:
+    print(f"[{disclosure.disclosure_type}] {disclosure.text}")
+```
+
+---
+
+## CreateStudyUseCase
+
+Registers a new study in the catalog.
+
+### Location
+
+`invariant.application.use_cases.create_study`
+
+### Dependencies
+
+| Port | Purpose |
+|------|---------|
+| `CatalogStore` | Save the study |
+| `IdGenerator` | Generate study ID |
+| `Clock` | Timestamp creation |
+
+### Input: CreateStudyRequest
+
+```python
+from invariant.application.dto.catalog_write import CreateStudyRequest
+
+request = CreateStudyRequest(
+    name="South Africa Census 2021",
+    publisher="Statistics South Africa",
+    description="Decennial population and housing census",
+)
+```
+
+### Output: StudyId
+
+Returns the generated `StudyId` for the new study.
+
+### Example
+
+```python
+from invariant.application.use_cases.create_study import CreateStudyUseCase
+
+use_case = CreateStudyUseCase(
+    catalog_store=catalog_store,
+    id_generator=id_generator,
+    clock=clock,
+)
+
+study_id = use_case.execute(request)
+print(f"Created study: {study_id}")
+```
+
+---
+
+## AcknowledgeIssuesUseCase
+
+Records user acknowledgment of validation warnings, allowing query execution to proceed.
+
+### Location
+
+`invariant.application.use_cases.acknowledge_issues`
+
+### Dependencies
+
+| Port | Purpose |
+|------|---------|
+| `AuditLog` | Record acknowledgment |
+
+### Input: AcknowledgmentRequest
+
+```python
+from invariant.application.dto.validation_dto import AcknowledgmentRequest
+
+request = AcknowledgmentRequest(
+    query_id="q-abc123",
+    acknowledged_issue_codes=["PARTIAL_COMPARABILITY", "CROSSWALK_APPLIED"],
+    user_id="user@example.com",  # optional
+)
+```
+
+### Output: AcknowledgmentResultDTO
+
+```python
+@dataclass(frozen=True)
+class AcknowledgmentResultDTO:
+    query_id: str
+    acknowledged: bool
+    can_execute: bool
+    message: str | None
+```
+
+### Example
+
+```python
+from invariant.application.use_cases.acknowledge_issues import AcknowledgeIssuesUseCase
+
+ack_use_case = AcknowledgeIssuesUseCase(audit_log=audit_log)
+
+# After validation returns REQUIRE_ACK
+if validation_result.requires_acknowledgment:
+    ack_request = AcknowledgmentRequest(
+        query_id=validation_result.query_id,
+        acknowledged_issue_codes=[i.code for i in validation_result.issues],
+    )
+    ack_result = ack_use_case.execute(ack_request)
+
+    if ack_result.can_execute:
+        # Now execute the query
+        execute_use_case.execute(plan)
+```
+
+---
+
+## Typical Flow
+
+Here's how use cases are typically combined:
+
+```python
+# 1. Validate
+validation = validate_use_case.execute(request)
+
+# 2. Check result
+if validation.status == "BLOCK":
+    # Show errors, cannot proceed
+    return
+
+if validation.status == "REQUIRE_ACK":
+    # Show warnings, get user confirmation
+    if not user_confirms():
+        return
+    # Record acknowledgment
+    ack_use_case.execute(AcknowledgmentRequest(...))
+
+# 3. Build plan
+plan = build_query_plan(request, validation.query_id, snapshot)
+
+# 4. Execute
+result = execute_use_case.execute(plan)
+
+# 5. Return results with disclosures
+return result
+```
+
+---
+
+## DTOs Summary
+
+### Query DTOs
+
+| DTO | Purpose |
+|-----|---------|
+| `QueryRequest` | High-level query from UI/API |
+| `DataProductSelectionRequest` | Selection from one data product |
+| `MetricRequest` | Variable + aggregation |
+| `FilterRequest` | Filter condition |
+| `CombineRequest` | How to combine multiple selections |
+| `PresentationRequest` | Display hints |
+
+### Validation DTOs
+
+| DTO | Purpose |
+|-----|---------|
+| `ValidationResultDTO` | Validation outcome |
+| `IssueDTO` | Single validation issue |
+| `DisclosureDTO` | Provenance message |
+| `RemediationDTO` | Suggested fix |
+| `AcknowledgmentRequest` | User acknowledgment input |
+| `AcknowledgmentResultDTO` | Acknowledgment outcome |
+
+### Catalog DTOs
+
+| DTO | Purpose |
+|-----|---------|
+| `CreateStudyRequest` | New study input |
+| `CreateDatasetRequest` | New dataset input |
+| `CreateDataProductRequest` | New data product input |
+| `CreateVariableRequest` | New variable input |
+| `CreateIndicatorDefinitionRequest` | New indicator definition |
+
+---
+
+## Validation Rules
+*Source: developer/validation-rules.md*
+
+# Validation Rules
+
+Validation rules are the heart of Invariant's semantic enforcement. They evaluate query plans against catalog metadata and produce issues when problems are detected.
+
+## How Validation Works
+
+```
+QueryPlan + CatalogSnapshot
+         ↓
+    [Rule 1] → Issues
+    [Rule 2] → Issues
+    [Rule 3] → Issues
+         ↓
+    Aggregate Issues
+         ↓
+  Compute Overall Status
+         ↓
+   ValidationResult
+```
+
+The `Validator` runs all configured rules and combines their results:
+
+```python
+from invariant.domain.services.validator import Validator, IndicatorAggregationRule
+
+validator = Validator(rules=[
+    IndicatorAggregationRule(),
+    # Add more rules...
+])
+
+result = validator.validate(plan, catalog_snapshot)
+```
+
+---
+
+## Built-in Rules
+
+### IndicatorAggregationRule
+
+**Location:** `invariant.domain.services.validator`
+
+**Purpose:** Blocks naive aggregation of indicators (percentages, rates, means).
+
+**Forbidden aggregations:** `SUM`, `AVG`, `MEAN`
+
+**Logic:**
+1. For each metric in the query
+2. If variable role is `INDICATOR`
+3. And aggregation is in forbidden set
+4. Check if an `IndicatorDefinition` exists
+5. If no definition or `NOT_AGGREGATABLE` → BLOCK
+6. If `ALLOW_LIST` and aggregation not in list → BLOCK
+7. If `RECOMPUTE` → ALLOW (can aggregate via recomputation)
+
+**Issue Code:** `INDICATOR_AGG_NOT_ALLOWED`
+
+**Example:**
+```python
+# Blocked query
+MetricRequest(variable="unemployment_rate", aggregation="SUM")
+
+# Issue produced:
+Issue(
+    code="INDICATOR_AGG_NOT_ALLOWED",
+    severity=Severity.BLOCK,
+    message="Cannot SUM indicator 'unemployment_rate' because it is a derived value. "
+            "Indicators require recomputation, not naive aggregation.",
+    remediations=[
+        Remediation(
+            action="DEFINE_INDICATOR",
+            label="Define numerator/denominator so the system can recompute safely",
+        ),
+        Remediation(
+            action="CHANGE_AGG",
+            label="Use NONE (display as-is) or a safe aggregation",
+        ),
+    ],
+)
+```
+
+---
+
+## Severity Levels
+
+Each rule produces issues with a severity level:
+
+| Level | Meaning | Query Status |
+|-------|---------|--------------|
+| `ALLOW` | No problem | Execute |
+| `WARN` | Caution but allowed | Execute with disclaimers |
+| `REQUIRE_ACK` | Must acknowledge risk | Execute after acknowledgment |
+| `BLOCK` | Cannot proceed | Reject |
+
+The overall query status is the highest severity among all issues.
+
+---
+
+## Writing Custom Rules
+
+Rules implement the `Rule` protocol:
+
+```python
+from invariant.domain.services.validator import Rule, CatalogSnapshot
+from invariant.domain.model.query_plan import QueryPlan
+from invariant.domain.model.validation import Issue
+
+class MyCustomRule(Rule):
+    """Enforces some domain constraint."""
+
+    def evaluate(self, plan: QueryPlan, catalog: CatalogSnapshot) -> list[Issue]:
+        issues = []
+
+        for op in plan.operations:
+            dp = catalog.data_products.get(op.data_product_id)
+            if dp is None:
+                continue
+
+            # Your validation logic here
+            if self._is_violation(op, dp):
+                issues.append(self._create_issue(op, dp))
+
+        return issues
+
+    def _is_violation(self, op, dp) -> bool:
+        # Check for rule violation
+        ...
+
+    def _create_issue(self, op, dp) -> Issue:
+        return Issue(
+            code="MY_RULE_VIOLATION",
+            severity=Severity.BLOCK,
+            message="Description of what went wrong",
+            details={"variable": ..., "reason": ...},
+            remediations=[
+                Remediation(action="FIX_IT", label="How to fix this"),
+            ],
+        )
+```
+
+### Rule Guidelines
+
+1. **Return empty list if no issues** — Don't return None
+2. **Check data product exists** — It may be missing from snapshot
+3. **Use specific issue codes** — Codes should be unique and searchable
+4. **Provide remediations** — Tell users how to fix the problem
+5. **Include relevant details** — Variable names, requested values, etc.
+
+---
+
+## Deployment Profiles
+
+Configure different rule sets for different contexts:
+
+### Minimal Profile (Prototyping)
+
+```python
+minimal_validator = Validator(rules=[
+    # Only basic checks
+    GrainValidationRule(),
+])
+```
+
+Fast, permissive. Good for exploration and development.
+
+### Standard Profile (Production)
+
+```python
+standard_validator = Validator(rules=[
+    GrainValidationRule(),
+    IndicatorAggregationRule(),
+    ComparabilityRule(),
+    UniverseMatchRule(),
+])
+```
+
+Enforces core semantic constraints. Suitable for public dashboards.
+
+### Research Profile (Maximum Rigor)
+
+```python
+research_validator = Validator(rules=[
+    GrainValidationRule(),
+    IndicatorAggregationRule(),
+    ComparabilityRule(),
+    UniverseMatchRule(),
+    RequireUniverseRule(),           # Universe must be explicit
+    RequireComparabilityAckRule(),   # Must acknowledge partial comparability
+    RequireMethodologyMatchRule(),    # Methods must match exactly
+])
+```
+
+Strictest validation. Suitable for academic/research use.
+
+---
+
+## Planned Rules
+
+These rules are defined in scope but not yet implemented:
+
+### UniverseMatchRule
+
+Checks that combined datasets have compatible universes.
+
+| Situation | Severity |
+|-----------|----------|
+| Same universe | ALLOW |
+| Compatible universes (subset) | WARN |
+| Incompatible universes | BLOCK |
+
+### ComparabilityRule
+
+Assesses overall dataset comparability.
+
+| Situation | Severity |
+|-----------|----------|
+| Full comparability | ALLOW |
+| Partial (with crosswalk) | WARN |
+| None | BLOCK |
+
+### ReferenceSystemVersionRule
+
+Checks alignment of reference system versions.
+
+| Situation | Severity |
+|-----------|----------|
+| Same version | ALLOW |
+| Different version, crosswalk exists | WARN |
+| Different version, no crosswalk | BLOCK |
+
+### GrainValidationRule
+
+Validates that aggregation requests are compatible with data grain.
+
+---
+
+## Issue Structure
+
+```python
+@dataclass
+class Issue:
+    code: str                    # Unique identifier
+    severity: Severity           # ALLOW, WARN, REQUIRE_ACK, BLOCK
+    message: str                 # Human-readable explanation
+    details: dict[str, Any]      # Machine-readable context
+    remediations: list[Remediation]  # Suggested fixes
+```
+
+### Issue Codes
+
+Issue codes should be:
+- **Unique** — One code per rule/situation
+- **Stable** — Don't change codes between versions
+- **Searchable** — Users can Google them
+- **Descriptive** — Hint at the problem
+
+Examples:
+- `INDICATOR_AGG_NOT_ALLOWED`
+- `UNIVERSE_MISMATCH`
+- `CROSSWALK_REQUIRED`
+- `REFERENCE_VERSION_MISMATCH`
+
+### Remediations
+
+```python
+@dataclass
+class Remediation:
+    action: str              # Machine-readable action type
+    label: str               # Human-readable description
+    required_fields: list[str]  # Fields needed to apply this remediation
+```
+
+Action types:
+- `DEFINE_INDICATOR` — Add indicator definition
+- `CHANGE_AGG` — Use different aggregation
+- `ADD_CROSSWALK` — Provide crosswalk mapping
+- `ACKNOWLEDGE` — Accept and proceed
+- `REWRITE_PLAN` — Use modified query
+
+---
+
+## Configuring Severity
+
+For some rules, severity can be configured:
+
+```python
+class ConfigurableRule(Rule):
+    def __init__(self, severity: Severity = Severity.BLOCK):
+        self.severity = severity
+
+    def evaluate(self, plan, catalog) -> list[Issue]:
+        if self._is_violation(plan, catalog):
+            return [Issue(
+                code="...",
+                severity=self.severity,  # Use configured severity
+                ...
+            )]
+        return []
+
+# Use as WARN instead of BLOCK
+relaxed_rule = ConfigurableRule(severity=Severity.WARN)
+```
+
+This allows deployments to choose their strictness level.
+
+---
+
+## Testing Rules
+
+```python
+def test_indicator_aggregation_rule_blocks_sum():
+    # Setup
+    rule = IndicatorAggregationRule()
+    plan = make_plan_with_indicator_sum()
+    catalog = make_catalog_with_indicator()
+
+    # Execute
+    issues = rule.evaluate(plan, catalog)
+
+    # Assert
+    assert len(issues) == 1
+    assert issues[0].code == "INDICATOR_AGG_NOT_ALLOWED"
+    assert issues[0].severity == Severity.BLOCK
+
+
+def test_indicator_aggregation_rule_allows_recompute():
+    # Setup
+    rule = IndicatorAggregationRule()
+    plan = make_plan_with_indicator_sum()
+    catalog = make_catalog_with_recomputable_indicator()
+
+    # Execute
+    issues = rule.evaluate(plan, catalog)
+
+    # Assert
+    assert len(issues) == 0  # RECOMPUTE policy allows aggregation
+```
+
+See `tests/unit/domain/services/test_validator.py` for examples.
+
+---
+
+# API & Implementation
+
+## Data Model
+*Source: 05-data-model.md*
+
+# Data Model
+
+## Overview
+
+The data model is split into:
+1. **Core catalog** (required) - enables ingestion and dashboards
+2. **Semantic/rigor layer** (optional) - enables safe cross-dataset operations
+
+---
+
+## Core Catalog (Required)
+
+### study
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `study_id` | UUID | Primary key |
+| `name` | text | Study name |
+| `owner_org` | text | Organization |
+| `description` | text | Description |
+| `methodology_summary` | text | How data was collected |
+| `instrument_ref` | text | URL/ID reference (optional) |
+| `license` | text | Data license |
+| `created_at` | timestamp | Creation date |
+
+### dataset
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `dataset_id` | UUID | Primary key |
+| `study_id` | UUID | FK → study |
+| `name` | text | Dataset name |
+| `description` | text | Description |
+| `source_ref` | text | URL/citation |
+| `release_date` | date | When released |
+| `collection_start` | date | Collection period start (optional) |
+| `collection_end` | date | Collection period end (optional) |
+| `reference_date` | date | What date the data describes (optional) |
+| `reference_system_id` | UUID | FK → reference_system |
+| `reference_system_version_id` | UUID | FK → reference_system_version (optional) |
+| `universe_id` | UUID | FK → universe (optional) |
+| `quality_notes` | text | Quality caveats |
+
+### data_product
+
+What dashboards actually query.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `data_product_id` | UUID | Primary key |
+| `dataset_id` | UUID | FK → dataset |
+| `name` | text | Data product name |
+| `kind` | enum | `FACT` \| `INDICATOR` |
+| `grain` | jsonb | GrainSpec (list of dimension keys) |
+| `default_time_dimension_id` | UUID | Optional FK → variable |
+| `is_public` | bool | Whether publicly available |
+
+### variable
+
+Columns/fields in a data product.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `variable_id` | UUID | Primary key |
+| `data_product_id` | UUID | FK → data_product |
+| `name` | text | Column name as in file |
+| `role` | enum | `DIMENSION` \| `MEASURE` \| `INDICATOR` |
+| `data_type` | enum | `STRING` \| `INT` \| `FLOAT` \| `DATE` \| `BOOL` |
+| `domain_ref` | jsonb | Allowed values (optional) |
+| `unit` | text | e.g., %, persons, facilities (optional) |
+| `description` | text | Description (optional) |
+
+---
+
+## Semantic / Rigor Layer (Optional)
+
+### universe
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `universe_id` | UUID | Primary key |
+| `label` | text | Short tag (e.g., "All residents") |
+| `definition` | text | Full definition |
+| `inclusions` | jsonb | Inclusion rules |
+| `exclusions` | jsonb | Exclusion rules |
+
+### concept
+
+Semantic identity for cross-dataset alignment.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `concept_id` | UUID | Primary key |
+| `label` | text | e.g., "Population", "Learning difficulty prevalence" |
+| `description` | text | Description |
+| `canonical_unit` | text | e.g., persons, %, rate per 1000 |
+
+### variable_semantics
+
+Attach meaning to a variable.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `variable_id` | UUID | FK → variable |
+| `concept_id` | UUID | FK → concept |
+| `unit` | text | Unit for this variable |
+| `notes` | text | Additional notes |
+| `comparability_group` | text | Quick hack for grouping (optional) |
+
+### indicator_definition
+
+What makes an indicator safe.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `indicator_variable_id` | UUID | FK → variable (where role=INDICATOR) |
+| `indicator_type` | enum | `PERCENT` \| `RATE` \| `MEAN` \| `INDEX` \| `OTHER` |
+| `aggregation_policy` | enum | `NOT_AGGREGATABLE` \| `RECOMPUTE` \| `ALLOW_LIST` |
+| `allowed_aggregations` | jsonb | List of allowed aggs (only if ALLOW_LIST) |
+| `numerator_ref` | jsonb | Pointer: dataset/variable + grain |
+| `denominator_ref` | jsonb | Pointer: dataset/variable + grain |
+| `formula` | text | Formula (optional) |
+| `weighting_method` | enum | `POP_WEIGHTED` \| `DENOM_WEIGHTED` \| `NONE` (optional) |
+
+### reference_system
+
+Base abstraction for any system of units you can group by.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `reference_system_id` | UUID | Primary key |
+| `name` | text | e.g., "Nigeria Admin Boundaries", "Health Facility Registry" |
+| `kind` | enum | `GEOGRAPHY` \| `FACILITY` \| `ORGANIZATION` \| `PROGRAM` \| `OTHER` |
+| `authority` | text | Who defines it |
+| `description` | text | Description (optional) |
+
+### reference_system_version
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `reference_system_version_id` | UUID | Primary key |
+| `reference_system_id` | UUID | FK → reference_system |
+| `label` | text | e.g., "GADM 4.1", "NBS 2016 LGA", "Facility Registry 2023" |
+| `valid_from` | date | Validity start (optional) |
+| `valid_to` | date | Validity end (optional) |
+| `notes` | text | Notes |
+
+### geography_system_profile
+
+Geography-specific extensions. Only for reference systems where `kind = GEOGRAPHY`.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `reference_system_id` | UUID | PK + FK → reference_system |
+| `geometry_type` | enum | `POLYGON` \| `POINT` \| `MIXED` |
+| `levels` | jsonb | Hierarchy level names (optional), e.g., ["country", "province", "district"] |
+
+### crosswalk
+
+For mapping between reference system versions (boundary changes, registry updates, etc.).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `crosswalk_id` | UUID | Primary key |
+| `from_version_id` | UUID | FK → reference_system_version |
+| `to_version_id` | UUID | FK → reference_system_version |
+| `method` | enum | `ADMIN_MAP` \| `AREA_WEIGHTED` \| `POP_WEIGHTED` \| `DIRECT` |
+| `table_ref` | text | Where mapping lives |
+| `quality_notes` | text | Notes |
+
+### suppression_policy
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `policy_id` | UUID | Primary key |
+| `dataset_id` | UUID | FK → dataset |
+| `min_cell_size` | int | Minimum cell size |
+| `encoding` | enum | `NULL` \| `MASKED_VALUE` \| `SPECIAL_CODE` |
+| `special_code_value` | text | e.g., -999 |
+| `notes` | text | Notes |
+
+---
+
+## Physical Data Storage
+
+Two practical options:
+
+### Option A: Wide Tables Per Data Product (Recommended)
+
+Simple and fast. Each dataset becomes a table.
+
+```
+dp_population_fact_2023
+├── geography_code
+├── sex
+├── age_group
+└── count
+
+dp_disability_indicators_2023
+├── geography_code
+├── indicator1
+└── indicator2
+```
+
+### Option B: Long "Facts" Format
+
+More generic; slower unless tuned.
+
+The rigor system lives in catalog tables and doesn't care how you store the rows.
+
+---
+
+## Domain Value Objects
+
+### GrainSpec
+
+What one row means.
+
+```json
+{
+  "keys": ["geography_code", "age_group", "sex", "year"],
+  "time_axis": "year"
+}
+```
+
+### Domain (Allowed Values)
+
+```json
+// Enumerated
+{ "type": "enumerated", "values": ["male", "female", "other"] }
+
+// Range
+{ "type": "range", "min": 0, "max": 100 }
+
+// Code list reference
+{ "type": "codelist", "ref": "reference_system:nga_admin" }
+```
+
+### SemanticBinding
+
+```json
+{
+  "concept_id": "uuid",
+  "unit": "%",
+  "notes": "Age at last birthday",
+  "qualifiers": {
+    "age_basis": "age_last_birthday",
+    "inclusion_rule_ref": "uuid"
+  }
+}
+```
+
+---
+
+## Semantic Enforcement Layer
+
+These domain objects support executable semantics, runtime governance, and AI-ready operations.
+
+### semantic_claim
+
+A normalized statement about meaning that can be checked and has consequences if violated.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `claim_id` | UUID | Primary key |
+| `subject_type` | enum | `DATASET` \| `DATA_PRODUCT` \| `VARIABLE` \| `INDICATOR` \| `QUERY_PLAN` |
+| `subject_id` | UUID | FK to the subject entity |
+| `claim_type` | enum | `UNIVERSE` \| `UNIT` \| `GRAIN` \| `AGGREGATION_SAFETY` \| `COMPARABILITY` \| `SUPPRESSION` \| `QUALITY_GUARANTEE` \| `FRESHNESS` \| `DEFINITION` |
+| `parameters` | jsonb | Machine-readable payload for the claim |
+| `enforcement` | enum | `ALLOW` \| `WARN` \| `REQUIRE_ACK` \| `BLOCK` |
+| `evidence_refs` | jsonb | Optional policy/doc references for trust (optional) |
+
+**Note:** Claims may be explicit (authored) or derived (generated from existing entities like IndicatorDefinition).
+
+### quality_rule
+
+Semantic guarantee about data quality. Definitions are in scope; ingestion-time checking is not.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `rule_id` | UUID | Primary key |
+| `scope_type` | enum | `VARIABLE` \| `DATASET` \| `DATA_PRODUCT` |
+| `scope_id` | UUID | FK to the scoped entity |
+| `rule_type` | enum | `NOT_NULL` \| `RANGE` \| `ENUM` \| `FRESHNESS` \| `CONSISTENCY` |
+| `parameters` | jsonb | Rule-specific parameters |
+| `enforcement` | enum | `ALLOW` \| `WARN` \| `REQUIRE_ACK` \| `BLOCK` |
+
+### FreshnessGuarantee (Value Object)
+
+```json
+{
+  "max_staleness_hours": 24
+}
+```
+
+### FreshnessMetadata (DTO from port)
+
+```json
+{
+  "last_updated_at": "2024-01-15T10:30:00Z",
+  "checked_at": "2024-01-15T12:00:00Z"
+}
+```
+
+### Attribution (Value Object)
+
+Dimensionality diagnosis: which segment caused or contributed to a problem.
+
+```json
+{
+  "slices": [
+    {
+      "dimension": {"variable_id": "uuid", "name": "age_group"},
+      "value": "65+",
+      "contribution_score": 0.82,
+      "row_count": 3,
+      "note": "Small cell count"
+    }
+  ],
+  "method": "exact"  // "exact" | "sampled" | "heuristic" | "unavailable"
+}
+```
+
+### Impact (Value Object)
+
+Meaning-level blast radius: what breaks if something changes.
+
+```json
+{
+  "affected_entities": [
+    {
+      "entity_type": "INDICATOR",
+      "entity_id": "uuid",
+      "relation": "uses_as_numerator",
+      "summary": "Literacy rate indicator depends on this measure",
+      "severity": "HIGH"
+    },
+    {
+      "entity_type": "QUERY_PLAN",
+      "entity_id": "uuid",
+      "relation": "references",
+      "summary": "Active dashboard query",
+      "severity": "MEDIUM"
+    }
+  ]
+}
+```
+
+### RemediationAction (Value Object)
+
+Typed, bounded action to resolve an issue. Not free-form mutations.
+
+```json
+{
+  "action_type": "APPLY_CROSSWALK",  // REWRITE_PLAN | UPDATE_CATALOG | ACK_ONLY | APPLY_CROSSWALK
+  "description": "Apply 2020→2023 boundary crosswalk",
+  "parameters": {
+    "crosswalk_id": "uuid",
+    "method": "AREA_WEIGHTED"
+  },
+  "auditable": true
+}
+```
+
+### CheckResult (Value Object)
+
+Structured outcome of a semantic check.
+
+```json
+{
+  "passed": false,
+  "severity": "REQUIRE_ACK",
+  "code": "GEO_VERSION_MISMATCH",
+  "message": "Query combines 2020 and 2023 boundary versions",
+  "attributions": [...],
+  "impacts": [...],
+  "remediation_actions": [
+    {"action_type": "APPLY_CROSSWALK", ...},
+    {"action_type": "ACK_ONLY", "description": "Acknowledge mismatch and proceed"}
+  ],
+  "disclosures": [
+    {"code": "BOUNDARY_MISMATCH", "message": "Results combine different boundary versions"}
+  ]
+}
+```
+
+### RulesetPack (Configuration Object)
+
+Versioned bundle for "same kernel, different rigor."
+
+```json
+{
+  "id": "regulated",
+  "version": "1.2.0",
+  "enabled_checks": ["INDICATOR_AGGREGATION", "COMPARABILITY", "FRESHNESS", "SUPPRESSION"],
+  "severity_overrides": {
+    "FRESHNESS_VIOLATED": "BLOCK"
+  },
+  "allow_rewrites": true,
+  "require_ack_for": ["GEO_VERSION_MISMATCH", "UNIVERSE_CONFLICT"]
+}
+```
+
+---
+
+## Tool Contracts (AI/LLM Integration)
+
+These objects define semantic operations for AI agents and LLM-powered interfaces.
+
+### ToolContract
+
+Schema describing a kernel operation.
+
+```json
+{
+  "name": "validate_query",
+  "description": "Validate a query plan against catalog semantics",
+  "parameters": [
+    {"name": "plan", "type": "query_plan", "description": "The query plan to validate", "required": true},
+    {"name": "ruleset", "type": "string", "description": "Ruleset pack to use", "required": false, "enum_values": ["core", "public-dashboard", "regulated"]}
+  ],
+  "returns": "ValidationResult with issues, disclosures, and remediations",
+  "examples": [...]
+}
+```
+
+### ContextSlice (Projection)
+
+Compact, LLM-safe projections of kernel results.
+
+**Validation Summary:**
+```json
+{
+  "valid": false,
+  "issue_count": 3,
+  "blocking_issues": [{"code": "INDICATOR_AVG", "message": "Cannot average indicator"}],
+  "required_acknowledgments": [{"code": "GEO_MISMATCH", "message": "Boundary version mismatch"}],
+  "disclosures": ["Data suppressed for cells < 5"]
+}
+```
+
+**Indicator Explanation:**
+```json
+{
+  "id": "uuid",
+  "name": "Literacy Rate",
+  "definition": "Percentage of population aged 15+ who can read and write",
+  "formula": "literate_population / total_population_15plus * 100",
+  "aggregation_rule": "RECOMPUTE",
+  "can_average": false,
+  "numerator": "uuid",
+  "denominator": "uuid"
+}
+```
+
+---
+
+## Application Layer
+*Source: 06-application-layer.md*
+
+# Application Layer
+
+> **See also:** [Implementation Plan](plan-application-layer.md) for detailed design and TDD phases.
+
+## Package Layout
+
+```
+invariant/
+  application/
+    ports/
+      catalog_store.py        # CRUD for catalog entities + snapshot
+      query_engine.py         # Execute validated plans
+      indicator_engine.py     # Recomputation logic
+      crosswalk_service.py    # Geography crosswalks
+      suppression_engine.py   # Apply suppression policies
+      attribution_provider.py # Compute attributions (optional)
+      audit_log.py            # Record queries/acknowledgments
+      clock.py                # Time abstraction
+      id_gen.py               # ID generation
+
+    dto/
+      catalog_write.py      # Create/update requests
+      catalog_read.py       # Read responses + documentation
+      query_request.py      # Query building request
+      validation_dto.py     # Validation results (with attributions, impacts, remediations)
+      results_dto.py        # Query execution results
+      context_slices.py     # LLM-safe projections
+
+    use_cases/
+      # Catalog management
+      upsert_catalog.py
+      get_catalog.py
+      get_catalog_docs_index.py   # List datasets/data products
+      get_dataset_doc.py          # Dataset documentation
+      get_data_product_doc.py     # Data product documentation
+      get_variable_doc.py         # Variable documentation
+      get_concept_doc.py          # Concept documentation
+
+      # Query lifecycle
+      build_query_plan.py
+      validate_query_plan.py
+      acknowledge_validation.py
+      execute_query.py
+
+      # Cross-dataset operations
+      compare_datasets.py
+      create_curated_indicator.py
+
+      # Semantic analysis (NEW)
+      analyze_semantic_impact.py  # What breaks if this changes?
+      enrich_with_attribution.py  # Attach dimensional attributions to issues
+      execute_tool.py             # Dispatch semantic tool calls (AI/LLM integration)
+
+    services/               # Application services (orchestrators)
+      plan_compiler.py      # Request → QueryPlan resolution
+      result_normalizer.py  # Engine result → DTO formats
+      rigor_pipeline.py     # Wires validator + rewriters + suppression
+      semantic_impact_analyzer.py  # Traverse catalog for impact analysis (NEW)
+      context_slice_projector.py   # Project results for LLM consumption (NEW)
+      tool_registry.py             # Registry of semantic tool contracts (NEW)
+
+    policies/               # "Rigour packs" (configure rule sets)
+      minimal.py            # Fast, permissive
+      standard.py           # Production defaults
+      strict.py             # Research/academic rigor
+      regulated.py          # Strict suppression + freshness enforcement (NEW)
+```
+
+**Key principle:** `application/use_cases` are the only entry points your UI or API should call.
+
+---
+
+## Ports (Interfaces)
+
+Ports define what the application layer needs from infrastructure. They are protocols, not implementations.
+
+### CatalogStore
+
+```python
+class CatalogStore(Protocol):
+    """Port for catalog persistence."""
+
+    def get_study(self, study_id: StudyId) -> Study | None: ...
+    def save_study(self, study: Study) -> None: ...
+    def list_studies(self) -> list[Study]: ...
+
+    def get_dataset(self, dataset_id: DatasetId) -> Dataset | None: ...
+    def save_dataset(self, dataset: Dataset) -> None: ...
+    def list_datasets(self, study_id: StudyId | None = None) -> list[Dataset]: ...
+
+    def get_data_product(self, dp_id: DataProductId) -> DataProduct | None: ...
+    def save_data_product(self, dp: DataProduct) -> None: ...
+
+    def get_indicator_definition(self, var_id: VariableId) -> IndicatorDefinition | None: ...
+    def save_indicator_definition(self, defn: IndicatorDefinition) -> None: ...
+
+    def get_catalog_snapshot(self, dp_ids: set[DataProductId]) -> CatalogSnapshot: ...
+```
+
+### QueryEngine
+
+```python
+class QueryEngine(Protocol):
+    """Port for executing validated query plans."""
+
+    def execute(self, plan: QueryPlan) -> RawQueryResult: ...
+    def estimate_cost(self, plan: QueryPlan) -> CostEstimate: ...
+```
+
+### IndicatorEngine
+
+```python
+class IndicatorEngine(Protocol):
+    """Port for indicator recomputation."""
+
+    def can_recompute(self, definition: IndicatorDefinition) -> bool: ...
+    def rewrite_plan(self, plan: QueryPlan, definition: IndicatorDefinition) -> QueryPlan: ...
+```
+
+### CrosswalkService
+
+```python
+class CrosswalkService(Protocol):
+    """Port for geography crosswalk resolution."""
+
+    def get_crosswalk(
+        self,
+        from_version: GeoVersionId,
+        to_version: GeoVersionId,
+    ) -> Crosswalk | None: ...
+
+    def apply_crosswalk(
+        self,
+        data: RawQueryResult,
+        crosswalk: Crosswalk,
+        method: CrosswalkMethod,
+    ) -> tuple[RawQueryResult, Disclosure]: ...
+```
+
+### SuppressionEngine
+
+```python
+class SuppressionEngine(Protocol):
+    """Port for applying suppression policies."""
+
+    def apply(
+        self,
+        data: RawQueryResult,
+        policy: SuppressionPolicy,
+    ) -> tuple[RawQueryResult, list[Disclosure]]: ...
+```
+
+### AuditLog
+
+```python
+class AuditLog(Protocol):
+    """Port for recording query audit trail."""
+
+    def record_query(
+        self,
+        query_id: str,
+        plan: QueryPlan,
+        validation: ValidationResult,
+        acknowledged: bool = False,
+    ) -> None: ...
+
+    def record_acknowledgment(
+        self,
+        query_id: str,
+        acknowledged_issues: list[str],
+        user_id: str | None = None,
+    ) -> None: ...
+
+    def record_execution(
+        self,
+        query_id: str,
+        success: bool,
+        error: str | None = None,
+        row_count: int | None = None,
+    ) -> None: ...
+```
+
+### Clock & IdGenerator
+
+```python
+class Clock(Protocol):
+    def now(self) -> datetime: ...
+    def today(self) -> date: ...
+
+class IdGenerator(Protocol):
+    def generate_study_id(self) -> StudyId: ...
+    def generate_dataset_id(self) -> DatasetId: ...
+    def generate_query_id(self) -> str: ...
+    # etc.
+```
+
+### AttributionProvider (NEW)
+
+Optional port for computing dimensional attributions. Default implementation returns empty attributions.
+
+```python
+@dataclass(frozen=True)
+class AttributionRequest:
+    """What the kernel asks for."""
+    issue_code: str
+    dataset_id: DatasetId
+    dimensions: tuple[AttributionDimension, ...]
+    filter_context: dict  # from query plan
+
+class AttributionProvider(Protocol):
+    """Optional port - adapters compute attributions from actual data."""
+
+    def compute_attribution(
+        self,
+        request: AttributionRequest,
+    ) -> Attribution:
+        """Compute attribution. Adapter decides how (SQL, pandas, etc.)."""
+        ...
+
+
+class NullAttributionProvider:
+    """Default: no attribution computation available."""
+
+    def compute_attribution(self, request: AttributionRequest) -> Attribution:
+        return Attribution(slices=(), method="unavailable")
+```
+
+**Scope boundary:** The interface is in scope. Actual computation (SQL queries, pandas aggregations) belongs in adapters.
+
+### CatalogStore Extensions (NEW)
+
+Extended to support freshness metadata:
+
+```python
+class CatalogStore(Protocol):
+    # ... existing methods ...
+
+    def get_freshness_metadata(
+        self,
+        dataset_id: DatasetId,
+    ) -> FreshnessMetadata | None:
+        """
+        Return freshness metadata if available.
+        Adapter determines how to obtain this (DB query, cache, etc.).
+        """
+        ...
+```
+
+---
+
+## Use Cases
+
+### UC1: UpsertCatalog
+
+**Purpose:** Create or update catalog entities (studies, datasets, data products, variables).
+
+**Input:**
+- `CreateStudyRequest`, `CreateDatasetRequest`, `CreateDataProductRequest`, etc.
+
+**Output:**
+- Created/updated entity DTO with ID
+
+**Steps:**
+1. Parse request, generate ID if new
+2. Load existing entity (if update)
+3. Construct/update domain entity
+4. Validate domain invariants
+5. Persist via CatalogStore
+6. Return DTO
+
+---
+
+### UC2: GetCatalog
+
+**Purpose:** Retrieve catalog entities by ID.
+
+**Input:**
+- Entity ID (study, dataset, data product, variable)
+
+**Output:**
+- Entity DTO or None
+
+---
+
+### UC3–UC7: Documentation Use Cases
+
+**Purpose:** Retrieve detailed documentation for catalog entities.
+
+| Use Case | Returns |
+|----------|---------|
+| `GetCatalogDocsIndex` | List of dataset/data product summaries |
+| `GetDatasetDoc` | Full dataset documentation (universe, geography, quality notes) |
+| `GetDataProductDoc` | Grain, variables, time dimension, public flag |
+| `GetVariableDoc` | Role, type, unit, domain, concept, indicator definition |
+| `GetConceptDoc` | Canonical meaning, unit |
+
+---
+
+### UC8: BuildQueryPlan
+
+**Purpose:** Transform UI request into domain `QueryPlan`.
+
+**Input:**
+- `QueryRequest` (data products, dimensions, metrics, filters, combine intent)
+
+**Output:**
+- `QueryPlan` (domain object)
+
+**Steps:**
+1. Resolve variable names → VariableIds via CatalogStore
+2. Validate all referenced entities exist
+3. Construct `SelectOp`s with resolved IDs
+4. Construct `CombineOp` if multi-dataset
+5. Return `QueryPlan`
+
+---
+
+### UC9: ValidateQueryPlan
+
+**Purpose:** Run the validation gate.
+
+**Input:**
+- `QueryPlan`
+- Policy name (default: "standard")
+
+**Output:**
+- `ValidationResultDTO`: status, issues, disclosures, can_execute flag
+
+**Steps:**
+1. Load policy (rule set)
+2. Get CatalogSnapshot for involved data products
+3. Create Validator with policy rules
+4. Run `validator.validate(plan, snapshot)`
+5. Map `ValidationResult` → `ValidationResultDTO`
+
+---
+
+### UC10: AcknowledgeValidation
+
+**Purpose:** Record user acknowledgment for REQUIRE_ACK queries.
+
+**Input:**
+- `AcknowledgmentRequest`: query_id, acknowledged issue codes
+
+**Output:**
+- Acknowledgment token/confirmation
+
+**Steps:**
+1. Verify query_id exists in pending state
+2. Verify all blocking issues acknowledged
+3. Record acknowledgment via AuditLog
+4. Return token for execute
+
+---
+
+### UC11: ExecuteQuery
+
+**Purpose:** Execute a validated query plan.
+
+**Input:**
+- `query_id` + optional acknowledgment token
+
+**Output:**
+- `QueryResultDTO`: columns, rows, disclosures, metadata
+
+**Steps:**
+1. Re-validate (never trust client)
+2. Check status allows execution (or has valid acknowledgment)
+3. Apply rigor pipeline:
+   - Crosswalk (if geography mismatch)
+   - Indicator recomputation (if needed)
+   - Suppression (if policy enabled)
+4. Execute via QueryEngine
+5. Normalize result via ResultNormalizer
+6. Attach accumulated disclosures
+7. Record execution via AuditLog
+8. Return `QueryResultDTO`
+
+---
+
+### UC12: CompareDatasets
+
+**Purpose:** Assess comparability between datasets.
+
+**Input:**
+- `dataset_a_id`, `dataset_b_id`
+- Optional variable mappings
+
+**Output:**
+- `ComparabilityReportDTO`: level (FULL/PARTIAL/NONE), reasons, suggested remediations
+
+---
+
+### UC13: CreateCuratedIndicator
+
+**Purpose:** Generate a new indicator data product from existing measures.
+
+**Input:**
+- Indicator definition (formula or numerator/denominator refs)
+- Target grain
+- Source data product(s)
+
+**Output:**
+- New `DataProduct(kind=INDICATOR)` ID
+
+---
+
+### UC14: AnalyzeSemanticImpact (NEW)
+
+**Purpose:** Determine what breaks if a catalog entity changes.
+
+**Input:**
+- `entity_type`: dataset, indicator, geography_version, universe
+- `entity_id`: ID of the entity
+
+**Output:**
+- `ImpactReportDTO`: affected entities with relation type, summary, and severity
+
+**Steps:**
+1. Load entity from CatalogStore
+2. Traverse catalog graph:
+   - For dataset: find dependent data products, indicators using it
+   - For indicator: find queries referencing it, data products containing it
+   - For geography_version: find datasets using it, potential crosswalk requirements
+   - For universe: find datasets with this universe, incompatible joins
+3. Score severity based on relation type
+4. Return structured impact report
+
+**Use case:** AI agents asking "what happens if I change this?" before making updates.
+
+---
+
+### UC15: EnrichWithAttribution (NEW)
+
+**Purpose:** Attach dimensional attributions to validation issues.
+
+**Input:**
+- `issues`: tuple of Issue objects from validation
+- `plan`: QueryPlan
+- `catalog`: CatalogSnapshot
+
+**Output:**
+- `issues`: same issues with attributions attached (where relevant)
+
+**Steps:**
+1. Filter issues that support attribution (SUPPRESSION_TRIGGERED, SMALL_CELL_WARNING, etc.)
+2. For each attributable issue:
+   - Get relevant dimensions from catalog
+   - Build AttributionRequest
+   - Call AttributionProvider.compute_attribution()
+   - Attach result to issue
+3. Return enriched issues
+
+**Note:** Uses optional AttributionProvider port. Default returns empty attributions.
+
+---
+
+### UC16: ExecuteTool (NEW)
+
+**Purpose:** Dispatch semantic tool calls from AI agents or LLM interfaces.
+
+**Input:**
+- `tool_name`: name of the tool (validate_query, analyze_impact, explain_indicator, check_comparability)
+- `params`: dict of parameters
+
+**Output:**
+- `ToolResult`: success/error with typed data
+
+**Steps:**
+1. Look up tool in ToolRegistry
+2. Validate params against ToolContract
+3. Dispatch to appropriate use case
+4. Wrap result in ToolResult
+5. Project via ContextSliceProjector if needed
+
+**Available tools:**
+| Tool | Maps To |
+|------|---------|
+| `validate_query` | ValidateQueryPlan |
+| `analyze_impact` | AnalyzeSemanticImpact |
+| `explain_indicator` | GetVariableDoc (with indicator focus) |
+| `check_comparability` | CompareDatasets |
+
+**Scope boundary:** This use case is in scope. HTTP/MCP transport is not.
+
+---
+
+## Application Services
+
+### PlanCompiler
+
+Resolves `QueryRequest` → `QueryPlan`:
+- Variable name → VariableId resolution
+- Filter value validation
+- Grain consistency checks
+
+### ResultNormalizer
+
+Transforms raw engine results → DTOs:
+- Column metadata enrichment (labels, units)
+- Disclosure attachment
+- Suppression indicator formatting
+
+### RigorPipeline
+
+Orchestrates the validation-to-execution chain:
+1. Validate plan
+2. Check acknowledgment (if REQUIRE_ACK)
+3. Rewrite plan (indicator recomputation)
+4. Apply crosswalk (if geography mismatch)
+5. Execute
+6. Apply suppression
+7. Accumulate disclosures
+
+### SemanticImpactAnalyzer (NEW)
+
+Traverses catalog graph to determine impact of changes:
+
+```python
+class SemanticImpactAnalyzer:
+    def __init__(self, catalog_store: CatalogStore):
+        self._catalog = catalog_store
+
+    def analyze(
+        self,
+        entity_type: str,
+        entity_id: str,
+    ) -> ImpactReport:
+        """
+        Traverse catalog relationships to find affected entities.
+        No infrastructure assumptions - pure graph walking.
+        """
+        ...
+```
+
+**Relationships traversed:**
+- Dataset → DataProducts → Variables → IndicatorDefinitions
+- IndicatorDefinition → numerator/denominator refs
+- Dataset → universe, geography_version
+- Crosswalk → from_version, to_version
+
+### ContextSliceProjector (NEW)
+
+Projects kernel results into LLM-safe, bounded context:
+
+```python
+class ContextSliceProjector:
+    @staticmethod
+    def validation_summary(result: ValidationResult, max_issues: int = 10) -> dict:
+        """Compact summary for LLM consumption."""
+        ...
+
+    @staticmethod
+    def indicator_explanation(indicator: IndicatorDefinition) -> dict:
+        """LLM-friendly indicator explanation."""
+        ...
+
+    @staticmethod
+    def comparability_report(report: ComparabilityReport) -> dict:
+        """Compact comparability summary."""
+        ...
+
+    @staticmethod
+    def dataset_summary(dataset: Dataset, catalog: CatalogSnapshot) -> dict:
+        """Dataset overview for context."""
+        ...
+```
+
+**Design principle:** Avoid bloated outputs. Include only essential fields for the task at hand.
+
+### ToolRegistry (NEW)
+
+Registry of semantic tool contracts the kernel exposes:
+
+```python
+class ToolRegistry:
+    @staticmethod
+    def get_contracts() -> tuple[ToolContract, ...]:
+        """Return all available tool contracts."""
+        ...
+
+    @staticmethod
+    def get_contract(name: str) -> ToolContract | None:
+        """Look up a specific tool contract."""
+        ...
+```
+
+**Purpose:** AI agents and UIs can discover available operations without hardcoding.
+
+---
+
+## Policy Packs
+
+Policies configure which rules run and how strict they are.
+
+### Minimal (prototyping)
+
+```python
+MINIMAL_POLICY = Policy(
+    name="minimal",
+    rules=[GrainValidationRule(), MeasureTypeRule()],
+    require_universe=False,
+    require_crosswalk=False,
+    suppression_enabled=False,
+)
+```
+
+### Standard (production)
+
+```python
+STANDARD_POLICY = Policy(
+    name="standard",
+    rules=[
+        GrainValidationRule(),
+        MeasureTypeRule(),
+        IndicatorAggregationRule(),
+        ComparabilityRule(),
+    ],
+    require_universe=False,
+    require_crosswalk=False,
+    suppression_enabled=True,
+)
+```
+
+### Strict (research)
+
+```python
+STRICT_POLICY = Policy(
+    name="strict",
+    rules=[
+        GrainValidationRule(),
+        MeasureTypeRule(),
+        IndicatorAggregationRule(),
+        ComparabilityRule(),
+        UniverseRequiredRule(),
+        CrosswalkRequiredRule(),
+        MethodologyMatchRule(),
+    ],
+    require_universe=True,
+    require_crosswalk=True,
+    suppression_enabled=True,
+)
+```
+
+### Regulated (NEW)
+
+For deployments with strict governance requirements:
+
+```python
+REGULATED_PACK = RulesetPack(
+    id="regulated",
+    version="1.0.0",
+    enabled_checks=(
+        "GRAIN_VALIDATION",
+        "MEASURE_TYPE",
+        "INDICATOR_AGGREGATION",
+        "COMPARABILITY",
+        "UNIVERSE_REQUIRED",
+        "CROSSWALK_REQUIRED",
+        "FRESHNESS",
+        "SUPPRESSION",
+    ),
+    severity_overrides={
+        "FRESHNESS_VIOLATED": Severity.BLOCK,
+        "SUPPRESSION_VIOLATED": Severity.BLOCK,
+    },
+    allow_rewrites=True,
+    require_ack_for=(
+        "GEO_VERSION_MISMATCH",
+        "UNIVERSE_CONFLICT",
+        "PARTIAL_COMPARABILITY",
+    ),
+)
+```
+
+Same kernel. Different rule packs.
+
+---
+
+## RulesetPack Configuration (NEW)
+
+Ruleset packs are versioned bundles that configure validation behavior:
+
+```python
+@dataclass(frozen=True)
+class RulesetPack:
+    id: str              # "core", "public-dashboard", "regulated"
+    version: str         # semver
+    enabled_checks: tuple[str, ...]  # check codes
+    severity_overrides: dict[str, Severity] = field(default_factory=dict)
+    allow_rewrites: bool = True
+    require_ack_for: tuple[str, ...] = ()  # issue codes
+```
+
+**Benefits:**
+- Packs are data, not code (can be YAML/JSON)
+- Same kernel, different deployments
+- Version tracking for governance audits
+- Clear documentation of what's enforced
+
+**Built-in packs:**
+| Pack | Use Case |
+|------|----------|
+| `core` | Minimum viable validation |
+| `public-dashboard` | Suppression enforced, partial comparability requires ack |
+| `strict` | Full semantic validation, crosswalks mandatory |
+| `regulated` | Freshness + suppression blocking, full audit trail |
+
+---
+
+## API Contracts
+*Source: 07-api-contracts.md*
+
+# API Contracts
+
+DTOs and JSON schemas for UI ↔ application communication.
+
+---
+
+## Ingest DTOs
+
+### Request
+
+```json
+{
+  "study": {
+    "name": "NHW PHC Survey 2023",
+    "license": "CC BY 4.0"
+  },
+  "dataset": {
+    "name": "Population by age/sex",
+    "source_ref": "https://example.org/data",
+    "release_date": "2024-02-01",
+    "geography_system_id": "nga_admin",
+    "geography_version_id": null,
+    "universe_id": null
+  },
+  "sheet": {
+    "name": "Sheet1",
+    "hints": {
+      "roles": {
+        "count": "MEASURE",
+        "age": "DIMENSION",
+        "sex": "DIMENSION"
+      },
+      "units": {
+        "count": "persons"
+      }
+    }
+  }
+}
+```
+
+### Response
+
+```json
+{
+  "dataset_id": "ds_123",
+  "data_products": [
+    {
+      "data_product_id": "dp_001",
+      "kind": "FACT",
+      "name": "Sheet1"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "UNIVERSE_UNDECLARED",
+      "message": "Universe not set; cross-dataset comparisons will be gated."
+    },
+    {
+      "code": "GEO_VERSION_UNDECLARED",
+      "message": "Geography version not set; boundary drift checks disabled."
+    }
+  ]
+}
+```
+
+---
+
+## Query DTOs
+
+### Query Request (from UI)
+
+Single data product query:
+
+```json
+{
+  "intent": "NUMBER",
+  "data_product_id": "dp_001",
+  "dimensions": ["geography_code"],
+  "metrics": [
+    { "variable": "count", "aggregation": "SUM" }
+  ],
+  "filters": [
+    { "variable": "age", "op": "IN", "values": ["6-10"] },
+    { "variable": "sex", "op": "IN", "values": ["male"] },
+    { "variable": "geography_code", "op": "EQ", "values": ["NG004"] }
+  ],
+  "group_by": []
+}
+```
+
+Cross-dataset comparison:
+
+```json
+{
+  "intent": "CHART",
+  "operations": [
+    {
+      "data_product_id": "dp_a",
+      "dimensions": ["geography_code"],
+      "metrics": [{ "variable": "indicator1", "aggregation": "NONE" }],
+      "filters": [],
+      "group_by": ["geography_code"]
+    },
+    {
+      "data_product_id": "dp_b",
+      "dimensions": ["geography_code"],
+      "metrics": [{ "variable": "indicator1", "aggregation": "NONE" }],
+      "filters": [],
+      "group_by": ["geography_code"]
+    }
+  ],
+  "combine": {
+    "mode": "COMPARE",
+    "on": ["geography_code"],
+    "series_labels": ["Study A", "Study B"]
+  }
+}
+```
+
+---
+
+## QueryPlan (Domain Object)
+
+The normalized plan persisted for auditability.
+
+```json
+{
+  "query_id": "q_789",
+  "intent": "NUMBER",
+  "operations": [
+    {
+      "op": "SELECT",
+      "data_product_id": "dp_001",
+      "dimensions": ["geography_code"],
+      "metrics": [
+        { "variable": "count", "aggregation": "SUM" }
+      ],
+      "filters": [
+        { "variable": "age", "op": "IN", "values": ["6-10"] },
+        { "variable": "sex", "op": "IN", "values": ["male"] },
+        { "variable": "geography_code", "op": "EQ", "values": ["NG004"] }
+      ],
+      "group_by": []
+    }
+  ],
+  "combine": null,
+  "presentation": {
+    "format": "NUMBER"
+  }
+}
+```
+
+---
+
+## Validation DTOs
+
+### ValidationResult
+
+Success:
+
+```json
+{
+  "query_id": "q_789",
+  "status": "ALLOW",
+  "issues": [],
+  "disclosures": [],
+  "rewritten_plan": null
+}
+```
+
+Blocked (indicator aggregation):
+
+```json
+{
+  "query_id": "q_790",
+  "status": "BLOCK",
+  "issues": [
+    {
+      "code": "INDICATOR_AGG_NOT_ALLOWED",
+      "severity": "BLOCK",
+      "message": "Cannot SUM indicator 'indicator1' because it is a derived percentage.",
+      "details": {
+        "variable": "indicator1",
+        "requested_agg": "SUM",
+        "allowed": ["NONE", "RECOMPUTE"]
+      },
+      "remediations": [
+        {
+          "action": "DEFINE_INDICATOR",
+          "label": "Define numerator/denominator so the system can recompute safely",
+          "required_fields": ["numerator_ref", "denominator_ref", "indicator_type"]
+        },
+        {
+          "action": "CHANGE_AGG",
+          "label": "Use NONE (display as-is) or a safe aggregation"
+        }
+      ]
+    }
+  ],
+  "disclosures": []
+}
+```
+
+Warning with disclosure:
+
+```json
+{
+  "query_id": "q_791",
+  "status": "WARN",
+  "issues": [
+    {
+      "code": "GEO_VERSION_MISMATCH",
+      "severity": "WARN",
+      "message": "Datasets use different boundary versions. Crosswalk applied.",
+      "details": {
+        "dp_a_version": "NBS 2016 LGA",
+        "dp_b_version": "NBS 2022 LGA",
+        "crosswalk_method": "area-weighted"
+      },
+      "remediations": []
+    }
+  ],
+  "disclosures": [
+    {
+      "disclosure_type": "BOUNDARY_ADJUSTED",
+      "text": "Geography crosswalk applied (area-weighted)."
+    }
+  ],
+  "rewritten_plan": null
+}
+```
+
+### Issue Schema
+
+```json
+{
+  "code": "string (e.g., INDICATOR_AGG_NOT_ALLOWED)",
+  "severity": "ALLOW | WARN | REQUIRE_ACK | BLOCK",
+  "message": "Human-readable explanation",
+  "details": {
+    "...context-specific fields..."
+  },
+  "remediations": [
+    {
+      "action": "ACTION_CODE",
+      "label": "Human-readable instruction",
+      "required_fields": ["field1", "field2"]
+    }
+  ]
+}
+```
+
+---
+
+## Ruleset Configuration
+
+`rulesets/dashboard.json`:
+
+```json
+{
+  "name": "dashboard",
+  "rules": [
+    { "id": "R_INDICATOR_AGG", "severity": "BLOCK" },
+    { "id": "R_UNIVERSE_COMPARE", "severity": "REQUIRE_ACK" },
+    { "id": "R_GEO_VERSION_COMPARE", "severity": "WARN" }
+  ]
+}
+```
+
+`rulesets/strict.json`:
+
+```json
+{
+  "name": "strict",
+  "rules": [
+    { "id": "R_INDICATOR_AGG", "severity": "BLOCK" },
+    { "id": "R_UNIVERSE_COMPARE", "severity": "BLOCK" },
+    { "id": "R_GEO_VERSION_COMPARE", "severity": "BLOCK" },
+    { "id": "R_SUPPRESSION_AMBIGUITY", "severity": "BLOCK" }
+  ]
+}
+```
+
+---
+
+## Rule Definitions (Config)
+
+### R_INDICATOR_AGG
+
+```json
+{
+  "rule_id": "R_INDICATOR_AGG",
+  "trigger": {
+    "variable_role": "INDICATOR",
+    "agg_in": ["SUM", "AVG"]
+  },
+  "decision": [
+    {
+      "when": { "aggregation_policy": "RECOMPUTE" },
+      "status": "ALLOW",
+      "rewrite": "RECOMPUTE"
+    },
+    {
+      "otherwise": true,
+      "status": "BLOCK",
+      "issue_code": "INDICATOR_AGG_NOT_ALLOWED"
+    }
+  ]
+}
+```
+
+### R_UNIVERSE_COMPARE
+
+```json
+{
+  "rule_id": "R_UNIVERSE_COMPARE",
+  "trigger": {
+    "combine_mode_in": ["COMPARE", "JOIN"]
+  },
+  "decision": [
+    {
+      "when": { "universe_missing": true },
+      "status": "REQUIRE_ACK",
+      "issue_code": "UNIVERSE_UNDECLARED"
+    },
+    {
+      "when": { "universe_mismatch": true },
+      "status": "BLOCK",
+      "issue_code": "UNIVERSE_MISMATCH"
+    },
+    {
+      "otherwise": true,
+      "status": "ALLOW"
+    }
+  ]
+}
+```
+
+### R_GEO_VERSION_COMPARE
+
+```json
+{
+  "rule_id": "R_GEO_VERSION_COMPARE",
+  "trigger": {
+    "combine_mode_in": ["COMPARE", "JOIN"]
+  },
+  "decision": [
+    {
+      "when": { "geo_version_mismatch": true, "crosswalk_exists": true },
+      "status": "WARN",
+      "disclosure": "BOUNDARY_ADJUSTED"
+    },
+    {
+      "when": { "geo_version_mismatch": true, "crosswalk_exists": false },
+      "status": "BLOCK",
+      "issue_code": "GEO_VERSION_MISMATCH"
+    },
+    {
+      "otherwise": true,
+      "status": "ALLOW"
+    }
+  ]
+}
+```
+
+---
+
+## Worked Examples
+
+### Example 1: "How many 6–10 male kids live in NG004?"
+
+Plan: sum count with filters → `ALLOW`
+
+No special metadata needed beyond count being additive.
+
+### Example 2: "Total population of NG" (sum across geography)
+
+Plan: sum count with group_by none → `ALLOW`
+
+Note: if NG means country total, you'll want a geography hierarchy table so NG = rollup of its children.
+
+### Example 3: "Total % kids with learning difficulties in NG"
+
+User tries `SUM(indicator1)` across geographies → `BLOCK`
+
+**Remediation:** Either show "national rate" from a precomputed indicator at country grain, or recompute from numerator/denominator.
+
+### Example 4: "Compare learning difficulty % between Study A and Study B"
+
+If universes differ or undefined → `REQUIRE_ACK` or `BLOCK`
+
+**Remediation:** Attach universe definitions + variable semantic mapping.
+
+---
+
+## Capability Examples
+*Source: 08-capability-examples.md*
+
+# Capability Examples
+
+Concrete code examples demonstrating each kernel capability. Complements the [Capability Matrix](04-capability-matrix.md) with working code patterns.
+
+---
+
+## 1. Catalog Management
+
+### Registering a Study and Dataset
+
+```python
+# Define a study (e.g., a census)
+study = Study(
+    id="census-2021",
+    name="South Africa Census 2021",
+    publisher="Stats SA",
+    reference_period=DateRange(2021, 2021),
+)
+
+# Define a dataset within that study
+dataset = Dataset(
+    id="census-2021-demographics",
+    study_id="census-2021",
+    grain=Grain(keys=["geography_id", "age_group", "sex"]),
+    reference_system_version_id="sa-geo-2021",
+)
+
+# Register variables with their semantics
+variable = Variable(
+    id="population_count",
+    dataset_id="census-2021-demographics",
+    concept_id="population",
+    measure_type=MeasureType.COUNT,
+    aggregation_rule=AggregationRule.SUM,
+)
+```
+
+### Defining an Indicator (Derived Metric)
+
+```python
+# Indicators require explicit computation rules
+indicator = IndicatorDefinition(
+    id="unemployment_rate",
+    name="Unemployment Rate",
+    numerator_concept="unemployed_population",
+    denominator_concept="labour_force",
+    aggregation_rule=AggregationRule.RECOMPUTE,  # Cannot simply average rates
+)
+```
+
+### Registering Reference System Versions
+
+```python
+# Reference systems (including geography) evolve over time
+# First, define the reference system
+geo_system = ReferenceSystem(
+    id="south-africa-admin",
+    name="South Africa Admin Boundaries",
+    kind=ReferenceSystemKind.GEOGRAPHY,
+)
+
+# Geography-specific profile (only for GEOGRAPHY kind)
+geo_profile = GeographySystemProfile(
+    reference_system_id="south-africa-admin",
+    geometry_type=GeometryType.POLYGON,
+    levels=["country", "province", "district", "municipality", "ward"],
+)
+
+# Versions track changes over time
+geo_2011 = ReferenceSystemVersion(
+    id="sa-geo-2011",
+    reference_system_id="south-africa-admin",
+    valid_period=DateRange(2011, 2015),
+)
+
+geo_2016 = ReferenceSystemVersion(
+    id="sa-geo-2016",
+    reference_system_id="south-africa-admin",
+    valid_period=DateRange(2016, 2021),
+)
+
+# Crosswalk defines how to map between versions
+crosswalk = Crosswalk(
+    source_version_id="sa-geo-2011",
+    target_version_id="sa-geo-2016",
+    mapping_type=MappingType.MANY_TO_MANY,
+    coverage=Coverage.PARTIAL,  # Some 2011 wards split in 2016
+)
+
+# Non-geography example: facility registry
+facility_system = ReferenceSystem(
+    id="health-facilities-ng",
+    name="Nigeria Health Facility Registry",
+    kind=ReferenceSystemKind.FACILITY,
+)
+
+facility_v2023 = ReferenceSystemVersion(
+    id="hf-ng-2023",
+    reference_system_id="health-facilities-ng",
+    valid_period=DateRange(2023, None),
+)
+```
+
+---
+
+## 2. Query Planning
+
+### Simple Query: Single Dataset, Single Variable
+
+```python
+query = QueryPlan(
+    select=[
+        SelectOp(
+            dataset_id="census-2021-demographics",
+            variable_id="population_count",
+            geography_level="province",
+        )
+    ],
+    filters=[
+        Filter(dimension="sex", values=["female"]),
+    ],
+    presentation=PresentationSpec(
+        format="table",
+        include_disclosures=True,
+    ),
+)
+```
+
+### Aggregation Query: Roll Up from Ward to Province
+
+```python
+query = QueryPlan(
+    select=[
+        SelectOp(
+            dataset_id="census-2021-demographics",
+            variable_id="population_count",
+            geography_level="province",  # Data stored at ward level
+            aggregation=AggregationOp.SUM,
+        )
+    ],
+)
+
+# Kernel validates: population_count allows SUM aggregation ✓
+```
+
+### Comparison Query: Two Datasets Side by Side
+
+```python
+query = QueryPlan(
+    select=[
+        SelectOp(dataset_id="census-2011-demographics", variable_id="population_count"),
+        SelectOp(dataset_id="census-2021-demographics", variable_id="population_count"),
+    ],
+    combine=CombineOp.ALIGN_BY_GEOGRAPHY,
+    presentation=PresentationSpec(
+        format="comparison_table",
+        show_change=True,
+    ),
+)
+
+# Kernel checks comparability and geography alignment
+```
+
+---
+
+## 3. Validation & Disclosures
+
+### Validation Result: Clean Query
+
+```python
+result = validator.validate(query)
+
+# ValidationResult(
+#     status=ValidationStatus.VALID,
+#     issues=[],
+#     disclosures=[
+#         Disclosure(type="data_source", message="Census 2021, Stats SA"),
+#         Disclosure(type="reference_period", message="2021"),
+#     ],
+#     rewritten_plan=None,  # No rewrite needed
+# )
+```
+
+### Validation Result: Query with Issues
+
+```python
+# Attempting to average an unemployment rate across provinces
+query = QueryPlan(
+    select=[
+        SelectOp(
+            dataset_id="labour-force-survey",
+            variable_id="unemployment_rate",
+            geography_level="country",
+            aggregation=AggregationOp.AVERAGE,  # WRONG
+        )
+    ],
+)
+
+result = validator.validate(query)
+
+# ValidationResult(
+#     status=ValidationStatus.INVALID,
+#     issues=[
+#         Issue(
+#             severity=Severity.ERROR,
+#             code="INVALID_AGGREGATION",
+#             message="unemployment_rate cannot be averaged; it must be recomputed from numerator/denominator",
+#             location=SelectOp(variable_id="unemployment_rate"),
+#         )
+#     ],
+#     remediations=[
+#         Remediation(
+#             description="Recompute indicator from underlying components",
+#             rewritten_plan=QueryPlan(...),  # Plan using numerator/denominator
+#         )
+#     ],
+#     disclosures=[],
+# )
+```
+
+### Validation Result: Query with Warnings
+
+```python
+# Comparing datasets with partial comparability
+result = validator.validate(comparison_query)
+
+# ValidationResult(
+#     status=ValidationStatus.VALID_WITH_WARNINGS,
+#     issues=[
+#         Issue(
+#             severity=Severity.WARNING,
+#             code="PARTIAL_COMPARABILITY",
+#             message="Age group definitions differ between Census 2011 and Census 2021",
+#             requires_acknowledgment=True,
+#         )
+#     ],
+#     disclosures=[
+#         Disclosure(
+#             type="comparability",
+#             message="PARTIAL: Age groups '15-24' vs '15-19, 20-24'",
+#         )
+#     ],
+# )
+```
+
+---
+
+## 4. Comparability Assessment
+
+### Full Comparability
+
+```python
+assessment = comparability.assess(
+    dataset_a="census-2011-demographics",
+    dataset_b="census-2021-demographics",
+    variable="population_count",
+)
+
+# ComparabilityAssessment(
+#     level=ComparabilityLevel.FULL,
+#     reasons=[],
+#     disclosures=[
+#         Disclosure(type="method", message="Both use de facto enumeration"),
+#     ],
+# )
+```
+
+### Partial Comparability
+
+```python
+assessment = comparability.assess(
+    dataset_a="census-2011-demographics",
+    dataset_b="census-2021-demographics",
+    variable="household_income",
+)
+
+# ComparabilityAssessment(
+#     level=ComparabilityLevel.PARTIAL,
+#     reasons=[
+#         "Income brackets differ (2011: R0-R4800, 2021: R0-R6000)",
+#         "2021 includes imputed values for non-response",
+#     ],
+#     disclosures=[
+#         Disclosure(type="method_change", message="Income imputation introduced in 2021"),
+#     ],
+# )
+```
+
+### No Comparability
+
+```python
+assessment = comparability.assess(
+    dataset_a="census-2011-demographics",
+    dataset_b="labour-force-survey-2021",
+    variable="employment_status",
+)
+
+# ComparabilityAssessment(
+#     level=ComparabilityLevel.NONE,
+#     reasons=[
+#         "Different universes: Census (all persons) vs LFS (working-age only)",
+#         "Different reference periods: point-in-time vs quarterly average",
+#         "Different collection methods: enumeration vs sample survey",
+#     ],
+#     blocked=True,  # Kernel will not allow this comparison
+# )
+```
+
+---
+
+## 5. Crosswalk Resolution
+
+### Reference System Version Mismatch Detection
+
+```python
+query = QueryPlan(
+    select=[
+        SelectOp(dataset_id="census-2011-demographics", variable_id="population_count"),
+        SelectOp(dataset_id="census-2021-demographics", variable_id="population_count"),
+    ],
+    combine=CombineOp.ALIGN_BY_REFERENCE_UNIT,
+    reference_level="ward",
+)
+
+result = validator.validate(query)
+
+# ValidationResult(
+#     status=ValidationStatus.INVALID,
+#     issues=[
+#         Issue(
+#             severity=Severity.ERROR,
+#             code="REFERENCE_SYSTEM_VERSION_MISMATCH",
+#             message="Cannot align: census-2011 uses sa-geo-2011, census-2021 uses sa-geo-2016",
+#         )
+#     ],
+#     remediations=[
+#         Remediation(
+#             description="Apply crosswalk to normalize to sa-geo-2016",
+#             rewritten_plan=QueryPlan(...),
+#             disclosures=[
+#                 Disclosure(
+#                     type="crosswalk",
+#                     message="2011 data redistributed to 2016 boundaries using area-weighted interpolation",
+#                 ),
+#             ],
+#         ),
+#         Remediation(
+#             description="Aggregate to district level (stable across versions)",
+#             rewritten_plan=QueryPlan(...),
+#         ),
+#     ],
+# )
+```
+
+### Crosswalk Application
+
+```python
+# If user accepts crosswalk remediation
+crosswalk_provider.apply(
+    source_data=census_2011_wards,
+    crosswalk_id="sa-geo-2011-to-2016",
+    method=InterpolationMethod.AREA_WEIGHTED,
+)
+
+# Returns data with:
+# - Values redistributed to 2016 ward boundaries
+# - Disclosure attached explaining the transformation
+# - Uncertainty flags for wards with complex splits/merges
+```
+
+---
+
+## 6. Indicator Recomputation
+
+### Rate Indicator: Cannot Average, Must Recompute
+
+```python
+# User requests unemployment rate at national level
+# Data exists at provincial level
+query = QueryPlan(
+    select=[
+        SelectOp(
+            dataset_id="labour-force-survey",
+            variable_id="unemployment_rate",
+            geography_level="country",
+        )
+    ],
+)
+
+# Kernel rewrites to:
+rewritten_plan = QueryPlan(
+    select=[
+        # Fetch components instead
+        SelectOp(variable_id="unemployed_count", geography_level="country", aggregation=AggregationOp.SUM),
+        SelectOp(variable_id="labour_force_count", geography_level="country", aggregation=AggregationOp.SUM),
+    ],
+    compute=[
+        ComputeOp(
+            output_variable="unemployment_rate",
+            formula="unemployed_count / labour_force_count",
+        )
+    ],
+    disclosures=[
+        Disclosure(
+            type="recomputation",
+            message="Rate recomputed from summed components, not averaged",
+        ),
+    ],
+)
+```
+
+### Indicator Without Components: Blocked
+
+```python
+# Some indicators cannot be recomputed (components not available)
+indicator = IndicatorDefinition(
+    id="gini_coefficient",
+    aggregation_rule=AggregationRule.NOT_AGGREGATABLE,
+    components=None,  # Cannot be derived from available data
+)
+
+query = QueryPlan(
+    select=[
+        SelectOp(
+            variable_id="gini_coefficient",
+            geography_level="country",  # Only available at provincial level
+        )
+    ],
+)
+
+result = validator.validate(query)
+
+# ValidationResult(
+#     status=ValidationStatus.INVALID,
+#     issues=[
+#         Issue(
+#             severity=Severity.ERROR,
+#             code="NOT_AGGREGATABLE",
+#             message="gini_coefficient cannot be aggregated to country level; no recomputation path available",
+#         )
+#     ],
+#     remediations=[],  # No fix possible
+# )
+```
+
+---
+
+## 7. Suppression & Disclosure
+
+### Small Cell Suppression
+
+```python
+suppression_policy = SuppressionPolicy(
+    id="census-standard",
+    min_cell_count=5,
+    min_population=10,
+    complementary_suppression=True,  # Prevent back-calculation
+)
+
+result = executor.execute(validated_plan)
+
+# QueryResult(
+#     data=[
+#         Row(geography="Ward 1", population=1234, suppressed=False),
+#         Row(geography="Ward 2", population=None, suppressed=True),  # < 10 people
+#         Row(geography="Ward 3", population=None, suppressed=True),  # Complementary
+#     ],
+#     disclosures=[
+#         Disclosure(
+#             type="suppression",
+#             message="2 cells suppressed: 1 below threshold, 1 complementary",
+#             policy_id="census-standard",
+#         ),
+#     ],
+# )
+```
+
+### Disclosure Accumulation
+
+```python
+# A complex query accumulates disclosures from multiple sources
+result = executor.execute(complex_plan)
+
+# QueryResult(
+#     data=[...],
+#     disclosures=[
+#         Disclosure(type="data_source", message="Census 2021, Stats SA"),
+#         Disclosure(type="crosswalk", message="2011 boundaries mapped to 2016 via area interpolation"),
+#         Disclosure(type="recomputation", message="Unemployment rate recomputed from components"),
+#         Disclosure(type="suppression", message="3 cells suppressed per census-standard policy"),
+#         Disclosure(type="comparability", message="PARTIAL: methodology change in 2016"),
+#     ],
+# )
+```
+
+---
+
+## 8. Execution (Provider-Agnostic)
+
+### The Kernel Doesn't Know Your Database
+
+```python
+# The kernel produces a validated, normalized plan
+validated_plan = validator.validate(query).plan
+
+# Execution is delegated to an adapter you provide
+class PostgresExecutor(QueryExecutor):
+    def execute(self, plan: ValidatedPlan) -> RawResult:
+        sql = self.plan_to_sql(plan)
+        return self.connection.execute(sql)
+
+class DuckDBExecutor(QueryExecutor):
+    def execute(self, plan: ValidatedPlan) -> RawResult:
+        return self.duckdb.execute(plan.to_duckdb_query())
+
+class InMemoryExecutor(QueryExecutor):
+    def execute(self, plan: ValidatedPlan) -> RawResult:
+        return self.dataframe.query(plan.to_pandas_query())
+
+# Same kernel, different backends
+result = kernel.execute(validated_plan, executor=PostgresExecutor())
+result = kernel.execute(validated_plan, executor=DuckDBExecutor())
+result = kernel.execute(validated_plan, executor=InMemoryExecutor())
+```
+
+---
+
+## 9. Deployment Profiles
+
+### Minimal Profile (Prototyping)
+
+```python
+kernel = InvariantKernel(
+    validation_rules=[
+        # Only basic checks
+        GrainValidationRule(),
+        MeasureTypeRule(),
+    ],
+    crosswalk_provider=None,  # Disabled
+    suppression_engine=None,  # Disabled
+    indicator_engine=None,    # Disabled
+)
+
+# Fast, permissive, good for exploration
+```
+
+### Standard Profile (Production)
+
+```python
+kernel = InvariantKernel(
+    validation_rules=[
+        GrainValidationRule(),
+        MeasureTypeRule(),
+        AggregationRule(),
+        ComparabilityRule(),
+        UniverseMatchRule(),
+    ],
+    crosswalk_provider=DatabaseCrosswalkProvider(),
+    suppression_engine=StandardSuppressionEngine(policy="census-standard"),
+    indicator_engine=RecomputationEngine(),
+)
+
+# Strict, disclosure-rich, suitable for public-facing applications
+```
+
+### Research Profile (Maximum Rigor)
+
+```python
+kernel = InvariantKernel(
+    validation_rules=[
+        # All standard rules plus...
+        RequireUniverseRule(),           # Universe must be explicit
+        RequireComparabilityAckRule(),   # User must acknowledge partial comparability
+        ProhibitCrosswalkRule(),         # No crosswalks; only stable geographies
+        RequireMethodologyMatchRule(),   # Methods must match exactly
+    ],
+    crosswalk_provider=None,
+    suppression_engine=StrictSuppressionEngine(policy="research-standard"),
+    indicator_engine=RecomputationEngine(require_components=True),
+)
+
+# Maximum rigor for academic/research use
+```
+
+---
+
+# Reference
+
+## Generated Glossary
+*Source: generated/glossary.md*
+
+# Glossary
+
+> **Auto-generated from domain models.** Do not edit manually.
+> Source: `scripts/generate_docs.py`
+
+This glossary is generated from Python dataclass docstrings in the domain layer.
+For explanatory context, see [Conceptual Model](../01-conceptual-model.md).
+
+## Catalog Primitives
+
+### Study
+
+A data collection effort with methodology.
+
+A study may produce multiple datasets and involve multiple instruments.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `id` | `StudyId` |
+| `name` | `str` |
+| `owner_org` | `str` |
+| `description` | `str \| None` |
+| `methodology_summary` | `str \| None` |
+| `instrument_ref` | `str \| None` |
+| `license` | `str \| None` |
+| `created_at` | `datetime` |
+
+### Dataset
+
+A concrete table produced by a study.
+
+Datasets are produced at a specific level of aggregation and
+reference a reference system (geography, facilities, etc.).
+
+Invariants:
+- collection_end must not be before collection_start (if both present)
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `id` | `DatasetId` |
+| `study_id` | `StudyId` |
+| `name` | `str` |
+| `description` | `str \| None` |
+| `source_ref` | `str \| None` |
+| `release_date` | `date \| None` |
+| `collection_start` | `date \| None` |
+| `collection_end` | `date \| None` |
+| `reference_date` | `date \| None` |
+| `reference_system_id` | `ReferenceSystemId \| None` |
+| `reference_system_version_id` | `ReferenceSystemVersionId \| None` |
+| `universe_id` | `UniverseId \| None` |
+| `quality_notes` | `str \| None` |
+
+### DataProduct
+
+A data product that dashboards query.
+
+Data products are either FACT (containing measures) or INDICATOR
+(containing derived indicators).
+
+Invariants:
+- Must have at least one variable
+- Grain keys must reference existing dimension variables
+- INDICATOR kind must have at least one variable with role=INDICATOR
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `id` | `DataProductId` |
+| `dataset_id` | `DatasetId` |
+| `name` | `str` |
+| `kind` | `DataProductKind` |
+| `grain` | `GrainSpec` |
+| `variables` | `list[Variable]` |
+| `default_time_dimension_id` | `VariableId \| None` |
+| `is_public` | `bool` |
+| `_variables_by_name` | `dict[str, Variable]` |
+| `_variables_by_id` | `dict[VariableId, Variable]` |
+
+### Variable
+
+A variable (column) in a data product.
+
+Variables have a role (DIMENSION, MEASURE, or INDICATOR) that determines
+how they can be used in queries and aggregations.
+
+Invariants:
+- MEASURE and INDICATOR variables must have numeric data types
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `id` | `VariableId` |
+| `data_product_id` | `DataProductId` |
+| `name` | `str` |
+| `role` | `VariableRole` |
+| `data_type` | `DataType` |
+| `domain` | `VariableDomain \| None` |
+| `unit` | `str \| None` |
+| `description` | `str \| None` |
+
+## Reference Systems
+
+### ReferenceSystem
+
+Base abstraction for any system of groupable units.
+
+A ReferenceSystem represents a set of identifiable entities that can be used
+for grouping data: geographic units, facilities, schools, organizations, etc.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `id` | `ReferenceSystemId` |
+| `name` | `str` |
+| `kind` | `ReferenceSystemKind` |
+| `authority` | `str` |
+| `description` | `str` |
+
+### ReferenceSystemVersion
+
+A versioned snapshot of reference system units.
+
+Reference systems change over time (e.g., boundary changes, facility additions).
+This tracks which version of the unit set a dataset uses.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `id` | `ReferenceSystemVersionId` |
+| `reference_system_id` | `ReferenceSystemId` |
+| `label` | `str` |
+| `valid_from` | `date \| None` |
+| `valid_to` | `date \| None` |
+| `notes` | `str` |
+
+### Crosswalk
+
+Mapping between two reference system versions.
+
+Used to compare or aggregate data across version changes.
+Works for any reference system type, not just geography.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `id` | `CrosswalkId` |
+| `from_version_id` | `ReferenceSystemVersionId` |
+| `to_version_id` | `ReferenceSystemVersionId` |
+| `method` | `CrosswalkMethod` |
+| `table_ref` | `str` |
+| `quality_notes` | `str` |
+
+### GeographySystem
+
+Geography-specific profile for ReferenceSystem where kind=GEOGRAPHY.
+
+Adds geometry type and hierarchy levels to the base reference system.
+This is a profile/extension, not a standalone entity.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `reference_system_id` | `ReferenceSystemId` |
+| `geometry_type` | `GeoType` |
+| `levels` | `tuple[str, ...]` |
+
+## Semantic Layer
+
+### Universe
+
+The population to which a dataset's values apply.
+
+A universe defines the scope and boundaries of what the data represents.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `id` | `UniverseId` |
+| `label` | `str` |
+| `definition` | `str` |
+| `inclusions` | `tuple[str, ...]` |
+| `exclusions` | `tuple[str, ...]` |
+
+### Concept
+
+Semantic identity for cross-dataset alignment.
+
+Concepts define what a variable measures, enabling comparison
+across different datasets.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `id` | `ConceptId` |
+| `label` | `str` |
+| `description` | `str` |
+| `canonical_unit` | `str \| None` |
+
+### VariableSemantics
+
+Attaches semantic meaning to a variable.
+
+Links a variable to a concept and provides additional context.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `variable_id` | `VariableId` |
+| `concept_id` | `ConceptId` |
+| `unit` | `str \| None` |
+| `notes` | `str \| None` |
+| `comparability_group` | `str \| None` |
+
+### IndicatorDefinition
+
+Defines how an indicator is computed and can be aggregated.
+
+Invariants:
+- If aggregation_policy=RECOMPUTE, must have (numerator_ref AND denominator_ref) OR formula
+- If aggregation_policy=ALLOW_LIST, allowed_aggregations must not be empty
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `variable_id` | `VariableId` |
+| `indicator_type` | `IndicatorType` |
+| `aggregation_policy` | `AggregationPolicy` |
+| `numerator_ref` | `VariableRef \| None` |
+| `denominator_ref` | `VariableRef \| None` |
+| `formula` | `str \| None` |
+| `allowed_aggregations` | `tuple[AggregationType, ...]` |
+| `weighting_method` | `WeightingMethod \| None` |
+
+## Query Planning
+
+### QueryPlan
+
+A normalized query plan for validation and execution.
+
+Invariants:
+- Must have at least one operation
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `query_id` | `str` |
+| `intent` | `QueryIntent` |
+| `operations` | `list[SelectOp]` |
+| `presentation` | `PresentationSpec` |
+| `combine` | `CombineOp \| None` |
+
+### SelectOp
+
+A select operation on a single data product.
+
+Uses VariableId for dimensions and group_by for stability when
+variables are renamed.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `data_product_id` | `DataProductId` |
+| `dimension_ids` | `tuple[VariableId, ...]` |
+| `metrics` | `tuple[Metric, ...]` |
+| `filters` | `tuple[Filter, ...]` |
+| `group_by_ids` | `tuple[VariableId, ...]` |
+
+### Filter
+
+A filter condition on a variable.
+
+Uses VariableId for stability when variables are renamed.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `variable_id` | `VariableId` |
+| `op` | `FilterOp` |
+| `values` | `tuple[str, ...]` |
+
+### Metric
+
+A metric to compute (variable + aggregation).
+
+Uses VariableId for stability when variables are renamed.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `variable_id` | `VariableId` |
+| `agg` | `AggregationType` |
+
+### CombineOp
+
+Combines multiple select operations.
+
+Note: 'on' uses string dimension names (not VariableId) because these are
+semantic join keys that match across different data products by meaning
+(e.g., "geography_code" matches columns with that semantic meaning in both
+datasets, even if they have different VariableIds).
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `mode` | `CombineMode` |
+| `on` | `tuple[str, ...]` |
+| `series_labels` | `tuple[str, ...]` |
+
+### PresentationSpec
+
+How to present the query results.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `format` | `PresentationFormat` |
+| `units` | `str \| None` |
+
+## Validation
+
+### ValidationResult
+
+Result of validating a query plan.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `query_id` | `str` |
+| `status` | `ValidationStatus` |
+| `issues` | `tuple[Issue, ...]` |
+| `disclosures` | `tuple[Disclosure, ...]` |
+| `rewritten_plan` | `QueryPlan \| None` |
+
+### Issue
+
+A validation issue found during query plan validation.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `code` | `str` |
+| `severity` | `Severity` |
+| `message` | `str` |
+| `details` | `IssueDetails` |
+| `remediations` | `tuple[Remediation, ...]` |
+| `attributions` | `tuple[Attribution, ...]` |
+| `impacts` | `tuple[Impact, ...]` |
+| `remediation_actions` | `tuple[RemediationAction, ...]` |
+| `context_links` | `tuple[str, ...]` |
+
+### Disclosure
+
+A disclosure to show with query results.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `disclosure_type` | `str` |
+| `text` | `str` |
+
+### Remediation
+
+A suggested action to fix a validation issue.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `action` | `str` |
+| `label` | `str` |
+| `required_fields` | `tuple[str, ...]` |
+
+## Value Objects
+
+### GrainSpec
+
+Specification of what one row means in a data product.
+
+Defines the dimension keys (by VariableId) that form the grain of the data.
+Using VariableId rather than names provides stability when variables are renamed.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `keys` | `tuple[VariableId, ...]` |
+| `time_axis` | `VariableId \| None` |
+
+### EnumeratedDomain
+
+Domain with a fixed set of allowed values.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `values` | `tuple[str, ...]` |
+
+### RangeDomain
+
+Domain with a numeric range.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `min_value` | `float` |
+| `max_value` | `float` |
+
+### CodeListDomain
+
+Domain referencing an external code list.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `ref` | `str` |
+
+### VariableRef
+
+Reference to a variable in a data product.
+
+Used for numerator/denominator references in indicator definitions.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `data_product_id` | `DataProductId` |
+| `variable_id` | `VariableId` |
+
+### CatalogSnapshot
+
+A read-optimized snapshot of catalog data for validation.
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| `data_products` | `dict[DataProductId, DataProduct]` |
+| `indicator_definitions` | `dict[VariableId, IndicatorDefinition]` |
+| `datasets` | `dict[DatasetId, Dataset]` |
+
+## Enumerations
+
+### DataProductKind
+
+Kind of data product.
+
+| Value | Description |
+|-------|-------------|
+| `FACT` | FACT |
+| `INDICATOR` | INDICATOR |
+
+### VariableRole
+
+Role of a variable in a data product.
+
+| Value | Description |
+|-------|-------------|
+| `DIMENSION` | DIMENSION |
+| `MEASURE` | MEASURE |
+| `INDICATOR` | INDICATOR |
+
+### DataType
+
+Data type of a variable.
+
+| Value | Description |
+|-------|-------------|
+| `STRING` | STRING |
+| `INT` | INT |
+| `FLOAT` | FLOAT |
+| `DATE` | DATE |
+| `BOOL` | BOOL |
+
+### IndicatorType
+
+Type of indicator.
+
+| Value | Description |
+|-------|-------------|
+| `PERCENT` | PERCENT |
+| `RATE` | RATE |
+| `MEAN` | MEAN |
+| `INDEX` | INDEX |
+| `OTHER` | OTHER |
+
+### AggregationPolicy
+
+Policy for aggregating an indicator.
+
+| Value | Description |
+|-------|-------------|
+| `NOT_AGGREGATABLE` | NOT_AGGREGATABLE |
+| `RECOMPUTE` | RECOMPUTE |
+| `ALLOW_LIST` | ALLOW_LIST |
+
+### AggregationType
+
+Type of aggregation for metrics.
+
+| Value | Description |
+|-------|-------------|
+| `SUM` | SUM |
+| `AVG` | AVG |
+| `MIN` | MIN |
+| `MAX` | MAX |
+| `COUNT` | COUNT |
+| `NONE` | NONE |
+| `MEAN` | MEAN |
+
+### GeoType
+
+Type of geographic unit.
+
+| Value | Description |
+|-------|-------------|
+| `POLYGON` | POLYGON |
+| `POINT` | POINT |
+| `MIXED` | MIXED |
+
+### ReferenceSystemKind
+
+Kind of reference system.
+
+| Value | Description |
+|-------|-------------|
+| `GEOGRAPHY` | geography |
+| `FACILITY` | facility |
+| `ORGANIZATION` | organization |
+| `PROGRAM` | program |
+| `OTHER` | other |
+
+### CrosswalkMethod
+
+Method used for crosswalk between reference system versions.
+
+| Value | Description |
+|-------|-------------|
+| `ADMIN_MAP` | ADMIN_MAP |
+| `AREA_WEIGHTED` | AREA_WEIGHTED |
+| `POP_WEIGHTED` | POP_WEIGHTED |
+| `DIRECT` | DIRECT |
+
+### SuppressionEncoding
+
+How suppressed values are encoded.
+
+| Value | Description |
+|-------|-------------|
+| `NULL` | NULL |
+| `MASKED_VALUE` | MASKED_VALUE |
+| `SPECIAL_CODE` | SPECIAL_CODE |
+
+### WeightingMethod
+
+Method for weighting during recomputation.
+
+| Value | Description |
+|-------|-------------|
+| `POP_WEIGHTED` | POP_WEIGHTED |
+| `DENOM_WEIGHTED` | DENOM_WEIGHTED |
+| `NONE` | NONE |
+
+### ComparabilityLevel
+
+Level of comparability between datasets.
+
+| Value | Description |
+|-------|-------------|
+| `FULL` | FULL |
+| `PARTIAL` | PARTIAL |
+| `NONE` | NONE |
+
+### IncompatibilityReason
+
+Reasons why two datasets may not be comparable.
+
+| Value | Description |
+|-------|-------------|
+| `UNIVERSE_MISMATCH` | UNIVERSE_MISMATCH |
+| `UNIVERSE_UNDEFINED` | UNIVERSE_UNDEFINED |
+| `REFERENCE_SYSTEM_VERSION_MISMATCH` | REFERENCE_SYSTEM_VERSION_MISMATCH |
+| `REFERENCE_SYSTEM_MISMATCH` | REFERENCE_SYSTEM_MISMATCH |
+| `TIME_PERIOD_MISMATCH` | TIME_PERIOD_MISMATCH |
+| `METHODOLOGY_MISMATCH` | METHODOLOGY_MISMATCH |
+
+### PresentationFormat
+
+Format for presenting query results.
+
+| Value | Description |
+|-------|-------------|
+| `NUMBER` | NUMBER |
+| `SERIES` | SERIES |
+| `CHOROPLETH` | CHOROPLETH |
+| `TABLE` | TABLE |
+
+### QueryIntent
+
+The intent of the query (presentation type).
+
+| Value | Description |
+|-------|-------------|
+| `NUMBER` | NUMBER |
+| `CHART` | CHART |
+| `TABLE` | TABLE |
+| `MAP` | MAP |
+
+### FilterOp
+
+Filter operation type.
+
+| Value | Description |
+|-------|-------------|
+| `EQ` | EQ |
+| `IN` | IN |
+| `GT` | GT |
+| `GTE` | GTE |
+| `LT` | LT |
+| `LTE` | LTE |
+
+### CombineMode
+
+Mode for combining multiple operations.
+
+| Value | Description |
+|-------|-------------|
+| `COMPARE` | COMPARE |
+| `JOIN` | JOIN |
+
+### Severity
+
+Severity level for validation issues.
+
+Uses IntEnum to enable comparison/ordering.
+
+| Value | Description |
+|-------|-------------|
+| `ALLOW` | 0 |
+| `WARN` | 1 |
+| `REQUIRE_ACK` | 2 |
+| `BLOCK` | 3 |
+
+### ValidationStatus
+
+Overall status of a validation result.
+
+| Value | Description |
+|-------|-------------|
+| `ALLOW` | 0 |
+| `WARN` | 1 |
+| `REQUIRE_ACK` | 2 |
+| `BLOCK` | 3 |
+
+---
+
+## Validation Rules Reference
+*Source: generated/validation-rules.md*
+
+# Validation Rules
+
+> **Auto-generated from validation rule docstrings.** Do not edit manually.
+> Source: `scripts/generate_docs.py`
+
+These rules are enforced by the kernel during query validation.
+
+## IndicatorAggregationRule
+
+Rule that blocks aggregation of indicators unless recomputable.
+
+Indicators (percentages, rates, means) cannot be naively summed or averaged.
+They require either:
+- No aggregation (display as-is)
+- Recomputation from underlying numerator/denominator
+- Explicit allowed aggregations (rare cases like MIN/MAX)
+
+---
+
+## Aggregation Rules
+*Source: generated/aggregation-rules.md*
+
+# Aggregation Rules
+
+> **Auto-generated from domain enums.** Do not edit manually.
+> Source: `scripts/generate_docs.py`
+
+This document describes how different variable types can be aggregated.
+
+## Variable Roles
+
+| Role | Can Aggregate? | Safe Operations |
+|------|----------------|-----------------|
+| DIMENSION | No | GROUP BY only |
+| MEASURE | Yes | SUM, AVG, MIN, MAX, COUNT |
+| INDICATOR | Conditional | Depends on AggregationPolicy |
+
+## Aggregation Policies (for Indicators)
+
+| Policy | Meaning | Allowed Aggregations |
+|--------|---------|---------------------|
+| NOT_AGGREGATABLE | Cannot be aggregated at all | NONE only |
+| RECOMPUTE | Must be recomputed from numerator/denominator | Any (via recomputation) |
+| ALLOW_LIST | Only specific aggregations permitted | As specified in allowed_aggregations |
+
+## Why Indicators Cannot Be Summed
+
+Indicators are derived values (percentages, rates, means, indices).
+Naive aggregation produces nonsense:
+
+- **Summing percentages:** 50% + 60% = 110% (meaningless)
+- **Averaging rates:** Mean of rates ignores population weights
+- **Adding indices:** Composite indices don't decompose linearly
+
+The safe approach is to:
+
+1. Define the indicator's numerator and denominator
+2. Aggregate the numerator and denominator separately (both are measures)
+3. Recompute the indicator from the aggregated values
+
+This is what `AggregationPolicy.RECOMPUTE` enables.
+
+---
+
+## Examples
+*Source: generated/examples.md*
+
+# Executable Examples
+
+> **Auto-generated from YAML fixtures.** Do not edit manually.
+> Source: `scripts/generate_docs.py`
+
+These examples are validated by integration tests.
+If the code changes and examples break, the build fails.
+
+## Valid Patterns
+
+These queries pass validation and demonstrate correct usage.
+
+### indicator_no_aggregation
+
+**Query an indicator without aggregation (display as-is)**
+
+**What this teaches:**
+
+- Indicators can be safely queried with aggregation=NONE
+- NONE means "display the value at its stored grain"
+- This is always safe because no mathematical operation is performed
+- Use this when you want the pre-computed indicator values directly
+
+*Source: `examples/valid/indicator_no_aggregation.yaml`*
+
+### indicator_with_recompute
+
+**Aggregate an indicator that has a RECOMPUTE policy defined**
+
+**What this teaches:**
+
+- Indicators with RECOMPUTE policy can be aggregated
+- The system recomputes from numerator/denominator, not by summing the indicator
+- This is safe because employment_rate = employed / labor_force at any grain
+- Always define numerator_ref and denominator_ref for recomputable indicators
+
+*Source: `examples/valid/indicator_with_recompute.yaml`*
+
+### multiple_measures
+
+**Query multiple measures with different aggregations**
+
+**What this teaches:**
+
+- Multiple metrics can be requested in a single query
+- Each metric specifies its own aggregation type
+- SUM is typical for counts; MIN/MAX work for any numeric measure
+- All measures must belong to the same data product in a selection
+
+*Source: `examples/valid/multiple_measures.yaml`*
+
+### simple_measure_sum
+
+**Sum a measure (population count) grouped by geography**
+
+**What this teaches:**
+
+- Measures are numeric values that represent counts or quantities
+- Measures can be aggregated with SUM because they are additive
+- FACT data products contain raw measures that support direct aggregation
+- Dimensions (like geography_code) define how data is grouped
+
+*Source: `examples/valid/simple_measure_sum.yaml`*
+
+## Invalid Patterns (Rejected)
+
+These queries are rejected by validation. Each demonstrates a rule violation.
+
+### avg_indicator_not_aggregatable
+
+**Attempting to AVG an indicator with NOT_AGGREGATABLE policy**
+
+**Violation:** `INDICATOR_AGG_NOT_ALLOWED`
+
+**What this teaches:**
+
+- Indicators can be explicitly marked as NOT_AGGREGATABLE
+- This is used when no valid aggregation exists (e.g., survey weights)
+- Even "reasonable" aggregations like AVG are blocked
+- The only option is to query at the indicator's native grain (NONE)
+
+*Source: `examples/invalid/avg_indicator_not_aggregatable.yaml`*
+
+### mean_indicator_no_weighting
+
+**Attempting to compute MEAN on an indicator without recomputation**
+
+**Violation:** `INDICATOR_AGG_NOT_ALLOWED`
+
+**What this teaches:**
+
+- MEAN of indicators is as dangerous as SUM
+- Mean(50%, 60%) = 55%, but this ignores population weights
+- A geography with 1000 people should count more than one with 100
+- Use RECOMPUTE with proper denominator instead
+
+*Source: `examples/invalid/mean_indicator_no_weighting.yaml`*
+
+### sum_indicator_allow_list_mismatch
+
+**Attempting to SUM an indicator that only allows MIN/MAX**
+
+**Violation:** `INDICATOR_AGG_NOT_ALLOWED`
+
+**What this teaches:**
+
+- ALLOW_LIST policy restricts which aggregations are valid
+- The allowed_aggregations field specifies permitted operations
+- MIN and MAX are often safe for indicators (preserve relative ordering)
+- SUM is almost never valid for derived values
+
+*Source: `examples/invalid/sum_indicator_allow_list_mismatch.yaml`*
+
+### sum_indicator_no_definition
+
+**Attempting to SUM an indicator without an IndicatorDefinition**
+
+**Violation:** `INDICATOR_AGG_NOT_ALLOWED`
+
+**What this teaches:**
+
+- Indicators (rates, percentages, means) cannot be naively summed
+- Summing 50% + 60% does NOT give a meaningful 110%
+- Without an IndicatorDefinition, the system cannot recompute safely
+- Define numerator/denominator to enable safe aggregation
+
+*Source: `examples/invalid/sum_indicator_no_definition.yaml`*
+
+---
