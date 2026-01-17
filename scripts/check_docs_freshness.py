@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """Check if generated documentation is up to date.
 
-This script regenerates documentation and compares it to existing files.
-If there are differences, it exits with code 1 (for CI failure).
+This script:
+1. Regenerates documentation and compares it to existing files
+2. Validates that all links in llms.txt point to existing files
+
+If there are differences or broken links, it exits with code 1 (for CI failure).
 
 Usage:
     python scripts/check_docs_freshness.py
 
 Exit codes:
-    0 - All generated docs are up to date
-    1 - Generated docs need to be regenerated
+    0 - All checks pass
+    1 - Generated docs need to be regenerated or llms.txt has broken links
 """
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -29,6 +33,27 @@ def get_current_content() -> dict[str, str]:
         for path in GENERATED_DIR.glob("*.md"):
             content[path.name] = path.read_text()
     return content
+
+
+def check_llms_txt_links() -> list[str]:
+    """Verify all links in llms.txt point to existing files."""
+    llms_txt = ROOT / "llms.txt"
+    if not llms_txt.exists():
+        return ["llms.txt does not exist"]
+
+    errors = []
+    content = llms_txt.read_text()
+    # Extract markdown links: [text](path)
+    for match in re.finditer(r"\[([^\]]+)\]\(([^)]+)\)", content):
+        link_text = match.group(1)
+        link_path = match.group(2)
+        # Skip external URLs
+        if link_path.startswith(("http://", "https://", "mailto:")):
+            continue
+        target = ROOT / link_path
+        if not target.exists():
+            errors.append(f"  BROKEN: [{link_text}]({link_path})")
+    return errors
 
 
 def main() -> int:
@@ -63,6 +88,8 @@ def main() -> int:
         if name not in after:
             stale_files.append(f"  DELETED: {name}")
 
+    has_errors = False
+
     if stale_files:
         print("ERROR: Generated documentation is out of date!")
         print()
@@ -71,9 +98,26 @@ def main() -> int:
             print(f)
         print()
         print("Run 'python scripts/generate_docs.py' to update.")
+        has_errors = True
+
+    # Check llms.txt links
+    broken_links = check_llms_txt_links()
+    if broken_links:
+        if has_errors:
+            print()
+        print("ERROR: llms.txt has broken links!")
+        print()
+        print("Broken links:")
+        for link in broken_links:
+            print(link)
+        print()
+        print("Update llms.txt to fix broken links.")
+        has_errors = True
+
+    if has_errors:
         return 1
 
-    print("OK: All generated documentation is up to date.")
+    print("OK: All documentation checks passed.")
     return 0
 
 

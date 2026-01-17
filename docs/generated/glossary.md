@@ -366,6 +366,10 @@ A validation issue found during query plan validation.
 | `message` | `str` |
 | `details` | `IssueDetails` |
 | `remediations` | `tuple[Remediation, ...]` |
+| `attributions` | `tuple[Attribution, ...]` |
+| `impacts` | `tuple[Impact, ...]` |
+| `remediation_actions` | `tuple[RemediationAction, ...]` |
+| `context_links` | `tuple[str, ...]` |
 
 ### Disclosure
 
@@ -460,6 +464,7 @@ A read-optimized snapshot of catalog data for validation.
 |-------|------|
 | `data_products` | `dict[DataProductId, DataProduct]` |
 | `indicator_definitions` | `dict[VariableId, IndicatorDefinition]` |
+| `datasets` | `dict[DatasetId, Dataset]` |
 
 ## Enumerations
 
