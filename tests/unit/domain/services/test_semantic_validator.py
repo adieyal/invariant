@@ -49,6 +49,7 @@ from invariant.domain.model.semantic_dataset import (
 )
 from invariant.domain.model.validation import Disclosure, Severity, ValidationStatus
 from invariant.domain.services.semantic_validator import (
+    AdditivityRule,
     GeographyGrainRule,
     NameResolutionRule,
     SemanticCheck,
@@ -1186,6 +1187,402 @@ class TestTimeGrainRule:
     def test_implements_semantic_query_rule_protocol(self) -> None:
         """Test that TimeGrainRule implements the SemanticQueryRule protocol."""
         rule = TimeGrainRule()
+        # Check that the rule can be used where SemanticQueryRule is expected
+        assert hasattr(rule, "evaluate")
+        assert callable(rule.evaluate)
+
+        # Actually call it to verify the signature matches
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        # This should work without type errors
+        issues: list = rule.evaluate(query, catalog)
+        assert isinstance(issues, list)
+
+
+# Helper functions for AdditivityRule tests
+
+
+def _make_metric_with_additivity(
+    name: str,
+    dataset_name: str = "test_dataset",
+    additivity_type: AdditivityType = AdditivityType.ADDITIVE,
+    across_time: bool = True,
+    across_geo: bool = True,
+    rollup_policy: RollupPolicy = RollupPolicy.ALLOW,
+) -> DomainMetric:
+    """Create a simple metric with additivity constraints for testing."""
+    return DomainMetric.create_simple_agg(
+        name=name,
+        dataset_name=dataset_name,
+        expr="count",
+        agg=AggregationFunction.SUM,
+        additivity=Additivity(
+            type=additivity_type,
+            across_time=across_time,
+            across_geo=across_geo,
+            rollup_policy=rollup_policy,
+        ),
+    )
+
+
+def _make_ratio_metric(
+    name: str,
+    numerator: str = "count",
+    denominator: str = "total",
+) -> DomainMetric:
+    """Create a ratio metric for testing."""
+    return DomainMetric.create_ratio(
+        name=name,
+        numerator=numerator,
+        denominator=denominator,
+        additivity=Additivity(
+            type=AdditivityType.NON_ADDITIVE,
+            across_time=False,
+            across_geo=False,
+            rollup_policy=RollupPolicy.RECOMPUTE,
+        ),
+    )
+
+
+def _make_dataset_with_grain(
+    name: str,
+    geo_keys: list[str] | None = None,
+    time_keys: list[str] | None = None,
+    other_keys: list[str] | None = None,
+) -> SemanticDataset:
+    """Create a dataset with specified grain keys for testing."""
+    grain_keys = GrainKeys(
+        geo=geo_keys or [],
+        time=time_keys or [],
+        other=other_keys or [],
+    )
+    return SemanticDataset.create(
+        name=name,
+        physical_ref=PhysicalRef(schema="public", table=name),
+        kind=DatasetKind.FACT,
+        grain_keys=grain_keys,
+    )
+
+
+def _make_catalog_with_additivity(
+    metrics: list[DomainMetric] | None = None,
+    datasets: list[SemanticDataset] | None = None,
+) -> SemanticCatalog:
+    """Create a catalog for additivity testing."""
+    return SemanticCatalog.create(
+        metrics=metrics or [],
+        datasets=datasets or [],
+    )
+
+
+class TestAdditivityRule:
+    """Tests for AdditivityRule."""
+
+    def test_additive_metric_returns_no_issues(self) -> None:
+        """Test that an additive metric returns no issues."""
+        rule = AdditivityRule()
+        metric = _make_metric_with_additivity(
+            "population",
+            additivity_type=AdditivityType.ADDITIVE,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            geo_keys=["geo_code"],
+            other_keys=["category"],
+        )
+        catalog = _make_catalog_with_additivity(metrics=[metric], datasets=[dataset])
+        # Query only groups by geography, not by category - rollup attempted
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[
+                GroupBySpec(dimension="geography", attribute="code", level="province")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_no_rollup_returns_no_issues(self) -> None:
+        """Test that a query at the same grain returns no issues."""
+        rule = AdditivityRule()
+        metric = _make_metric_with_additivity(
+            "population",
+            additivity_type=AdditivityType.NON_ADDITIVE,
+            rollup_policy=RollupPolicy.FORBID,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            geo_keys=["geo_code"],
+        )
+        catalog = _make_catalog_with_additivity(metrics=[metric], datasets=[dataset])
+        # Query groups by geography - matches grain
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[
+                GroupBySpec(dimension="geography", attribute="code", level="ward")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_non_additive_metric_with_forbid_policy_returns_error(self) -> None:
+        """Test that a non-additive metric with FORBID policy returns error on rollup."""
+        rule = AdditivityRule()
+        metric = _make_metric_with_additivity(
+            "rate",
+            additivity_type=AdditivityType.NON_ADDITIVE,
+            rollup_policy=RollupPolicy.FORBID,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            geo_keys=["geo_code"],
+            time_keys=["date_col"],
+        )
+        catalog = _make_catalog_with_additivity(metrics=[metric], datasets=[dataset])
+        # Query has no group_by - full rollup
+        query = SemanticQueryRequest(metrics=["rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "FORBIDDEN_ADDITIVITY_ROLLUP"
+        assert issues[0].severity == Severity.BLOCK
+        assert "rate" in issues[0].message
+        assert "non-additive" in issues[0].message
+        assert issues[0].details["metric"] == "rate"
+        assert issues[0].details["additivity_type"] == "NON_ADDITIVE"
+        assert issues[0].details["rollup_policy"] == "FORBID"
+
+    def test_non_additive_metric_with_recompute_policy_returns_no_error(self) -> None:
+        """Test that a non-additive metric with RECOMPUTE policy returns no error."""
+        rule = AdditivityRule()
+        metric = _make_metric_with_additivity(
+            "rate",
+            additivity_type=AdditivityType.NON_ADDITIVE,
+            rollup_policy=RollupPolicy.RECOMPUTE,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            geo_keys=["geo_code"],
+            time_keys=["date_col"],
+        )
+        catalog = _make_catalog_with_additivity(metrics=[metric], datasets=[dataset])
+        # Query has no group_by - full rollup
+        query = SemanticQueryRequest(metrics=["rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_non_additive_metric_with_allow_policy_returns_no_error(self) -> None:
+        """Test that a non-additive metric with ALLOW policy returns no error."""
+        rule = AdditivityRule()
+        metric = _make_metric_with_additivity(
+            "rate",
+            additivity_type=AdditivityType.NON_ADDITIVE,
+            rollup_policy=RollupPolicy.ALLOW,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            geo_keys=["geo_code"],
+        )
+        catalog = _make_catalog_with_additivity(metrics=[metric], datasets=[dataset])
+        # Query has no group_by - full rollup
+        query = SemanticQueryRequest(metrics=["rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_ratio_metric_returns_no_issues_on_rollup(self) -> None:
+        """Test that ratio metrics return no issues (they recompute by default)."""
+        rule = AdditivityRule()
+        # Create the base metrics first for the ratio
+        count_metric = _make_metric_with_additivity("count")
+        total_metric = _make_metric_with_additivity("total")
+        ratio_metric = _make_ratio_metric(
+            "success_rate",
+            numerator="count",
+            denominator="total",
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            geo_keys=["geo_code"],
+            time_keys=["date_col"],
+        )
+        catalog = _make_catalog_with_additivity(
+            metrics=[count_metric, total_metric, ratio_metric],
+            datasets=[dataset],
+        )
+        # Query has no group_by - full rollup
+        query = SemanticQueryRequest(metrics=["success_rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        # Ratios never sum, they always recompute
+        assert len(issues) == 0
+
+    def test_semi_additive_metric_warns_on_time_rollup(self) -> None:
+        """Test that semi-additive metric warns when rolling up across time."""
+        rule = AdditivityRule()
+        # Balance is additive across geography but not across time
+        metric = _make_metric_with_additivity(
+            "balance",
+            additivity_type=AdditivityType.SEMI_ADDITIVE,
+            across_time=False,
+            across_geo=True,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            time_keys=["date_col"],
+        )
+        catalog = _make_catalog_with_additivity(metrics=[metric], datasets=[dataset])
+        # Query doesn't group by time - rolling up across time
+        query = SemanticQueryRequest(
+            metrics=["balance"],
+            group_by=[
+                GroupBySpec(dimension="geography", attribute="code", level="province")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "SEMI_ADDITIVE_TIME_ROLLUP"
+        assert issues[0].severity == Severity.WARN
+        assert "balance" in issues[0].message
+        assert "time" in issues[0].message
+        assert issues[0].details["metric"] == "balance"
+        assert issues[0].details["across_time"] is False
+
+    def test_semi_additive_metric_warns_on_geo_rollup(self) -> None:
+        """Test that semi-additive metric warns when rolling up across geography."""
+        rule = AdditivityRule()
+        # Metric is additive across time but not across geography
+        metric = _make_metric_with_additivity(
+            "local_index",
+            additivity_type=AdditivityType.SEMI_ADDITIVE,
+            across_time=True,
+            across_geo=False,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            geo_keys=["geo_code"],
+        )
+        catalog = _make_catalog_with_additivity(metrics=[metric], datasets=[dataset])
+        # Query doesn't group by geography - rolling up across geo
+        query = SemanticQueryRequest(
+            metrics=["local_index"],
+            group_by=[GroupBySpec(dimension="time", attribute="month", grain="MONTH")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "SEMI_ADDITIVE_GEO_ROLLUP"
+        assert issues[0].severity == Severity.WARN
+        assert "local_index" in issues[0].message
+        assert "geography" in issues[0].message
+        assert issues[0].details["metric"] == "local_index"
+        assert issues[0].details["across_geo"] is False
+
+    def test_semi_additive_metric_warns_on_both_dimensions(self) -> None:
+        """Test that semi-additive metric warns for both dimensions when applicable."""
+        rule = AdditivityRule()
+        # Metric is not additive across time or geography
+        metric = _make_metric_with_additivity(
+            "point_in_time_balance",
+            additivity_type=AdditivityType.SEMI_ADDITIVE,
+            across_time=False,
+            across_geo=False,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            geo_keys=["geo_code"],
+            time_keys=["date_col"],
+        )
+        catalog = _make_catalog_with_additivity(metrics=[metric], datasets=[dataset])
+        # Query has no group_by - rolling up across both
+        query = SemanticQueryRequest(metrics=["point_in_time_balance"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 2
+        codes = {issue.code for issue in issues}
+        assert codes == {"SEMI_ADDITIVE_TIME_ROLLUP", "SEMI_ADDITIVE_GEO_ROLLUP"}
+
+    def test_semi_additive_metric_no_warning_when_grouped_correctly(self) -> None:
+        """Test that semi-additive metric returns no warnings when grouped correctly."""
+        rule = AdditivityRule()
+        # Balance is additive across geography but not across time
+        metric = _make_metric_with_additivity(
+            "balance",
+            additivity_type=AdditivityType.SEMI_ADDITIVE,
+            across_time=False,
+            across_geo=True,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            time_keys=["date_col"],
+        )
+        catalog = _make_catalog_with_additivity(metrics=[metric], datasets=[dataset])
+        # Query groups by time - no time rollup
+        query = SemanticQueryRequest(
+            metrics=["balance"],
+            group_by=[GroupBySpec(dimension="time", attribute="month", grain="MONTH")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_unknown_metric_skipped(self) -> None:
+        """Test that unknown metrics are skipped (handled by NameResolutionRule)."""
+        rule = AdditivityRule()
+        catalog = _make_catalog_with_additivity()  # Empty catalog
+        query = SemanticQueryRequest(metrics=["unknown_metric"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_multiple_metrics_with_different_additivity(self) -> None:
+        """Test multiple metrics with different additivity constraints."""
+        rule = AdditivityRule()
+        additive_metric = _make_metric_with_additivity(
+            "population",
+            additivity_type=AdditivityType.ADDITIVE,
+        )
+        non_additive_metric = _make_metric_with_additivity(
+            "rate",
+            additivity_type=AdditivityType.NON_ADDITIVE,
+            rollup_policy=RollupPolicy.FORBID,
+        )
+        dataset = _make_dataset_with_grain(
+            "test_dataset",
+            geo_keys=["geo_code"],
+        )
+        catalog = _make_catalog_with_additivity(
+            metrics=[additive_metric, non_additive_metric],
+            datasets=[dataset],
+        )
+        # Query has no group_by - full rollup
+        query = SemanticQueryRequest(metrics=["population", "rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        # Only rate should have an issue
+        assert len(issues) == 1
+        assert issues[0].details["metric"] == "rate"
+
+    def test_implements_semantic_query_rule_protocol(self) -> None:
+        """Test that AdditivityRule implements the SemanticQueryRule protocol."""
+        rule = AdditivityRule()
         # Check that the rule can be used where SemanticQueryRule is expected
         assert hasattr(rule, "evaluate")
         assert callable(rule.evaluate)
