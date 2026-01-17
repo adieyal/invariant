@@ -102,5 +102,5 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/your-org/invariant
+      link: https://github.com/adieyal/invariant
       name: Invariant on GitHub

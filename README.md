@@ -175,4 +175,4 @@ This creates a Markdown-based data dictionary with:
 
 ## License
 
-TBD
+MIT License - see [LICENSE](LICENSE) for details.
