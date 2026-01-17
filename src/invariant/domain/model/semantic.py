@@ -29,8 +29,8 @@ class Universe:
     id: UniverseId
     label: str
     definition: str
-    inclusions: tuple[str, ...] = ()
-    exclusions: tuple[str, ...] = ()
+    inclusions: tuple[str, ...]
+    exclusions: tuple[str, ...]
 
     def __init__(
         self,
@@ -40,11 +40,11 @@ class Universe:
         inclusions: Sequence[str] | None = None,
         exclusions: Sequence[str] | None = None,
     ) -> None:
-        object.__setattr__(self, "id", id)
-        object.__setattr__(self, "label", label)
-        object.__setattr__(self, "definition", definition)
-        object.__setattr__(self, "inclusions", tuple(inclusions or []))
-        object.__setattr__(self, "exclusions", tuple(exclusions or []))
+        self.id = id
+        self.label = label
+        self.definition = definition
+        self.inclusions = tuple(inclusions or [])
+        self.exclusions = tuple(exclusions or [])
 
 
 @dataclass
@@ -75,7 +75,7 @@ class VariableSemantics:
     comparability_group: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class IndicatorDefinition:
     """Defines how an indicator is computed and can be aggregated.
 
@@ -87,11 +87,11 @@ class IndicatorDefinition:
     variable_id: VariableId
     indicator_type: IndicatorType
     aggregation_policy: AggregationPolicy
-    numerator_ref: VariableRef | None = None
-    denominator_ref: VariableRef | None = None
-    formula: str | None = None
-    allowed_aggregations: tuple[AggregationType, ...] = ()
-    weighting_method: WeightingMethod | None = None
+    numerator_ref: VariableRef | None
+    denominator_ref: VariableRef | None
+    formula: str | None
+    allowed_aggregations: tuple[AggregationType, ...]
+    weighting_method: WeightingMethod | None
 
     def __init__(
         self,

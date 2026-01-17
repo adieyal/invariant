@@ -148,15 +148,15 @@ class Disclosure:
     text: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class ValidationResult:
     """Result of validating a query plan."""
 
     query_id: str
     status: ValidationStatus
-    issues: tuple[Issue, ...] = ()
-    disclosures: tuple[Disclosure, ...] = ()
-    rewritten_plan: QueryPlan | None = None
+    issues: tuple[Issue, ...]
+    disclosures: tuple[Disclosure, ...]
+    rewritten_plan: QueryPlan | None
 
     def __init__(
         self,

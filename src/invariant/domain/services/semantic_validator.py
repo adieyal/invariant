@@ -55,8 +55,8 @@ class SemanticValidator:
         checks: Sequence[SemanticCheck],
         pack: RulesetPack,
     ) -> None:
-        object.__setattr__(self, "checks", tuple(checks))
-        object.__setattr__(self, "pack", pack)
+        self.checks = tuple(checks)
+        self.pack = pack
 
     def validate(self, plan: QueryPlan, catalog: CatalogSnapshot) -> ValidationResult:
         """Validate a query plan against the catalog using semantic checks.
