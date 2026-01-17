@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
+from invariant.domain.model.semantic_catalog import SemanticCatalog  # noqa: TC001
 from invariant.domain.model.validation import (
     Disclosure,
     Issue,
@@ -16,6 +17,7 @@ from invariant.domain.model.validation import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from invariant.application.dto.semantic_query import SemanticQueryRequest
     from invariant.domain.model.check_result import CheckResult
     from invariant.domain.model.query_plan import QueryPlan
     from invariant.domain.model.ruleset_pack import RulesetPack
@@ -113,3 +115,117 @@ class SemanticValidator:
         if max_severity == Severity.WARN:
             return ValidationStatus.WARN
         return ValidationStatus.ALLOW
+
+
+class SemanticQueryRule(Protocol):
+    """Protocol for validation rules that evaluate semantic queries.
+
+    Rules evaluate a SemanticQueryRequest against a SemanticCatalog
+    and return a list of issues found.
+    """
+
+    def evaluate(
+        self, query: SemanticQueryRequest, catalog: SemanticCatalog
+    ) -> list[Issue]:
+        """Evaluate the rule against the query and catalog.
+
+        Args:
+            query: The semantic query request to validate.
+            catalog: The semantic catalog containing all assets.
+
+        Returns:
+            A list of issues found (empty if no issues).
+        """
+        ...
+
+
+class NameResolutionRule:
+    """Validation rule that resolves metric, dimension, and attribute names.
+
+    Checks that all referenced names in a query can be resolved against
+    the semantic catalog and returns errors for unknown or ambiguous references.
+    """
+
+    def evaluate(
+        self, query: SemanticQueryRequest, catalog: SemanticCatalog
+    ) -> list[Issue]:
+        """Evaluate name resolution for the query.
+
+        Args:
+            query: The semantic query request to validate.
+            catalog: The semantic catalog containing all assets.
+
+        Returns:
+            A list of issues for unresolved names.
+        """
+        issues: list[Issue] = []
+
+        # Check metric names
+        for metric_name in query.metrics:
+            if catalog.get_metric(metric_name) is None:
+                issues.append(
+                    Issue(
+                        code="UNKNOWN_METRIC",
+                        severity=Severity.BLOCK,
+                        message=f"Unknown metric: '{metric_name}'",
+                        details={"metric": metric_name},
+                    )
+                )
+
+        # Check dimension and attribute names in group_by
+        for group_by in query.group_by:
+            dimension = catalog.get_dimension(group_by.dimension)
+            if dimension is None:
+                issues.append(
+                    Issue(
+                        code="UNKNOWN_DIMENSION",
+                        severity=Severity.BLOCK,
+                        message=f"Unknown dimension: '{group_by.dimension}'",
+                        details={"dimension": group_by.dimension},
+                    )
+                )
+            elif dimension.get_attribute(group_by.attribute) is None:
+                issues.append(
+                    Issue(
+                        code="UNKNOWN_ATTRIBUTE",
+                        severity=Severity.BLOCK,
+                        message=(
+                            f"Unknown attribute '{group_by.attribute}' "
+                            f"in dimension '{group_by.dimension}'"
+                        ),
+                        details={
+                            "dimension": group_by.dimension,
+                            "attribute": group_by.attribute,
+                        },
+                    )
+                )
+
+        # Check dimension and attribute names in filters
+        for filter_spec in query.filters:
+            dimension = catalog.get_dimension(filter_spec.dimension)
+            if dimension is None:
+                issues.append(
+                    Issue(
+                        code="UNKNOWN_DIMENSION",
+                        severity=Severity.BLOCK,
+                        message=f"Unknown dimension: '{filter_spec.dimension}'",
+                        details={"dimension": filter_spec.dimension},
+                    )
+                )
+            elif dimension.get_attribute(filter_spec.attribute) is None:
+                issues.append(
+                    Issue(
+                        code="UNKNOWN_ATTRIBUTE",
+                        severity=Severity.BLOCK,
+                        message=(
+                            f"Unknown attribute '{filter_spec.attribute}' "
+                            f"in dimension '{filter_spec.dimension}'"
+                        ),
+                        details={
+                            "dimension": filter_spec.dimension,
+                            "attribute": filter_spec.attribute,
+                        },
+                    )
+                )
+
+        return issues

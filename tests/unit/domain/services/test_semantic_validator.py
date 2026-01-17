@@ -1,8 +1,28 @@
 """Tests for SemanticCheck protocol and SemanticValidator."""
 
+from invariant.application.dto.semantic_query import (
+    FilterOp,
+    FilterSpec,
+    GroupBySpec,
+    SemanticQueryRequest,
+)
 from invariant.domain.model.check_result import CheckResult
+from invariant.domain.model.dimension import (
+    DataType,
+    Dimension,
+    DimensionAttribute,
+    SemanticType,
+)
 from invariant.domain.model.enums import AggregationType, PresentationFormat
 from invariant.domain.model.ids import DataProductId, VariableId
+from invariant.domain.model.metric import (
+    Additivity,
+    AdditivityType,
+    AggregationFunction,
+)
+from invariant.domain.model.metric import (
+    Metric as DomainMetric,
+)
 from invariant.domain.model.query_plan import (
     Metric,
     PresentationSpec,
@@ -12,8 +32,10 @@ from invariant.domain.model.query_plan import (
 )
 from invariant.domain.model.remediation_action import ActionType, RemediationAction
 from invariant.domain.model.ruleset_pack import RulesetPack
+from invariant.domain.model.semantic_catalog import SemanticCatalog
 from invariant.domain.model.validation import Disclosure, Severity, ValidationStatus
 from invariant.domain.services.semantic_validator import (
+    NameResolutionRule,
     SemanticCheck,
     SemanticValidator,
 )
@@ -269,3 +291,263 @@ class TestSemanticValidator:
 
         assert result.status == ValidationStatus.WARN
         assert len(result.issues) == 2
+
+
+# Helper functions for NameResolutionRule tests
+
+
+def _make_metric(name: str) -> DomainMetric:
+    """Create a simple metric for testing."""
+    return DomainMetric.create_simple_agg(
+        name=name,
+        dataset_name="test_dataset",
+        expr="count",
+        agg=AggregationFunction.SUM,
+        additivity=Additivity(type=AdditivityType.ADDITIVE),
+    )
+
+
+def _make_dimension(name: str, attributes: dict[str, str] | None = None) -> Dimension:
+    """Create a dimension for testing."""
+    if attributes is None:
+        attributes = {"code": "code_column"}
+    attrs = {
+        attr_name: DimensionAttribute(
+            expr=expr,
+            data_type=DataType.STRING,
+            semantic_type=SemanticType.CATEGORY,
+        )
+        for attr_name, expr in attributes.items()
+    }
+    return Dimension.create(name=name, attributes=attrs)
+
+
+def _make_catalog(
+    metrics: list[DomainMetric] | None = None,
+    dimensions: list[Dimension] | None = None,
+) -> SemanticCatalog:
+    """Create a catalog for testing."""
+    return SemanticCatalog.create(
+        metrics=metrics or [],
+        dimensions=dimensions or [],
+    )
+
+
+class TestNameResolutionRule:
+    """Tests for NameResolutionRule."""
+
+    def test_valid_metric_name_returns_no_issues(self) -> None:
+        """Test that a valid metric name returns no issues."""
+        rule = NameResolutionRule()
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_unknown_metric_name_returns_error(self) -> None:
+        """Test that an unknown metric name returns an error."""
+        rule = NameResolutionRule()
+        catalog = _make_catalog()  # Empty catalog
+        query = SemanticQueryRequest(metrics=["unknown_metric"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "UNKNOWN_METRIC"
+        assert issues[0].severity == Severity.BLOCK
+        assert "unknown_metric" in issues[0].message
+        assert issues[0].details["metric"] == "unknown_metric"
+
+    def test_multiple_unknown_metrics_return_multiple_errors(self) -> None:
+        """Test that multiple unknown metrics return multiple errors."""
+        rule = NameResolutionRule()
+        known_metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[known_metric])
+        query = SemanticQueryRequest(metrics=["population", "unknown1", "unknown2"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 2
+        metric_names = {issue.details["metric"] for issue in issues}
+        assert metric_names == {"unknown1", "unknown2"}
+
+    def test_valid_dimension_name_in_group_by_returns_no_issues(self) -> None:
+        """Test that a valid dimension name in group_by returns no issues."""
+        rule = NameResolutionRule()
+        metric = _make_metric("population")
+        dimension = _make_dimension("geography", {"code": "geo_code"})
+        catalog = _make_catalog(metrics=[metric], dimensions=[dimension])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="geography", attribute="code")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_unknown_dimension_name_in_group_by_returns_error(self) -> None:
+        """Test that an unknown dimension name in group_by returns an error."""
+        rule = NameResolutionRule()
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="unknown_dim", attribute="code")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "UNKNOWN_DIMENSION"
+        assert issues[0].severity == Severity.BLOCK
+        assert "unknown_dim" in issues[0].message
+        assert issues[0].details["dimension"] == "unknown_dim"
+
+    def test_unknown_attribute_name_in_group_by_returns_error(self) -> None:
+        """Test that an unknown attribute name in group_by returns an error."""
+        rule = NameResolutionRule()
+        metric = _make_metric("population")
+        dimension = _make_dimension("geography", {"code": "geo_code"})
+        catalog = _make_catalog(metrics=[metric], dimensions=[dimension])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="geography", attribute="unknown_attr")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "UNKNOWN_ATTRIBUTE"
+        assert issues[0].severity == Severity.BLOCK
+        assert "unknown_attr" in issues[0].message
+        assert "geography" in issues[0].message
+        assert issues[0].details["dimension"] == "geography"
+        assert issues[0].details["attribute"] == "unknown_attr"
+
+    def test_valid_dimension_and_attribute_in_filter_returns_no_issues(self) -> None:
+        """Test that valid dimension and attribute in filter returns no issues."""
+        rule = NameResolutionRule()
+        metric = _make_metric("population")
+        dimension = _make_dimension("geography", {"code": "geo_code"})
+        catalog = _make_catalog(metrics=[metric], dimensions=[dimension])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            filters=[
+                FilterSpec(
+                    dimension="geography",
+                    attribute="code",
+                    op=FilterOp.EQ,
+                    value="ZA",
+                )
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_unknown_dimension_name_in_filter_returns_error(self) -> None:
+        """Test that an unknown dimension name in filter returns an error."""
+        rule = NameResolutionRule()
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            filters=[
+                FilterSpec(
+                    dimension="unknown_dim",
+                    attribute="code",
+                    op=FilterOp.EQ,
+                    value="ZA",
+                )
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "UNKNOWN_DIMENSION"
+        assert issues[0].details["dimension"] == "unknown_dim"
+
+    def test_unknown_attribute_name_in_filter_returns_error(self) -> None:
+        """Test that an unknown attribute name in filter returns an error."""
+        rule = NameResolutionRule()
+        metric = _make_metric("population")
+        dimension = _make_dimension("geography", {"code": "geo_code"})
+        catalog = _make_catalog(metrics=[metric], dimensions=[dimension])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            filters=[
+                FilterSpec(
+                    dimension="geography",
+                    attribute="unknown_attr",
+                    op=FilterOp.EQ,
+                    value="ZA",
+                )
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "UNKNOWN_ATTRIBUTE"
+        assert issues[0].details["dimension"] == "geography"
+        assert issues[0].details["attribute"] == "unknown_attr"
+
+    def test_multiple_issues_aggregated(self) -> None:
+        """Test that multiple issues from different sources are aggregated."""
+        rule = NameResolutionRule()
+        metric = _make_metric("population")
+        dimension = _make_dimension("geography", {"code": "geo_code"})
+        catalog = _make_catalog(metrics=[metric], dimensions=[dimension])
+        query = SemanticQueryRequest(
+            metrics=["population", "unknown_metric"],
+            group_by=[GroupBySpec(dimension="unknown_dim", attribute="code")],
+            filters=[
+                FilterSpec(
+                    dimension="geography",
+                    attribute="unknown_attr",
+                    op=FilterOp.EQ,
+                    value="ZA",
+                )
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        # Should have 3 issues: unknown metric, unknown dimension, unknown attribute
+        assert len(issues) == 3
+        codes = {issue.code for issue in issues}
+        assert codes == {"UNKNOWN_METRIC", "UNKNOWN_DIMENSION", "UNKNOWN_ATTRIBUTE"}
+
+    def test_empty_query_with_only_valid_metric(self) -> None:
+        """Test a query with only metrics and no group_by or filters."""
+        rule = NameResolutionRule()
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_implements_semantic_query_rule_protocol(self) -> None:
+        """Test that NameResolutionRule implements the SemanticQueryRule protocol."""
+
+        rule = NameResolutionRule()
+        # Check that the rule can be used where SemanticQueryRule is expected
+        assert hasattr(rule, "evaluate")
+        assert callable(rule.evaluate)
+
+        # Actually call it to verify the signature matches
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        # This should work without type errors
+        issues: list = rule.evaluate(query, catalog)
+        assert isinstance(issues, list)
