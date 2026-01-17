@@ -1,5 +1,13 @@
 """Tests for validation value objects."""
 
+from new_wazi.domain.model.attribution import (
+    Attribution,
+    AttributionDimension,
+    AttributionSlice,
+)
+from new_wazi.domain.model.ids import VariableId
+from new_wazi.domain.model.impact import AffectedEntity, Impact, ImpactSeverity
+from new_wazi.domain.model.remediation_action import ActionType, RemediationAction
 from new_wazi.domain.model.validation import (
     Disclosure,
     Issue,
@@ -67,6 +75,142 @@ class TestIssue:
         )
         assert issue.details == {}
         assert issue.remediations == ()
+
+    def test_issue_has_default_empty_enrichments(self) -> None:
+        issue = Issue(
+            code="TEST",
+            severity=Severity.WARN,
+            message="Test issue",
+        )
+        assert issue.attributions == ()
+        assert issue.impacts == ()
+        assert issue.remediation_actions == ()
+        assert issue.context_links == ()
+
+    def test_create_issue_with_attributions(self) -> None:
+        var_id = VariableId.create()
+        dim = AttributionDimension(variable_id=var_id, name="age_group")
+        slice_ = AttributionSlice(dimension=dim, value="65+", contribution_score=0.82)
+        attribution = Attribution(slices=(slice_,), method="exact")
+
+        issue = Issue(
+            code="SMALL_CELL",
+            severity=Severity.WARN,
+            message="Small cell detected",
+            attributions=[attribution],
+        )
+
+        assert len(issue.attributions) == 1
+        assert issue.attributions[0].method == "exact"
+
+    def test_create_issue_with_impacts(self) -> None:
+        entity = AffectedEntity(
+            entity_type="INDICATOR",
+            entity_id="ind-123",
+            relation="depends_on",
+            summary="Indicator depends on this",
+            severity=ImpactSeverity.HIGH,
+        )
+        impact = Impact(affected_entities=(entity,))
+
+        issue = Issue(
+            code="DATASET_CHANGE",
+            severity=Severity.WARN,
+            message="Dataset change impacts indicators",
+            impacts=[impact],
+        )
+
+        assert len(issue.impacts) == 1
+        assert issue.impacts[0].has_impact is True
+
+    def test_create_issue_with_remediation_actions(self) -> None:
+        action = RemediationAction(
+            action_type=ActionType.APPLY_CROSSWALK,
+            description="Apply crosswalk",
+            parameters={"crosswalk_id": "cw-123"},
+        )
+
+        issue = Issue(
+            code="GEO_MISMATCH",
+            severity=Severity.REQUIRE_ACK,
+            message="Geography version mismatch",
+            remediation_actions=[action],
+        )
+
+        assert len(issue.remediation_actions) == 1
+        assert issue.remediation_actions[0].action_type == ActionType.APPLY_CROSSWALK
+
+    def test_create_issue_with_context_links(self) -> None:
+        issue = Issue(
+            code="INDICATOR_AGG",
+            severity=Severity.BLOCK,
+            message="Cannot aggregate indicator",
+            context_links=["docs/indicators.md#aggregation-rules"],
+        )
+
+        assert len(issue.context_links) == 1
+        assert "indicators.md" in issue.context_links[0]
+
+    def test_with_attribution_method(self) -> None:
+        issue = Issue(
+            code="TEST",
+            severity=Severity.WARN,
+            message="Test issue",
+        )
+
+        var_id = VariableId.create()
+        dim = AttributionDimension(variable_id=var_id, name="age_group")
+        slice_ = AttributionSlice(dimension=dim, value="65+", contribution_score=0.82)
+        attribution = Attribution(slices=(slice_,), method="exact")
+
+        new_issue = issue.with_attribution(attribution)
+
+        assert len(new_issue.attributions) == 1
+        assert new_issue.attributions[0].method == "exact"
+        # Original unchanged
+        assert len(issue.attributions) == 0
+
+    def test_with_impact_method(self) -> None:
+        issue = Issue(
+            code="TEST",
+            severity=Severity.WARN,
+            message="Test issue",
+        )
+
+        entity = AffectedEntity(
+            entity_type="INDICATOR",
+            entity_id="ind-123",
+            relation="depends_on",
+            summary="Depends on this",
+            severity=ImpactSeverity.HIGH,
+        )
+        impact = Impact(affected_entities=(entity,))
+
+        new_issue = issue.with_impact(impact)
+
+        assert len(new_issue.impacts) == 1
+        assert new_issue.impacts[0].has_impact is True
+        # Original unchanged
+        assert len(issue.impacts) == 0
+
+    def test_with_remediation_action_method(self) -> None:
+        issue = Issue(
+            code="TEST",
+            severity=Severity.WARN,
+            message="Test issue",
+        )
+
+        action = RemediationAction(
+            action_type=ActionType.ACK_ONLY,
+            description="Acknowledge and proceed",
+        )
+
+        new_issue = issue.with_remediation_action(action)
+
+        assert len(new_issue.remediation_actions) == 1
+        assert new_issue.remediation_actions[0].action_type == ActionType.ACK_ONLY
+        # Original unchanged
+        assert len(issue.remediation_actions) == 0
 
 
 class TestDisclosure:
