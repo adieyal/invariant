@@ -4,15 +4,47 @@ from datetime import date, datetime
 
 import pytest
 
+from invariant.domain.model.comparability_rules import (
+    ComparabilityPolicy,
+    ComparabilityRules,
+)
 from invariant.domain.model.data_product import DataProduct
 from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.enums import DataProductKind, DataType, VariableRole
+from invariant.domain.model.dimension import (
+    DataType,
+    Dimension,
+    DimensionAttribute,
+    SemanticType,
+)
+from invariant.domain.model.enums import DataProductKind, VariableRole
+from invariant.domain.model.geo_hierarchy import GeoHierarchy
 from invariant.domain.model.ids import (
     DataProductId,
     DatasetId,
     ReferenceSystemId,
     StudyId,
     VariableId,
+)
+from invariant.domain.model.materialization import (
+    Materialization,
+    MaterializationGrain,
+    MaterializationSource,
+    RefreshConfig,
+    RefreshStrategy,
+    SourceType,
+    StorageConfig,
+)
+from invariant.domain.model.metric import (
+    Additivity,
+    AdditivityType,
+    AggregationFunction,
+    Metric,
+)
+from invariant.domain.model.semantic_dataset import (
+    DatasetKind,
+    GrainKeys,
+    PhysicalRef,
+    SemanticDataset,
 )
 from invariant.domain.model.study import Study
 from invariant.domain.model.value_objects import GrainSpec
@@ -22,6 +54,7 @@ from tests.unit.application.fakes import (
     FakeCatalogStore,
     FakeClock,
     FakeIdGenerator,
+    FakeSemanticAssetStore,
 )
 
 
@@ -203,3 +236,265 @@ class TestFakeAuditLog:
         audit.record_acknowledgment(query_id, ["ISSUE_1"], user_id="user-1")
 
         assert audit.is_acknowledged(query_id) is True
+
+
+class TestFakeSemanticAssetStore:
+    @pytest.fixture
+    def store(self) -> FakeSemanticAssetStore:
+        return FakeSemanticAssetStore()
+
+    @pytest.fixture
+    def sample_dataset(self) -> SemanticDataset:
+        return SemanticDataset.create(
+            name="demographics",
+            physical_ref=PhysicalRef("public", "demographics"),
+            kind=DatasetKind.FACT,
+            grain_keys=GrainKeys(geo=["geo_level", "geo_code"]),
+        )
+
+    @pytest.fixture
+    def sample_dimension(self) -> Dimension:
+        return Dimension.create(
+            name="gender",
+            attributes={
+                "code": DimensionAttribute(
+                    "code", DataType.STRING, SemanticType.CATEGORY
+                ),
+                "label": DimensionAttribute(
+                    "label", DataType.STRING, SemanticType.CATEGORY
+                ),
+            },
+        )
+
+    @pytest.fixture
+    def sample_geo_hierarchy(self) -> GeoHierarchy:
+        return GeoHierarchy.create(
+            name="sa_admin",
+            levels=["country", "province", "municipality", "ward"],
+        )
+
+    @pytest.fixture
+    def sample_metric(self) -> Metric:
+        return Metric.create_simple_agg(
+            name="total_population",
+            dataset_name="demographics",
+            expr="population",
+            agg=AggregationFunction.SUM,
+            additivity=Additivity(type=AdditivityType.ADDITIVE),
+        )
+
+    @pytest.fixture
+    def sample_materialization(self) -> Materialization:
+        return Materialization.create(
+            name="pop_by_province",
+            source=MaterializationSource(SourceType.PROFILE),
+            dataset_name="demographics",
+            grain=MaterializationGrain(geo_level="province"),
+            metrics=["total_population"],
+            refresh=RefreshConfig(RefreshStrategy.MANUAL),
+            storage=StorageConfig("cache", "pop_by_province"),
+        )
+
+    def test_add_and_get_dataset(
+        self, store: FakeSemanticAssetStore, sample_dataset: SemanticDataset
+    ) -> None:
+        store.add_dataset(sample_dataset)
+        retrieved = store.get_dataset("demographics")
+        assert retrieved is not None
+        assert retrieved.name == "demographics"
+        assert retrieved.id == sample_dataset.id
+
+    def test_get_nonexistent_dataset_returns_none(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        result = store.get_dataset("nonexistent")
+        assert result is None
+
+    def test_add_and_get_dimension(
+        self, store: FakeSemanticAssetStore, sample_dimension: Dimension
+    ) -> None:
+        store.add_dimension(sample_dimension)
+        retrieved = store.get_dimension("gender")
+        assert retrieved is not None
+        assert retrieved.name == "gender"
+        assert retrieved.id == sample_dimension.id
+
+    def test_get_nonexistent_dimension_returns_none(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        result = store.get_dimension("nonexistent")
+        assert result is None
+
+    def test_add_and_get_geo_hierarchy(
+        self, store: FakeSemanticAssetStore, sample_geo_hierarchy: GeoHierarchy
+    ) -> None:
+        store.add_geo_hierarchy(sample_geo_hierarchy)
+        retrieved = store.get_geo_hierarchy("sa_admin")
+        assert retrieved is not None
+        assert retrieved.name == "sa_admin"
+        assert retrieved.id == sample_geo_hierarchy.id
+
+    def test_get_nonexistent_geo_hierarchy_returns_none(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        result = store.get_geo_hierarchy("nonexistent")
+        assert result is None
+
+    def test_add_and_get_metric(
+        self, store: FakeSemanticAssetStore, sample_metric: Metric
+    ) -> None:
+        store.add_metric(sample_metric)
+        retrieved = store.get_metric("total_population")
+        assert retrieved is not None
+        assert retrieved.name == "total_population"
+        assert retrieved.id == sample_metric.id
+
+    def test_get_nonexistent_metric_returns_none(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        result = store.get_metric("nonexistent")
+        assert result is None
+
+    def test_add_and_get_materialization(
+        self, store: FakeSemanticAssetStore, sample_materialization: Materialization
+    ) -> None:
+        store.add_materialization(sample_materialization)
+        retrieved = store.get_materialization("pop_by_province")
+        assert retrieved is not None
+        assert retrieved.name == "pop_by_province"
+        assert retrieved.id == sample_materialization.id
+
+    def test_get_nonexistent_materialization_returns_none(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        result = store.get_materialization("nonexistent")
+        assert result is None
+
+    def test_set_and_get_comparability_rules(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        rules = ComparabilityRules.create(
+            default_policy=ComparabilityPolicy.FORBID,
+            forbid_on_mismatch=["methodology_id"],
+        )
+        store.set_comparability_rules(rules)
+        retrieved = store.get_comparability_rules()
+        assert retrieved.default_policy == ComparabilityPolicy.FORBID
+        assert retrieved.id == rules.id
+
+    def test_get_comparability_rules_returns_default_when_not_set(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        rules = store.get_comparability_rules()
+        # Should return a default rules instance
+        assert rules is not None
+        assert rules.default_policy == ComparabilityPolicy.WARN
+
+    def test_load_catalog_returns_all_assets(
+        self,
+        store: FakeSemanticAssetStore,
+        sample_dataset: SemanticDataset,
+        sample_dimension: Dimension,
+        sample_geo_hierarchy: GeoHierarchy,
+        sample_metric: Metric,
+        sample_materialization: Materialization,
+    ) -> None:
+        store.add_dataset(sample_dataset)
+        store.add_dimension(sample_dimension)
+        store.add_geo_hierarchy(sample_geo_hierarchy)
+        store.add_metric(sample_metric)
+        store.add_materialization(sample_materialization)
+
+        catalog = store.load_catalog()
+
+        assert len(catalog.datasets) == 1
+        assert len(catalog.dimensions) == 1
+        assert len(catalog.geo_hierarchies) == 1
+        assert len(catalog.metrics) == 1
+        assert len(catalog.materializations) == 1
+        assert catalog.get_dataset("demographics") is not None
+        assert catalog.get_dimension("gender") is not None
+        assert catalog.get_geo_hierarchy("sa_admin") is not None
+        assert catalog.get_metric("total_population") is not None
+        assert catalog.get_materialization("pop_by_province") is not None
+
+    def test_load_catalog_includes_comparability_rules(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        rules = ComparabilityRules.create(default_policy=ComparabilityPolicy.FORBID)
+        store.set_comparability_rules(rules)
+
+        catalog = store.load_catalog()
+
+        assert catalog.comparability_rules is not None
+        assert catalog.comparability_rules.default_policy == ComparabilityPolicy.FORBID
+
+    def test_load_catalog_without_comparability_rules(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        catalog = store.load_catalog()
+        # Should be None if not configured
+        assert catalog.comparability_rules is None
+
+    def test_clear_removes_all_assets(
+        self,
+        store: FakeSemanticAssetStore,
+        sample_dataset: SemanticDataset,
+        sample_dimension: Dimension,
+        sample_metric: Metric,
+    ) -> None:
+        store.add_dataset(sample_dataset)
+        store.add_dimension(sample_dimension)
+        store.add_metric(sample_metric)
+
+        store.clear()
+
+        assert store.get_dataset("demographics") is None
+        assert store.get_dimension("gender") is None
+        assert store.get_metric("total_population") is None
+        catalog = store.load_catalog()
+        assert len(catalog.datasets) == 0
+        assert len(catalog.dimensions) == 0
+        assert len(catalog.metrics) == 0
+
+    def test_overwrite_asset_with_same_name(
+        self, store: FakeSemanticAssetStore
+    ) -> None:
+        dataset1 = SemanticDataset.create(
+            name="demographics",
+            physical_ref=PhysicalRef("public", "demographics_v1"),
+            kind=DatasetKind.FACT,
+            grain_keys=GrainKeys(geo=["geo_level"]),
+        )
+        dataset2 = SemanticDataset.create(
+            name="demographics",
+            physical_ref=PhysicalRef("public", "demographics_v2"),
+            kind=DatasetKind.FACT,
+            grain_keys=GrainKeys(geo=["geo_level"]),
+        )
+
+        store.add_dataset(dataset1)
+        store.add_dataset(dataset2)
+
+        retrieved = store.get_dataset("demographics")
+        assert retrieved is not None
+        # Should be the second one (overwritten)
+        assert retrieved.id == dataset2.id
+        assert retrieved.physical_ref.table == "demographics_v2"
+
+    def test_protocol_compliance(self, store: FakeSemanticAssetStore) -> None:
+        """Verify FakeSemanticAssetStore implements SemanticAssetStore protocol."""
+        from invariant.application.ports.semantic_asset_store import SemanticAssetStore
+
+        # Protocol compliance is verified by duck typing
+        # If this doesn't raise, the fake implements the protocol
+        def use_store(s: SemanticAssetStore) -> None:
+            s.load_catalog()
+            s.get_dataset("test")
+            s.get_dimension("test")
+            s.get_geo_hierarchy("test")
+            s.get_metric("test")
+            s.get_materialization("test")
+            s.get_comparability_rules()
+
+        use_store(store)  # Should not raise

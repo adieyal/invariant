@@ -20,7 +20,13 @@ from invariant.application.ports.query_engine import (
     QueryEngine,
     RawQueryResult,
 )
+from invariant.application.ports.semantic_asset_store import SemanticAssetStore
 from invariant.application.ports.suppression_engine import SuppressionEngine
+from invariant.domain.model.comparability_rules import (
+    ComparabilityRules,
+)
+from invariant.domain.model.dimension import Dimension  # noqa: TC001
+from invariant.domain.model.geo_hierarchy import GeoHierarchy  # noqa: TC001
 from invariant.domain.model.ids import (
     ConceptId,
     CrosswalkId,
@@ -32,6 +38,10 @@ from invariant.domain.model.ids import (
     UniverseId,
     VariableId,
 )
+from invariant.domain.model.materialization import Materialization  # noqa: TC001
+from invariant.domain.model.metric import Metric  # noqa: TC001
+from invariant.domain.model.semantic_catalog import SemanticCatalog
+from invariant.domain.model.semantic_dataset import SemanticDataset  # noqa: TC001
 from invariant.domain.model.validation import Disclosure, ValidationResult
 from invariant.domain.services.validator import CatalogSnapshot
 
@@ -421,3 +431,95 @@ class FakeSuppressionEngine(SuppressionEngine):
     def set_suppression_count(self, count: int) -> None:
         """Set the number of cells to report as suppressed."""
         self._suppression_count = count
+
+
+@dataclass
+class FakeSemanticAssetStore(SemanticAssetStore):
+    """In-memory fake semantic asset store for testing.
+
+    Explicitly implements the SemanticAssetStore protocol for type safety.
+    Provides helper methods for easy test setup.
+    """
+
+    _datasets: dict[str, SemanticDataset] = field(default_factory=dict)
+    _dimensions: dict[str, Dimension] = field(default_factory=dict)
+    _geo_hierarchies: dict[str, GeoHierarchy] = field(default_factory=dict)
+    _metrics: dict[str, Metric] = field(default_factory=dict)
+    _materializations: dict[str, Materialization] = field(default_factory=dict)
+    _comparability_rules: ComparabilityRules | None = None
+
+    def load_catalog(self) -> SemanticCatalog:
+        """Load the complete semantic catalog from in-memory storage."""
+        return SemanticCatalog(
+            datasets=list(self._datasets.values()),
+            dimensions=list(self._dimensions.values()),
+            geo_hierarchies=list(self._geo_hierarchies.values()),
+            metrics=list(self._metrics.values()),
+            materializations=list(self._materializations.values()),
+            comparability_rules=self._comparability_rules,
+        )
+
+    def get_dataset(self, name: str) -> SemanticDataset | None:
+        """Get a semantic dataset by name."""
+        return self._datasets.get(name)
+
+    def get_dimension(self, name: str) -> Dimension | None:
+        """Get a dimension by name."""
+        return self._dimensions.get(name)
+
+    def get_geo_hierarchy(self, name: str) -> GeoHierarchy | None:
+        """Get a geo hierarchy by name."""
+        return self._geo_hierarchies.get(name)
+
+    def get_metric(self, name: str) -> Metric | None:
+        """Get a metric by name."""
+        return self._metrics.get(name)
+
+    def get_materialization(self, name: str) -> Materialization | None:
+        """Get a materialization by name."""
+        return self._materializations.get(name)
+
+    def get_comparability_rules(self) -> ComparabilityRules:
+        """Get the comparability rules.
+
+        Returns:
+            The configured ComparabilityRules, or a default instance if not set.
+        """
+        if self._comparability_rules is None:
+            return ComparabilityRules.create()
+        return self._comparability_rules
+
+    # Helper methods for test setup
+
+    def add_dataset(self, dataset: SemanticDataset) -> None:
+        """Add a dataset to the store."""
+        self._datasets[dataset.name] = dataset
+
+    def add_dimension(self, dimension: Dimension) -> None:
+        """Add a dimension to the store."""
+        self._dimensions[dimension.name] = dimension
+
+    def add_geo_hierarchy(self, geo_hierarchy: GeoHierarchy) -> None:
+        """Add a geo hierarchy to the store."""
+        self._geo_hierarchies[geo_hierarchy.name] = geo_hierarchy
+
+    def add_metric(self, metric: Metric) -> None:
+        """Add a metric to the store."""
+        self._metrics[metric.name] = metric
+
+    def add_materialization(self, materialization: Materialization) -> None:
+        """Add a materialization to the store."""
+        self._materializations[materialization.name] = materialization
+
+    def set_comparability_rules(self, rules: ComparabilityRules) -> None:
+        """Set the comparability rules."""
+        self._comparability_rules = rules
+
+    def clear(self) -> None:
+        """Clear all stored assets."""
+        self._datasets.clear()
+        self._dimensions.clear()
+        self._geo_hierarchies.clear()
+        self._metrics.clear()
+        self._materializations.clear()
+        self._comparability_rules = None
