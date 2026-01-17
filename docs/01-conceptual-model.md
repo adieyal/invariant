@@ -18,20 +18,38 @@ A universe is not optional metadata; it is foundational.
 
 ---
 
-## Geography as a Reference System
+## Reference Systems
 
-Your `geography_code` column is not a variable in the same sense as `age` or `sex`.
-
-Model it as:
+A **Reference System** is any collection of identifiable units you can group data by. Your `geography_code` or `facility_id` column is not a variable in the same sense as `age` or `sex`—it's a reference into a unit system.
 
 | Concept | Description |
 |---------|-------------|
-| **Geographic Unit** | A polygon or point with identity and hierarchy |
-| **Geographic Reference System** | The catalogue of those units (states, LGAs, facilities) |
+| **Reference Unit** | An identifiable entity (geo area, facility, school, program, org) |
+| **Reference System** | The catalogue of those units with optional versioning |
+| **Reference System Version** | A snapshot of units valid for a time period |
+| **Crosswalk** | A mapping between versions (when units change) |
 
-**Key idea:** Geography indexes observations; it is not itself observed.
+**Key idea:** Reference systems index observations; they are not themselves observed.
 
-This matters when boundaries change or codes get reused.
+### Geography as a Specialized Reference System
+
+Geography is the most common reference system in Wazimap-style applications. It extends the base concept with:
+
+| Extension | Description |
+|-----------|-------------|
+| **Geometry Type** | `POLYGON` (choropleth), `POINT` (facilities), or `MIXED` |
+| **Hierarchy** | Parent-child relationships (country → province → district) |
+| **Map Presentation** | Hints for visualization (choropleth vs. marker maps) |
+
+**Crucially:** The kernel knows about geometry *types* for presentation hints, but never stores or processes actual shapes. Geometry storage and spatial operations belong outside the kernel.
+
+### Why This Matters
+
+This abstraction enables:
+- **Versioned boundaries:** When admin boundaries change, you track it
+- **Non-geo unit systems:** Facility registries, school networks, program hierarchies
+- **Unified crosswalk logic:** Same comparability rules work across all reference systems
+- **Code reuse prevention:** When codes get reassigned to new units
 
 ---
 
@@ -140,16 +158,18 @@ Without this, longitudinal analysis becomes interpretive fiction.
 
 ## Considerations for Long-Term Integrity
 
-### 1. Boundary Drift and Versioning
+### 1. Reference System Drift and Versioning
 
-Geographic units change:
-- Names change
-- Borders change
-- Codes get reused
+Reference units change over time:
+- Names change (geographic areas renamed, facilities rebranded)
+- Boundaries change (admin area splits/merges)
+- Codes get reused (old facility code assigned to new facility)
+- Units appear/disappear (new schools open, programs discontinued)
 
 You need:
-- Versioned geographies
+- Versioned reference systems
 - Explicit validity periods
+- Crosswalks between versions
 
 Otherwise historical comparisons rot quietly.
 
@@ -196,9 +216,10 @@ Variables need semantic identifiers, not just names.
 
 ### 6. Legitimate Aggregation Paths
 
-Not all dimensions aggregate cleanly across geography.
+Not all dimensions aggregate cleanly across reference systems.
 
 `Facilities → municipality` ≠ `population → municipality`
+`School enrollments → district` ≠ `program budgets → district`
 
 Aggregation rules must be declared, not assumed.
 

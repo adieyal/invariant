@@ -22,7 +22,7 @@ dataset = Dataset(
     id="census-2021-demographics",
     study_id="census-2021",
     grain=Grain(keys=["geography_id", "age_group", "sex"]),
-    geography_version_id="sa-geo-2021",
+    reference_system_version_id="sa-geo-2021",
 )
 
 # Register variables with their semantics
@@ -48,22 +48,35 @@ indicator = IndicatorDefinition(
 )
 ```
 
-### Registering Geography Versions
+### Registering Reference System Versions
 
 ```python
-# Geography systems evolve over time
-geo_2011 = GeographyVersion(
-    id="sa-geo-2011",
-    system_id="south-africa",
-    valid_period=DateRange(2011, 2015),
+# Reference systems (including geography) evolve over time
+# First, define the reference system
+geo_system = ReferenceSystem(
+    id="south-africa-admin",
+    name="South Africa Admin Boundaries",
+    kind=ReferenceSystemKind.GEOGRAPHY,
+)
+
+# Geography-specific profile (only for GEOGRAPHY kind)
+geo_profile = GeographySystemProfile(
+    reference_system_id="south-africa-admin",
+    geometry_type=GeometryType.POLYGON,
     levels=["country", "province", "district", "municipality", "ward"],
 )
 
-geo_2016 = GeographyVersion(
+# Versions track changes over time
+geo_2011 = ReferenceSystemVersion(
+    id="sa-geo-2011",
+    reference_system_id="south-africa-admin",
+    valid_period=DateRange(2011, 2015),
+)
+
+geo_2016 = ReferenceSystemVersion(
     id="sa-geo-2016",
-    system_id="south-africa",
+    reference_system_id="south-africa-admin",
     valid_period=DateRange(2016, 2021),
-    levels=["country", "province", "district", "municipality", "ward"],
 )
 
 # Crosswalk defines how to map between versions
@@ -72,6 +85,19 @@ crosswalk = Crosswalk(
     target_version_id="sa-geo-2016",
     mapping_type=MappingType.MANY_TO_MANY,
     coverage=Coverage.PARTIAL,  # Some 2011 wards split in 2016
+)
+
+# Non-geography example: facility registry
+facility_system = ReferenceSystem(
+    id="health-facilities-ng",
+    name="Nigeria Health Facility Registry",
+    kind=ReferenceSystemKind.FACILITY,
+)
+
+facility_v2023 = ReferenceSystemVersion(
+    id="hf-ng-2023",
+    reference_system_id="health-facilities-ng",
+    valid_period=DateRange(2023, None),
 )
 ```
 
@@ -284,7 +310,7 @@ assessment = comparability.assess(
 
 ## 5. Crosswalk Resolution
 
-### Geography Version Mismatch Detection
+### Reference System Version Mismatch Detection
 
 ```python
 query = QueryPlan(
@@ -292,8 +318,8 @@ query = QueryPlan(
         SelectOp(dataset_id="census-2011-demographics", variable_id="population_count"),
         SelectOp(dataset_id="census-2021-demographics", variable_id="population_count"),
     ],
-    combine=CombineOp.ALIGN_BY_GEOGRAPHY,
-    geography_level="ward",
+    combine=CombineOp.ALIGN_BY_REFERENCE_UNIT,
+    reference_level="ward",
 )
 
 result = validator.validate(query)
@@ -303,7 +329,7 @@ result = validator.validate(query)
 #     issues=[
 #         Issue(
 #             severity=Severity.ERROR,
-#             code="GEOGRAPHY_VERSION_MISMATCH",
+#             code="REFERENCE_SYSTEM_VERSION_MISMATCH",
 #             message="Cannot align: census-2011 uses sa-geo-2011, census-2021 uses sa-geo-2016",
 #         )
 #     ],

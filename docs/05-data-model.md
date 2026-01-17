@@ -36,8 +36,8 @@ The data model is split into:
 | `collection_start` | date | Collection period start (optional) |
 | `collection_end` | date | Collection period end (optional) |
 | `reference_date` | date | What date the data describes (optional) |
-| `geography_system_id` | UUID | FK → geography_system |
-| `geography_version_id` | UUID | FK → geography_version (optional) |
+| `reference_system_id` | UUID | FK → reference_system |
+| `reference_system_version_id` | UUID | FK → reference_system_version (optional) |
 | `universe_id` | UUID | FK → universe (optional) |
 | `quality_notes` | text | Quality caveats |
 
@@ -122,36 +122,49 @@ What makes an indicator safe.
 | `formula` | text | Formula (optional) |
 | `weighting_method` | enum | `POP_WEIGHTED` \| `DENOM_WEIGHTED` \| `NONE` (optional) |
 
-### geography_system
+### reference_system
+
+Base abstraction for any system of units you can group by.
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `geography_system_id` | UUID | Primary key |
-| `name` | text | e.g., "Nigeria Admin Boundaries" |
-| `type` | enum | `POLYGON` \| `POINT` \| `MIXED` |
+| `reference_system_id` | UUID | Primary key |
+| `name` | text | e.g., "Nigeria Admin Boundaries", "Health Facility Registry" |
+| `kind` | enum | `GEOGRAPHY` \| `FACILITY` \| `ORGANIZATION` \| `PROGRAM` \| `OTHER` |
 | `authority` | text | Who defines it |
+| `description` | text | Description (optional) |
 
-### geography_version
+### reference_system_version
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `geography_version_id` | UUID | Primary key |
-| `geography_system_id` | UUID | FK → geography_system |
-| `label` | text | e.g., "GADM 4.1", "NBS 2016 LGA" |
+| `reference_system_version_id` | UUID | Primary key |
+| `reference_system_id` | UUID | FK → reference_system |
+| `label` | text | e.g., "GADM 4.1", "NBS 2016 LGA", "Facility Registry 2023" |
 | `valid_from` | date | Validity start (optional) |
 | `valid_to` | date | Validity end (optional) |
 | `notes` | text | Notes |
 
-### geography_crosswalk
+### geography_system_profile
 
-For boundary changes.
+Geography-specific extensions. Only for reference systems where `kind = GEOGRAPHY`.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `reference_system_id` | UUID | PK + FK → reference_system |
+| `geometry_type` | enum | `POLYGON` \| `POINT` \| `MIXED` |
+| `levels` | jsonb | Hierarchy level names (optional), e.g., ["country", "province", "district"] |
+
+### crosswalk
+
+For mapping between reference system versions (boundary changes, registry updates, etc.).
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `crosswalk_id` | UUID | Primary key |
-| `from_version_id` | UUID | FK → geography_version |
-| `to_version_id` | UUID | FK → geography_version |
-| `method` | enum | `ADMIN_MAP` \| `AREA_WEIGHTED` \| `POP_WEIGHTED` |
+| `from_version_id` | UUID | FK → reference_system_version |
+| `to_version_id` | UUID | FK → reference_system_version |
+| `method` | enum | `ADMIN_MAP` \| `AREA_WEIGHTED` \| `POP_WEIGHTED` \| `DIRECT` |
 | `table_ref` | text | Where mapping lives |
 | `quality_notes` | text | Notes |
 
@@ -220,7 +233,7 @@ What one row means.
 { "type": "range", "min": 0, "max": 100 }
 
 // Code list reference
-{ "type": "codelist", "ref": "geography_system:nga_admin" }
+{ "type": "codelist", "ref": "reference_system:nga_admin" }
 ```
 
 ### SemanticBinding

@@ -18,6 +18,37 @@ A provider-agnostic analytics kernel for Wazimap-style exploration: it models da
 
 ---
 
+## Reference Systems Abstraction
+
+A **ReferenceSystem** is a system of "units" you can group by. The kernel cares about unit identifiers and versions, not shapes or physical attributes.
+
+### Core Concept
+
+| Property | Description |
+|----------|-------------|
+| Units | A set of identifiable entities (geo units, facilities, schools, programs, orgs) |
+| Versioning | Optional validity periods for the unit set |
+| Crosswalks | Optional mappings between versions |
+
+### GeographySystem Profile
+
+`GeographySystem` is a specialization of `ReferenceSystem` with geography-specific semantics:
+
+| Extension | Description |
+|-----------|-------------|
+| Geometry type | `POLYGON` \| `POINT` \| `MIXED` (for presentation hints) |
+| Hierarchy | Optional parent-child relationships between levels |
+| Map presentation | Choropleth vs point display semantics |
+
+**Crucially:** geometry itself stays out of the kernel. The kernel knows a geography has a type (polygon/point) for presentation purposes, but never stores or processes shapes.
+
+This design gives you:
+- The Wazimap kernel you want (geography is richly supported)
+- An escape hatch for non-geo unit systems later (facilities, schools, orgs)
+- Comparability and crosswalk logic that works across reference system types
+
+---
+
 ## The Constitution (Opinionated Business Rules)
 
 These are non-negotiable. If the kernel isn't strict here, it's pointless.
@@ -26,7 +57,8 @@ These are non-negotiable. If the kernel isn't strict here, it's pointless.
 
 The kernel owns definitions for:
 - Study, Dataset, DataProduct, Variable
-- GeographySystem, GeographyVersion, Crosswalk
+- ReferenceSystem, ReferenceSystemVersion, Crosswalk
+- GeographySystem (profile of ReferenceSystem with geo-specific semantics)
 - Universe, Concept
 - IndicatorDefinition, SuppressionPolicy
 
@@ -81,12 +113,12 @@ These interfaces belong in the application layer. Domain stays clean.
 |------|----------------|
 | `CatalogRepository` | Load/save catalog entities; provide snapshot |
 | `QueryExecutor` | Execute validated plan against some backend |
-| `CrosswalkProvider` | Given geo versions, supply mapping or report missing |
+| `CrosswalkProvider` | Given reference system versions, supply mapping or report missing |
 | `IndicatorEngine` | Given `IndicatorDefinition`, produce recomputation logic or rewrite plan |
 | `SuppressionEngine` | Apply suppression + attach disclosures |
 | `AuditLogger` | (Optional) Record query, issues, acknowledgments |
 
-No Postgres. No dbt. No tiles.
+No Postgres. No dbt. No tiles. No geometry.
 
 ---
 
@@ -125,18 +157,25 @@ Same kernel. Different rule packs.
 
 ### In Scope
 
-- Canonical domain model for Wazimap-like data exploration
+**Core kernel:**
+- Versioned reference systems + crosswalks
+- Semantic variables + safe aggregation/validation
 - Query planning + validation + disclosures
 - Comparability assessment
 - Extension points for crosswalks, suppression, indicator recomputation
 - Provider-agnostic execution contract + normalized results
+
+**Geography profile (built-in):**
+- Geometry type enums (polygon/point/mixed)
+- Choropleth/point map presentation formats
+- Optional hierarchy helpers
 
 ### Out of Scope (Infrastructure)
 
 The kernel must not choose or implement:
 
 - Storage engines (Postgres, BigQuery, DuckDB, parquet, OLAP cubes)
-- Geo formats & tile pipelines
+- Geo formats, tiling, rendering, polygon math, spatial storage
 - Auth, tenancy, caching
 - Job runners / orchestration (Celery, Airflow, dbt, cron)
 - UI, HTTP framework, GraphQL
@@ -151,6 +190,7 @@ If any of these appear in the business layer, scope has been violated:
 |------|--------|
 | Ingestion pipelines (ETL/ELT) beyond metadata definitions | OUT |
 | Schema inference, file parsing, OCR, scraping | OUT |
+| Geometry storage, polygon math, spatial queries | OUT |
 | Map rendering, tiling, styling, legend logic | OUT |
 | User management & permissions beyond `is_public` flags | OUT |
 | "Smart" auto-join discovery across datasets | OUT (postpone) |

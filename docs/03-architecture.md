@@ -32,7 +32,7 @@ This is metadata and rules that shadow Plane A.
 - Variable semantics (what "age_group" actually means)
 - Denominator definitions for indicators
 - Methodology / instrument references
-- Geography versioning
+- Reference system versioning (geography versions, facility registry versions, etc.)
 - Comparability constraints
 
 ### The Gate: Policy Engine for "Questionable Moves"
@@ -41,7 +41,7 @@ When someone tries to:
 - Compare across studies
 - Aggregate indicators
 - Mix different universe definitions
-- Trend across boundary versions
+- Trend across reference system versions (boundary changes, registry updates)
 
 You don't block by default—you either **warn**, **require acknowledgement**, or **require additional metadata**.
 
@@ -71,7 +71,7 @@ Create a **Comparability Profile** attached to datasets or variables:
 - Universe tags
 - Population constraints (age range, inclusion/exclusion rules)
 - Methodology tags (survey, administrative, modeled)
-- Geography version (boundary set + valid time range)
+- Reference system version (boundary set, facility registry version, etc. + valid time range)
 - Time semantics (reference date vs collection period)
 
 Comparisons become a join + rule check, not a philosophical debate.
@@ -148,7 +148,7 @@ Explicit list of "danger ops":
 1. Mixing data products
 2. Comparing indicators across datasets
 3. Aggregating indicators
-4. Trending across geography versions
+4. Trending across reference system versions (boundary changes, registry updates)
 5. Joining datasets with different universe tags
 
 Everything else stays frictionless.
