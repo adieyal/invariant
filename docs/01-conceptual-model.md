@@ -33,7 +33,7 @@ A **Reference System** is any collection of identifiable units you can group dat
 
 ### Geography as a Specialized Reference System
 
-Geography is the most common reference system in Wazimap-style applications. It extends the base concept with:
+Geography is the most common reference system in statistical data applications. It extends the base concept with:
 
 | Extension | Description |
 |-----------|-------------|

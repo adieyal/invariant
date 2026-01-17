@@ -2,9 +2,9 @@
 
 ## Problem Statement
 
-The Wazi kernel is concept-heavy. Documentation drift is inevitable when:
+The Invariant kernel is concept-heavy. Documentation drift is inevitable when:
 - Definitions live in prose (`docs/01-conceptual-model.md`, `docs/02-glossary.md`)
-- Behavior lives in code (`src/new_wazi/domain/model/`)
+- Behavior lives in code (`src/invariant/domain/model/`)
 - Examples are static and not validated
 
 ## Guiding Principle
@@ -16,9 +16,9 @@ The Wazi kernel is concept-heavy. Documentation drift is inevitable when:
 
 | Asset | Location | Role |
 |-------|----------|------|
-| Domain models | `src/new_wazi/domain/model/*.py` | Canonical definitions (frozen dataclasses) |
-| Enums | `src/new_wazi/domain/model/enums.py` | Semantic constraints |
-| Validation rules | `src/new_wazi/domain/services/validator.py` | Encoded bad practices |
+| Domain models | `src/invariant/domain/model/*.py` | Canonical definitions (frozen dataclasses) |
+| Enums | `src/invariant/domain/model/enums.py` | Semantic constraints |
+| Validation rules | `src/invariant/domain/services/validator.py` | Encoded bad practices |
 | Prose docs | `docs/*.md` | Explanatory (drift risk) |
 | Unit tests | `tests/unit/domain/model/` | Some executable examples |
 
@@ -168,7 +168,7 @@ Create `scripts/generate_docs.py` that extracts documentation from code.
 # scripts/generate_docs.py
 import inspect
 from pathlib import Path
-from new_wazi.domain.model import (
+from invariant.domain.model import (
     Study, Dataset, DataProduct, Variable, Universe,
     IndicatorDefinition, ReferenceSystem, Crosswalk
 )

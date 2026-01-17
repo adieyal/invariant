@@ -1,1 +1,1 @@
-"""Application layer for the Wazi analytics kernel."""
+"""Application layer for the Invariant analytics kernel."""

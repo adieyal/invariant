@@ -2,7 +2,7 @@
 
 ## 1. Feature Understanding
 
-**Summary**: Implement the application layer for the Wazi analytics kernel—ports, DTOs, use cases, services, and policies—that orchestrate domain operations while remaining provider-agnostic.
+**Summary**: Implement the application layer for the Invariant analytics kernel—ports, DTOs, use cases, services, and policies—that orchestrate domain operations while remaining provider-agnostic.
 
 **Actors**:
 - API consumers (dashboard UIs, CLI tools)
@@ -52,7 +52,7 @@
 ## 3. Package Structure
 
 ```
-src/new_wazi/application/
+src/invariant/application/
 ├── __init__.py
 ├── ports/
 │   ├── __init__.py

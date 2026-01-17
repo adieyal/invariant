@@ -1,1 +1,1 @@
-"""Integration tests for the Wazi analytics kernel."""
+"""Integration tests for the Invariant analytics kernel."""

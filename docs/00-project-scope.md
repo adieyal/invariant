@@ -1,12 +1,12 @@
 # Project Scope
 
-This document defines what the Wazi analytics kernel is (and isn't). Use it to evaluate whether work belongs in the kernel.
+This document defines what the Invariant analytics kernel is (and isn't). Use it to evaluate whether work belongs in the kernel.
 
 ---
 
 ## Purpose
 
-A provider-agnostic analytics kernel for Wazimap-style exploration: it models datasets, geographies, semantics, and query plans; validates comparability and aggregation; and returns normalized results with disclosures—while exposing extension points for stricter rules (universes, crosswalks, suppression, indicator recomputation).
+A provider-agnostic analytics kernel for statistical data exploration: it models datasets, geographies, semantics, and query plans; validates comparability and aggregation; and returns normalized results with disclosures—while exposing extension points for stricter rules (universes, crosswalks, suppression, indicator recomputation).
 
 ---
 
@@ -43,7 +43,7 @@ A **ReferenceSystem** is a system of "units" you can group by. The kernel cares 
 **Crucially:** geometry itself stays out of the kernel. The kernel knows a geography has a type (polygon/point) for presentation purposes, but never stores or processes shapes.
 
 This design gives you:
-- The Wazimap kernel you want (geography is richly supported)
+- Rich geography support (the most common use case)
 - An escape hatch for non-geo unit systems later (facilities, schools, orgs)
 - Comparability and crosswalk logic that works across reference system types
 

@@ -530,7 +530,7 @@ result = kernel.execute(validated_plan, executor=InMemoryExecutor())
 ### Minimal Profile (Prototyping)
 
 ```python
-kernel = WaziKernel(
+kernel = InvariantKernel(
     validation_rules=[
         # Only basic checks
         GrainValidationRule(),
@@ -547,7 +547,7 @@ kernel = WaziKernel(
 ### Standard Profile (Production)
 
 ```python
-kernel = WaziKernel(
+kernel = InvariantKernel(
     validation_rules=[
         GrainValidationRule(),
         MeasureTypeRule(),
@@ -566,7 +566,7 @@ kernel = WaziKernel(
 ### Research Profile (Maximum Rigor)
 
 ```python
-kernel = WaziKernel(
+kernel = InvariantKernel(
     validation_rules=[
         # All standard rules plus...
         RequireUniverseRule(),           # Universe must be explicit

@@ -1,4 +1,4 @@
-"""Data dictionary generator for Wazi catalogs.
+"""Data dictionary generator for Invariant catalogs.
 
 Generates human-readable documentation from catalog content.
 """

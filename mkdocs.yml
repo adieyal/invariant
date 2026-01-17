@@ -1,0 +1,47 @@
+site_name: Invariant Analytics Kernel
+site_description: Semantic validation layer for statistical data platforms
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Overview:
+    - Project Scope: 00-project-scope.md
+    - Conceptual Model: 01-conceptual-model.md
+    - Glossary: 02-glossary.md
+  - Architecture:
+    - Overview: 03-architecture.md
+    - Data Model: 05-data-model.md
+    - Application Layer: 06-application-layer.md
+    - API Contracts: 07-api-contracts.md
+  - Guides:
+    - Capability Matrix: 04-capability-matrix.md
+    - Capability Examples: 08-capability-examples.md
+  - Developer Guide:
+    - Getting Started: developer/index.md
+    - Quickstart: developer/quickstart.md
+    - Core Concepts: developer/concepts.md
+    - Architecture: developer/architecture.md
+    - Use Cases: developer/use-cases.md
+    - Validation Rules: developer/validation-rules.md
+    - Integration: developer/integrating.md
+    - CLI Patterns: developer/cli-patterns.md
+  - Reference:
+    - Glossary: generated/glossary.md
+    - Validation Rules: generated/validation-rules.md
+    - Aggregation Rules: generated/aggregation-rules.md
+    - Examples: generated/examples.md
+
+docs_dir: docs
+site_dir: site
+
+markdown_extensions:
+  - tables
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
