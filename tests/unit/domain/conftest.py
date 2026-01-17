@@ -1,0 +1,83 @@
+"""Shared test fixtures for domain tests."""
+
+from new_wazi.domain.model.data_product import DataProduct
+from new_wazi.domain.model.dataset import Dataset
+from new_wazi.domain.model.enums import DataProductKind, DataType, VariableRole
+from new_wazi.domain.model.ids import (
+    DataProductId,
+    DatasetId,
+    GeoSystemId,
+    GeoVersionId,
+    StudyId,
+    UniverseId,
+    VariableId,
+)
+from new_wazi.domain.model.value_objects import GrainSpec
+from new_wazi.domain.model.variable import Variable
+
+
+def make_dimension(name: str, dp_id: DataProductId) -> Variable:
+    """Helper to create a dimension variable."""
+    return Variable(
+        id=VariableId.create(),
+        data_product_id=dp_id,
+        name=name,
+        role=VariableRole.DIMENSION,
+        data_type=DataType.STRING,
+    )
+
+
+def make_measure(name: str, dp_id: DataProductId) -> Variable:
+    """Helper to create a measure variable."""
+    return Variable(
+        id=VariableId.create(),
+        data_product_id=dp_id,
+        name=name,
+        role=VariableRole.MEASURE,
+        data_type=DataType.INT,
+    )
+
+
+def make_indicator(name: str, dp_id: DataProductId) -> Variable:
+    """Helper to create an indicator variable."""
+    return Variable(
+        id=VariableId.create(),
+        data_product_id=dp_id,
+        name=name,
+        role=VariableRole.INDICATOR,
+        data_type=DataType.FLOAT,
+    )
+
+
+def make_data_product(
+    dp_id: DataProductId,
+    variables: list[Variable],
+    kind: DataProductKind = DataProductKind.FACT,
+) -> DataProduct:
+    """Helper to create a data product."""
+    dims = [v for v in variables if v.role == VariableRole.DIMENSION]
+    if not dims:
+        raise ValueError("make_data_product requires at least one dimension variable")
+    return DataProduct(
+        id=dp_id,
+        dataset_id=DatasetId.create(),
+        name="Test Product",
+        kind=kind,
+        grain=GrainSpec(keys=[d.id for d in dims]),
+        variables=variables,
+    )
+
+
+def make_dataset(
+    universe_id: UniverseId | None = None,
+    geo_version_id: GeoVersionId | None = None,
+) -> Dataset:
+    """Helper to create a dataset."""
+    return Dataset(
+        id=DatasetId.create(),
+        study_id=StudyId.create(),
+        name="Test Dataset",
+        geography_system_id=GeoSystemId.create(),
+        universe_id=universe_id,
+        geography_version_id=geo_version_id,
+    )
