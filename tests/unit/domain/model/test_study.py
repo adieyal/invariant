@@ -1,6 +1,6 @@
 """Tests for Study entity."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from new_wazi.domain.model.ids import StudyId
 from new_wazi.domain.model.study import Study
@@ -17,7 +17,7 @@ class TestStudy:
         assert study.owner_org == "National Health Ministry"
 
     def test_create_with_full_metadata(self) -> None:
-        created = datetime.now(UTC)
+        created = datetime.now(timezone.utc)  # noqa: UP017
         study = Study(
             id=StudyId.create(),
             name="NHW PHC Survey 2023",
@@ -35,13 +35,13 @@ class TestStudy:
         assert study.created_at == created
 
     def test_created_at_defaults_to_now(self) -> None:
-        before = datetime.now(UTC)
+        before = datetime.now(timezone.utc)  # noqa: UP017
         study = Study(
             id=StudyId.create(),
             name="Test Study",
             owner_org="Test Org",
         )
-        after = datetime.now(UTC)
+        after = datetime.now(timezone.utc)  # noqa: UP017
 
         assert study.created_at is not None
         assert before <= study.created_at <= after

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -24,4 +24,6 @@ class Study:
     methodology_summary: str | None = None
     instrument_ref: str | None = None
     license: str | None = None
-    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)  # noqa: UP017
+    )
