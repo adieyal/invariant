@@ -2,6 +2,8 @@
 
 A disciplined vocabulary for the data platform.
 
+## Core Concepts
+
 | Term | Definition |
 |------|------------|
 | **Universe** | The total population or phenomenon to which a dataset's values apply. |
@@ -26,3 +28,38 @@ A disciplined vocabulary for the data platform.
 | **Grain** | What one row means (e.g., geography × sex × age_group × year). |
 | **Crosswalk** | A mapping between two reference system versions (e.g., boundary changes, facility registry updates). |
 | **Suppression** | The hiding of small counts to protect privacy or prevent disclosure risk. |
+
+---
+
+## Semantic Enforcement
+
+| Term | Definition |
+|------|------------|
+| **Semantic Claim** | A statement about meaning that is true or false in context, can be checked, and has consequences if violated. Claims unify indicator rules, comparability, suppression, quality guarantees, and universe semantics. |
+| **Semantic Check** | A rule that evaluates one or more claims against a QueryPlan, Dataset, or DataProduct, producing a structured CheckResult. |
+| **Check Result** | The structured outcome of a semantic check: severity, message, attributions, impacts, remediation actions, and disclosures. |
+| **Severity** | The enforcement level for an issue: `ALLOW` (silent pass), `WARN` (visible disclaimer), `REQUIRE_ACK` (must acknowledge), `BLOCK` (cannot proceed). |
+| **Attribution** | Dimensionality diagnosis: identifies which segment (dimension value) caused or contributed to a problem. |
+| **Impact** | Meaning-level blast radius: what other entities (queries, indicators, datasets) would be affected by a change or violation. |
+| **Remediation Action** | A typed, bounded, auditable action that can resolve an issue. Examples: `REWRITE_PLAN`, `APPLY_CROSSWALK`, `ACK_ONLY`, `UPDATE_CATALOG`. |
+| **Disclosure** | A statement that must be shown to the user when results are returned (e.g., "Data suppressed for cells < 5"). |
+
+---
+
+## Policy & Configuration
+
+| Term | Definition |
+|------|------------|
+| **Ruleset Pack** | A versioned bundle that declares which checks are enabled, default severities, rewrite strategies, and required acknowledgments. Enables "same kernel, different rigor." |
+| **Deployment Profile** | A configuration mode for the kernel: minimal (prototyping), standard (production), strict (research/regulated). |
+| **Quality Rule** | A semantic guarantee about data quality (NOT_NULL, RANGE, ENUM, FRESHNESS). Definitions are in scope; ingestion-time checking is not. |
+| **Freshness Guarantee** | A claim that a dataset's data will be no more than N hours stale. The kernel validates against metadata provided via port. |
+
+---
+
+## Tool Contracts (AI/LLM Integration)
+
+| Term | Definition |
+|------|------------|
+| **Tool Contract** | A schema describing a semantic operation the kernel supports (name, parameters, returns). Used by AI agents or UIs to understand available actions. |
+| **Context Slice** | A compact, LLM-safe projection of kernel results (validation summary, indicator explanation, comparability report). Avoids bloated outputs. |

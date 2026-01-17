@@ -249,3 +249,206 @@ What one row means.
   }
 }
 ```
+
+---
+
+## Semantic Enforcement Layer
+
+These domain objects support executable semantics, runtime governance, and AI-ready operations.
+
+### semantic_claim
+
+A normalized statement about meaning that can be checked and has consequences if violated.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `claim_id` | UUID | Primary key |
+| `subject_type` | enum | `DATASET` \| `DATA_PRODUCT` \| `VARIABLE` \| `INDICATOR` \| `QUERY_PLAN` |
+| `subject_id` | UUID | FK to the subject entity |
+| `claim_type` | enum | `UNIVERSE` \| `UNIT` \| `GRAIN` \| `AGGREGATION_SAFETY` \| `COMPARABILITY` \| `SUPPRESSION` \| `QUALITY_GUARANTEE` \| `FRESHNESS` \| `DEFINITION` |
+| `parameters` | jsonb | Machine-readable payload for the claim |
+| `enforcement` | enum | `ALLOW` \| `WARN` \| `REQUIRE_ACK` \| `BLOCK` |
+| `evidence_refs` | jsonb | Optional policy/doc references for trust (optional) |
+
+**Note:** Claims may be explicit (authored) or derived (generated from existing entities like IndicatorDefinition).
+
+### quality_rule
+
+Semantic guarantee about data quality. Definitions are in scope; ingestion-time checking is not.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `rule_id` | UUID | Primary key |
+| `scope_type` | enum | `VARIABLE` \| `DATASET` \| `DATA_PRODUCT` |
+| `scope_id` | UUID | FK to the scoped entity |
+| `rule_type` | enum | `NOT_NULL` \| `RANGE` \| `ENUM` \| `FRESHNESS` \| `CONSISTENCY` |
+| `parameters` | jsonb | Rule-specific parameters |
+| `enforcement` | enum | `ALLOW` \| `WARN` \| `REQUIRE_ACK` \| `BLOCK` |
+
+### FreshnessGuarantee (Value Object)
+
+```json
+{
+  "max_staleness_hours": 24
+}
+```
+
+### FreshnessMetadata (DTO from port)
+
+```json
+{
+  "last_updated_at": "2024-01-15T10:30:00Z",
+  "checked_at": "2024-01-15T12:00:00Z"
+}
+```
+
+### Attribution (Value Object)
+
+Dimensionality diagnosis: which segment caused or contributed to a problem.
+
+```json
+{
+  "slices": [
+    {
+      "dimension": {"variable_id": "uuid", "name": "age_group"},
+      "value": "65+",
+      "contribution_score": 0.82,
+      "row_count": 3,
+      "note": "Small cell count"
+    }
+  ],
+  "method": "exact"  // "exact" | "sampled" | "heuristic" | "unavailable"
+}
+```
+
+### Impact (Value Object)
+
+Meaning-level blast radius: what breaks if something changes.
+
+```json
+{
+  "affected_entities": [
+    {
+      "entity_type": "INDICATOR",
+      "entity_id": "uuid",
+      "relation": "uses_as_numerator",
+      "summary": "Literacy rate indicator depends on this measure",
+      "severity": "HIGH"
+    },
+    {
+      "entity_type": "QUERY_PLAN",
+      "entity_id": "uuid",
+      "relation": "references",
+      "summary": "Active dashboard query",
+      "severity": "MEDIUM"
+    }
+  ]
+}
+```
+
+### RemediationAction (Value Object)
+
+Typed, bounded action to resolve an issue. Not free-form mutations.
+
+```json
+{
+  "action_type": "APPLY_CROSSWALK",  // REWRITE_PLAN | UPDATE_CATALOG | ACK_ONLY | APPLY_CROSSWALK
+  "description": "Apply 2020→2023 boundary crosswalk",
+  "parameters": {
+    "crosswalk_id": "uuid",
+    "method": "AREA_WEIGHTED"
+  },
+  "auditable": true
+}
+```
+
+### CheckResult (Value Object)
+
+Structured outcome of a semantic check.
+
+```json
+{
+  "passed": false,
+  "severity": "REQUIRE_ACK",
+  "code": "GEO_VERSION_MISMATCH",
+  "message": "Query combines 2020 and 2023 boundary versions",
+  "attributions": [...],
+  "impacts": [...],
+  "remediation_actions": [
+    {"action_type": "APPLY_CROSSWALK", ...},
+    {"action_type": "ACK_ONLY", "description": "Acknowledge mismatch and proceed"}
+  ],
+  "disclosures": [
+    {"code": "BOUNDARY_MISMATCH", "message": "Results combine different boundary versions"}
+  ]
+}
+```
+
+### RulesetPack (Configuration Object)
+
+Versioned bundle for "same kernel, different rigor."
+
+```json
+{
+  "id": "regulated",
+  "version": "1.2.0",
+  "enabled_checks": ["INDICATOR_AGGREGATION", "COMPARABILITY", "FRESHNESS", "SUPPRESSION"],
+  "severity_overrides": {
+    "FRESHNESS_VIOLATED": "BLOCK"
+  },
+  "allow_rewrites": true,
+  "require_ack_for": ["GEO_VERSION_MISMATCH", "UNIVERSE_CONFLICT"]
+}
+```
+
+---
+
+## Tool Contracts (AI/LLM Integration)
+
+These objects define semantic operations for AI agents and LLM-powered interfaces.
+
+### ToolContract
+
+Schema describing a kernel operation.
+
+```json
+{
+  "name": "validate_query",
+  "description": "Validate a query plan against catalog semantics",
+  "parameters": [
+    {"name": "plan", "type": "query_plan", "description": "The query plan to validate", "required": true},
+    {"name": "ruleset", "type": "string", "description": "Ruleset pack to use", "required": false, "enum_values": ["core", "public-dashboard", "regulated"]}
+  ],
+  "returns": "ValidationResult with issues, disclosures, and remediations",
+  "examples": [...]
+}
+```
+
+### ContextSlice (Projection)
+
+Compact, LLM-safe projections of kernel results.
+
+**Validation Summary:**
+```json
+{
+  "valid": false,
+  "issue_count": 3,
+  "blocking_issues": [{"code": "INDICATOR_AVG", "message": "Cannot average indicator"}],
+  "required_acknowledgments": [{"code": "GEO_MISMATCH", "message": "Boundary version mismatch"}],
+  "disclosures": ["Data suppressed for cells < 5"]
+}
+```
+
+**Indicator Explanation:**
+```json
+{
+  "id": "uuid",
+  "name": "Literacy Rate",
+  "definition": "Percentage of population aged 15+ who can read and write",
+  "formula": "literate_population / total_population_15plus * 100",
+  "aggregation_rule": "RECOMPUTE",
+  "can_average": false,
+  "numerator": "uuid",
+  "denominator": "uuid"
+}
+```

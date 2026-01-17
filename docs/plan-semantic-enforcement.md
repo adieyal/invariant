@@ -47,7 +47,7 @@ This plan covers the implementation of the semantic enforcement features determi
 
 ### 1.1 Attribution Model
 
-**File:** `src/new_wazi/domain/model/attribution.py` (NEW)
+**File:** `src/invariant/domain/model/attribution.py` (NEW)
 
 ```python
 @dataclass(frozen=True)
@@ -80,7 +80,7 @@ class Attribution:
 
 ### 1.2 Impact Model
 
-**File:** `src/new_wazi/domain/model/impact.py` (NEW)
+**File:** `src/invariant/domain/model/impact.py` (NEW)
 
 ```python
 class ImpactSeverity(Enum):
@@ -117,7 +117,7 @@ class Impact:
 
 ### 1.3 RemediationAction Model
 
-**File:** `src/new_wazi/domain/model/remediation_action.py` (NEW)
+**File:** `src/invariant/domain/model/remediation_action.py` (NEW)
 
 ```python
 class ActionType(Enum):
@@ -147,7 +147,7 @@ class RemediationAction:
 
 ### 1.4 Extend Issue with Optional Fields
 
-**File:** `src/new_wazi/domain/model/validation.py` (MODIFY)
+**File:** `src/invariant/domain/model/validation.py` (MODIFY)
 
 ```python
 @dataclass(frozen=True)
@@ -191,7 +191,7 @@ class Issue:
 
 ### 1.5 RulesetPack Model
 
-**File:** `src/new_wazi/domain/model/ruleset_pack.py` (NEW)
+**File:** `src/invariant/domain/model/ruleset_pack.py` (NEW)
 
 ```python
 @dataclass(frozen=True)
@@ -255,7 +255,7 @@ REGULATED_PACK = RulesetPack(
 
 ### 2.1 CheckResult Model
 
-**File:** `src/new_wazi/domain/model/check_result.py` (NEW)
+**File:** `src/invariant/domain/model/check_result.py` (NEW)
 
 ```python
 @dataclass(frozen=True)
@@ -294,7 +294,7 @@ class CheckResult:
 
 ### 2.2 SemanticCheck Protocol
 
-**File:** `src/new_wazi/domain/services/semantic_check.py` (NEW)
+**File:** `src/invariant/domain/services/semantic_check.py` (NEW)
 
 ```python
 class SemanticCheck(Protocol):
@@ -316,7 +316,7 @@ class SemanticCheck(Protocol):
 
 ### 2.3 Migrate Existing Rules to SemanticChecks
 
-**File:** `src/new_wazi/domain/services/checks/indicator_aggregation.py` (NEW)
+**File:** `src/invariant/domain/services/checks/indicator_aggregation.py` (NEW)
 
 Migrate `IndicatorAggregationRule` to new structure:
 
@@ -339,7 +339,7 @@ class IndicatorAggregationCheck:
 
 ### 2.4 SemanticValidator Service
 
-**File:** `src/new_wazi/domain/services/semantic_validator.py` (NEW)
+**File:** `src/invariant/domain/services/semantic_validator.py` (NEW)
 
 ```python
 class SemanticValidator:
@@ -384,7 +384,7 @@ class SemanticValidator:
 
 ### 3.1 FreshnessGuarantee Value Object
 
-**File:** `src/new_wazi/domain/model/quality.py` (NEW)
+**File:** `src/invariant/domain/model/quality.py` (NEW)
 
 ```python
 @dataclass(frozen=True)
@@ -407,7 +407,7 @@ class FreshnessMetadata:
 
 ### 3.2 Extend Dataset with Freshness
 
-**File:** `src/new_wazi/domain/model/dataset.py` (MODIFY)
+**File:** `src/invariant/domain/model/dataset.py` (MODIFY)
 
 ```python
 @dataclass
@@ -418,7 +418,7 @@ class Dataset:
 
 ### 3.3 Extend CatalogStore Port
 
-**File:** `src/new_wazi/application/ports/catalog_store.py` (MODIFY)
+**File:** `src/invariant/application/ports/catalog_store.py` (MODIFY)
 
 ```python
 class CatalogStore(Protocol):
@@ -434,7 +434,7 @@ class CatalogStore(Protocol):
 
 ### 3.4 FreshnessCheck Implementation
 
-**File:** `src/new_wazi/domain/services/checks/freshness.py` (NEW)
+**File:** `src/invariant/domain/services/checks/freshness.py` (NEW)
 
 ```python
 class FreshnessCheck:
@@ -491,7 +491,7 @@ class FreshnessCheck:
 
 ### 4.1 AttributionProvider Port
 
-**File:** `src/new_wazi/application/ports/attribution_provider.py` (NEW)
+**File:** `src/invariant/application/ports/attribution_provider.py` (NEW)
 
 ```python
 @dataclass(frozen=True)
@@ -530,7 +530,7 @@ class FakeAttributionProvider:
 
 ### 4.3 EnrichWithAttribution Use Case
 
-**File:** `src/new_wazi/application/use_cases/enrich_with_attribution.py` (NEW)
+**File:** `src/invariant/application/use_cases/enrich_with_attribution.py` (NEW)
 
 ```python
 ATTRIBUTABLE_ISSUES = frozenset({
@@ -588,7 +588,7 @@ class EnrichWithAttributionUseCase:
 
 ### 5.1 SemanticImpactAnalyzer Service
 
-**File:** `src/new_wazi/application/services/semantic_impact_analyzer.py` (NEW)
+**File:** `src/invariant/application/services/semantic_impact_analyzer.py` (NEW)
 
 ```python
 class SemanticImpactAnalyzer:
@@ -650,7 +650,7 @@ class SemanticImpactAnalyzer:
 
 ### 5.2 AnalyzeSemanticImpact Use Case
 
-**File:** `src/new_wazi/application/use_cases/analyze_semantic_impact.py` (NEW)
+**File:** `src/invariant/application/use_cases/analyze_semantic_impact.py` (NEW)
 
 ```python
 @dataclass(frozen=True)
@@ -702,7 +702,7 @@ class AnalyzeSemanticImpactUseCase:
 
 ### 6.1 ContextSliceProjector Service
 
-**File:** `src/new_wazi/application/services/context_slice_projector.py` (NEW)
+**File:** `src/invariant/application/services/context_slice_projector.py` (NEW)
 
 ```python
 class ContextSliceProjector:
@@ -768,7 +768,7 @@ class ContextSliceProjector:
 
 ### 6.2 ToolContract Model
 
-**File:** `src/new_wazi/domain/model/tool_contract.py` (NEW)
+**File:** `src/invariant/domain/model/tool_contract.py` (NEW)
 
 ```python
 @dataclass(frozen=True)
@@ -790,7 +790,7 @@ class ToolContract:
 
 ### 6.3 ToolRegistry Service
 
-**File:** `src/new_wazi/application/services/tool_registry.py` (NEW)
+**File:** `src/invariant/application/services/tool_registry.py` (NEW)
 
 ```python
 class ToolRegistry:
@@ -853,7 +853,7 @@ ToolRegistry.register(ToolContract(
 
 ### 6.4 ExecuteTool Use Case
 
-**File:** `src/new_wazi/application/use_cases/execute_tool.py` (NEW)
+**File:** `src/invariant/application/use_cases/execute_tool.py` (NEW)
 
 ```python
 @dataclass(frozen=True)
@@ -937,7 +937,7 @@ class ExecuteToolUseCase:
 
 ### 7.1 ValidatorFactory
 
-**File:** `src/new_wazi/domain/services/validator_factory.py` (NEW)
+**File:** `src/invariant/domain/services/validator_factory.py` (NEW)
 
 ```python
 class ValidatorFactory:
@@ -970,7 +970,7 @@ class ValidatorFactory:
 
 ### 7.2 Update ValidateQueryUseCase
 
-**File:** `src/new_wazi/application/use_cases/validate_query.py` (MODIFY)
+**File:** `src/invariant/application/use_cases/validate_query.py` (MODIFY)
 
 ```python
 class ValidateQueryUseCase:
@@ -1013,7 +1013,7 @@ class ValidateQueryUseCase:
 
 ### 8.1 Extended ValidationResultDTO
 
-**File:** `src/new_wazi/application/dto/validation_dto.py` (MODIFY)
+**File:** `src/invariant/application/dto/validation_dto.py` (MODIFY)
 
 ```python
 @dataclass(frozen=True)
@@ -1134,7 +1134,7 @@ class IssueDTO:
 ## Files to Create
 
 ```
-src/new_wazi/domain/model/
+src/invariant/domain/model/
   attribution.py          (NEW)
   impact.py               (NEW)
   remediation_action.py   (NEW)
@@ -1143,7 +1143,7 @@ src/new_wazi/domain/model/
   tool_contract.py        (NEW)
   quality.py              (NEW)
 
-src/new_wazi/domain/services/
+src/invariant/domain/services/
   semantic_check.py       (NEW)
   semantic_validator.py   (NEW)
   validator_factory.py    (NEW)
@@ -1157,37 +1157,37 @@ src/new_wazi/domain/services/
     universe_required.py  (NEW)
     crosswalk_required.py (NEW)
 
-src/new_wazi/application/ports/
+src/invariant/application/ports/
   attribution_provider.py (NEW)
 
-src/new_wazi/application/services/
+src/invariant/application/services/
   semantic_impact_analyzer.py   (NEW)
   context_slice_projector.py    (NEW)
   tool_registry.py              (NEW)
 
-src/new_wazi/application/use_cases/
+src/invariant/application/use_cases/
   analyze_semantic_impact.py    (NEW)
   enrich_with_attribution.py    (NEW)
   execute_tool.py               (NEW)
 
-src/new_wazi/application/dto/
+src/invariant/application/dto/
   context_slices.py             (NEW)
 ```
 
 ## Files to Modify
 
 ```
-src/new_wazi/domain/model/
+src/invariant/domain/model/
   validation.py           (extend Issue)
   dataset.py              (add freshness_guarantee)
 
-src/new_wazi/application/ports/
+src/invariant/application/ports/
   catalog_store.py        (add get_freshness_metadata)
 
-src/new_wazi/application/use_cases/
+src/invariant/application/use_cases/
   validate_query.py       (wire SemanticValidator)
 
-src/new_wazi/application/dto/
+src/invariant/application/dto/
   validation_dto.py       (extend IssueDTO)
 
 tests/unit/application/

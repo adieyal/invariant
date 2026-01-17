@@ -124,7 +124,7 @@
 ## 4. File Manifest
 
 ```
-src/new_wazi/
+src/invariant/
 ├── __init__.py
 └── domain/
     ├── __init__.py

@@ -5,26 +5,29 @@
 ## Package Layout
 
 ```
-new_wazi/
+invariant/
   application/
     ports/
-      catalog_store.py      # CRUD for catalog entities + snapshot
-      query_engine.py       # Execute validated plans
-      indicator_engine.py   # Recomputation logic
-      crosswalk_service.py  # Geography crosswalks
-      suppression_engine.py # Apply suppression policies
-      audit_log.py          # Record queries/acknowledgments
-      clock.py              # Time abstraction
-      id_gen.py             # ID generation
+      catalog_store.py        # CRUD for catalog entities + snapshot
+      query_engine.py         # Execute validated plans
+      indicator_engine.py     # Recomputation logic
+      crosswalk_service.py    # Geography crosswalks
+      suppression_engine.py   # Apply suppression policies
+      attribution_provider.py # Compute attributions (optional)
+      audit_log.py            # Record queries/acknowledgments
+      clock.py                # Time abstraction
+      id_gen.py               # ID generation
 
     dto/
       catalog_write.py      # Create/update requests
       catalog_read.py       # Read responses + documentation
       query_request.py      # Query building request
-      validation_dto.py     # Validation results
+      validation_dto.py     # Validation results (with attributions, impacts, remediations)
       results_dto.py        # Query execution results
+      context_slices.py     # LLM-safe projections
 
     use_cases/
+      # Catalog management
       upsert_catalog.py
       get_catalog.py
       get_catalog_docs_index.py   # List datasets/data products
@@ -32,22 +35,35 @@ new_wazi/
       get_data_product_doc.py     # Data product documentation
       get_variable_doc.py         # Variable documentation
       get_concept_doc.py          # Concept documentation
+
+      # Query lifecycle
       build_query_plan.py
       validate_query_plan.py
       acknowledge_validation.py
       execute_query.py
+
+      # Cross-dataset operations
       compare_datasets.py
       create_curated_indicator.py
+
+      # Semantic analysis (NEW)
+      analyze_semantic_impact.py  # What breaks if this changes?
+      enrich_with_attribution.py  # Attach dimensional attributions to issues
+      execute_tool.py             # Dispatch semantic tool calls (AI/LLM integration)
 
     services/               # Application services (orchestrators)
       plan_compiler.py      # Request → QueryPlan resolution
       result_normalizer.py  # Engine result → DTO formats
       rigor_pipeline.py     # Wires validator + rewriters + suppression
+      semantic_impact_analyzer.py  # Traverse catalog for impact analysis (NEW)
+      context_slice_projector.py   # Project results for LLM consumption (NEW)
+      tool_registry.py             # Registry of semantic tool contracts (NEW)
 
     policies/               # "Rigour packs" (configure rule sets)
       minimal.py            # Fast, permissive
       standard.py           # Production defaults
       strict.py             # Research/academic rigor
+      regulated.py          # Strict suppression + freshness enforcement (NEW)
 ```
 
 **Key principle:** `application/use_cases` are the only entry points your UI or API should call.
@@ -176,6 +192,58 @@ class IdGenerator(Protocol):
     def generate_dataset_id(self) -> DatasetId: ...
     def generate_query_id(self) -> str: ...
     # etc.
+```
+
+### AttributionProvider (NEW)
+
+Optional port for computing dimensional attributions. Default implementation returns empty attributions.
+
+```python
+@dataclass(frozen=True)
+class AttributionRequest:
+    """What the kernel asks for."""
+    issue_code: str
+    dataset_id: DatasetId
+    dimensions: tuple[AttributionDimension, ...]
+    filter_context: dict  # from query plan
+
+class AttributionProvider(Protocol):
+    """Optional port - adapters compute attributions from actual data."""
+
+    def compute_attribution(
+        self,
+        request: AttributionRequest,
+    ) -> Attribution:
+        """Compute attribution. Adapter decides how (SQL, pandas, etc.)."""
+        ...
+
+
+class NullAttributionProvider:
+    """Default: no attribution computation available."""
+
+    def compute_attribution(self, request: AttributionRequest) -> Attribution:
+        return Attribution(slices=(), method="unavailable")
+```
+
+**Scope boundary:** The interface is in scope. Actual computation (SQL queries, pandas aggregations) belongs in adapters.
+
+### CatalogStore Extensions (NEW)
+
+Extended to support freshness metadata:
+
+```python
+class CatalogStore(Protocol):
+    # ... existing methods ...
+
+    def get_freshness_metadata(
+        self,
+        dataset_id: DatasetId,
+    ) -> FreshnessMetadata | None:
+        """
+        Return freshness metadata if available.
+        Adapter determines how to obtain this (DB query, cache, etc.).
+        """
+        ...
 ```
 
 ---
@@ -337,6 +405,86 @@ class IdGenerator(Protocol):
 
 ---
 
+### UC14: AnalyzeSemanticImpact (NEW)
+
+**Purpose:** Determine what breaks if a catalog entity changes.
+
+**Input:**
+- `entity_type`: dataset, indicator, geography_version, universe
+- `entity_id`: ID of the entity
+
+**Output:**
+- `ImpactReportDTO`: affected entities with relation type, summary, and severity
+
+**Steps:**
+1. Load entity from CatalogStore
+2. Traverse catalog graph:
+   - For dataset: find dependent data products, indicators using it
+   - For indicator: find queries referencing it, data products containing it
+   - For geography_version: find datasets using it, potential crosswalk requirements
+   - For universe: find datasets with this universe, incompatible joins
+3. Score severity based on relation type
+4. Return structured impact report
+
+**Use case:** AI agents asking "what happens if I change this?" before making updates.
+
+---
+
+### UC15: EnrichWithAttribution (NEW)
+
+**Purpose:** Attach dimensional attributions to validation issues.
+
+**Input:**
+- `issues`: tuple of Issue objects from validation
+- `plan`: QueryPlan
+- `catalog`: CatalogSnapshot
+
+**Output:**
+- `issues`: same issues with attributions attached (where relevant)
+
+**Steps:**
+1. Filter issues that support attribution (SUPPRESSION_TRIGGERED, SMALL_CELL_WARNING, etc.)
+2. For each attributable issue:
+   - Get relevant dimensions from catalog
+   - Build AttributionRequest
+   - Call AttributionProvider.compute_attribution()
+   - Attach result to issue
+3. Return enriched issues
+
+**Note:** Uses optional AttributionProvider port. Default returns empty attributions.
+
+---
+
+### UC16: ExecuteTool (NEW)
+
+**Purpose:** Dispatch semantic tool calls from AI agents or LLM interfaces.
+
+**Input:**
+- `tool_name`: name of the tool (validate_query, analyze_impact, explain_indicator, check_comparability)
+- `params`: dict of parameters
+
+**Output:**
+- `ToolResult`: success/error with typed data
+
+**Steps:**
+1. Look up tool in ToolRegistry
+2. Validate params against ToolContract
+3. Dispatch to appropriate use case
+4. Wrap result in ToolResult
+5. Project via ContextSliceProjector if needed
+
+**Available tools:**
+| Tool | Maps To |
+|------|---------|
+| `validate_query` | ValidateQueryPlan |
+| `analyze_impact` | AnalyzeSemanticImpact |
+| `explain_indicator` | GetVariableDoc (with indicator focus) |
+| `check_comparability` | CompareDatasets |
+
+**Scope boundary:** This use case is in scope. HTTP/MCP transport is not.
+
+---
+
 ## Application Services
 
 ### PlanCompiler
@@ -363,6 +511,81 @@ Orchestrates the validation-to-execution chain:
 5. Execute
 6. Apply suppression
 7. Accumulate disclosures
+
+### SemanticImpactAnalyzer (NEW)
+
+Traverses catalog graph to determine impact of changes:
+
+```python
+class SemanticImpactAnalyzer:
+    def __init__(self, catalog_store: CatalogStore):
+        self._catalog = catalog_store
+
+    def analyze(
+        self,
+        entity_type: str,
+        entity_id: str,
+    ) -> ImpactReport:
+        """
+        Traverse catalog relationships to find affected entities.
+        No infrastructure assumptions - pure graph walking.
+        """
+        ...
+```
+
+**Relationships traversed:**
+- Dataset → DataProducts → Variables → IndicatorDefinitions
+- IndicatorDefinition → numerator/denominator refs
+- Dataset → universe, geography_version
+- Crosswalk → from_version, to_version
+
+### ContextSliceProjector (NEW)
+
+Projects kernel results into LLM-safe, bounded context:
+
+```python
+class ContextSliceProjector:
+    @staticmethod
+    def validation_summary(result: ValidationResult, max_issues: int = 10) -> dict:
+        """Compact summary for LLM consumption."""
+        ...
+
+    @staticmethod
+    def indicator_explanation(indicator: IndicatorDefinition) -> dict:
+        """LLM-friendly indicator explanation."""
+        ...
+
+    @staticmethod
+    def comparability_report(report: ComparabilityReport) -> dict:
+        """Compact comparability summary."""
+        ...
+
+    @staticmethod
+    def dataset_summary(dataset: Dataset, catalog: CatalogSnapshot) -> dict:
+        """Dataset overview for context."""
+        ...
+```
+
+**Design principle:** Avoid bloated outputs. Include only essential fields for the task at hand.
+
+### ToolRegistry (NEW)
+
+Registry of semantic tool contracts the kernel exposes:
+
+```python
+class ToolRegistry:
+    @staticmethod
+    def get_contracts() -> tuple[ToolContract, ...]:
+        """Return all available tool contracts."""
+        ...
+
+    @staticmethod
+    def get_contract(name: str) -> ToolContract | None:
+        """Look up a specific tool contract."""
+        ...
+```
+
+**Purpose:** AI agents and UIs can discover available operations without hardcoding.
 
 ---
 
@@ -419,4 +642,66 @@ STRICT_POLICY = Policy(
 )
 ```
 
+### Regulated (NEW)
+
+For deployments with strict governance requirements:
+
+```python
+REGULATED_PACK = RulesetPack(
+    id="regulated",
+    version="1.0.0",
+    enabled_checks=(
+        "GRAIN_VALIDATION",
+        "MEASURE_TYPE",
+        "INDICATOR_AGGREGATION",
+        "COMPARABILITY",
+        "UNIVERSE_REQUIRED",
+        "CROSSWALK_REQUIRED",
+        "FRESHNESS",
+        "SUPPRESSION",
+    ),
+    severity_overrides={
+        "FRESHNESS_VIOLATED": Severity.BLOCK,
+        "SUPPRESSION_VIOLATED": Severity.BLOCK,
+    },
+    allow_rewrites=True,
+    require_ack_for=(
+        "GEO_VERSION_MISMATCH",
+        "UNIVERSE_CONFLICT",
+        "PARTIAL_COMPARABILITY",
+    ),
+)
+```
+
 Same kernel. Different rule packs.
+
+---
+
+## RulesetPack Configuration (NEW)
+
+Ruleset packs are versioned bundles that configure validation behavior:
+
+```python
+@dataclass(frozen=True)
+class RulesetPack:
+    id: str              # "core", "public-dashboard", "regulated"
+    version: str         # semver
+    enabled_checks: tuple[str, ...]  # check codes
+    severity_overrides: dict[str, Severity] = field(default_factory=dict)
+    allow_rewrites: bool = True
+    require_ack_for: tuple[str, ...] = ()  # issue codes
+```
+
+**Benefits:**
+- Packs are data, not code (can be YAML/JSON)
+- Same kernel, different deployments
+- Version tracking for governance audits
+- Clear documentation of what's enforced
+
+**Built-in packs:**
+| Pack | Use Case |
+|------|----------|
+| `core` | Minimum viable validation |
+| `public-dashboard` | Suppression enforced, partial comparability requires ack |
+| `strict` | Full semantic validation, crosswalks mandatory |
+| `regulated` | Freshness + suppression blocking, full audit trail |

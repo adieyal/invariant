@@ -4,9 +4,11 @@
 
 ## Design Philosophy
 
-Build a **dashboard-first warehouse** with a **semantic layer** that can graduate from permissive to strict.
+Build a **dashboard-first warehouse** with a **semantic execution kernel** that can graduate from permissive to strict.
 
 **Opt-in rigor with guardrails that tighten when the user does dangerous things.**
+
+The kernel turns data meaning into machine-enforceable contracts that humans, queries, and AI agents must obey.
 
 The trap to avoid: building a "future-proof" semantic cathedral that no one uses.
 
@@ -152,3 +154,117 @@ Explicit list of "danger ops":
 5. Joining datasets with different universe tags
 
 Everything else stays frictionless.
+
+---
+
+## Semantic Enforcement Model
+
+The gate is implemented through **semantic claims** and **semantic checks**.
+
+### Semantic Claims
+
+A claim is a statement about meaning that:
+- Is true or false in context
+- Can be checked
+- Has consequences if violated
+
+Claims unify what were previously separate concepts:
+- Indicator aggregation rules
+- Comparability constraints
+- Suppression policies
+- Quality guarantees
+- Universe semantics
+
+Claims may be **explicit** (authored in catalog) or **derived** (generated from existing entities like IndicatorDefinition).
+
+### Semantic Checks
+
+A check evaluates one or more claims against a QueryPlan, Dataset, or DataProduct.
+
+Each check produces a **CheckResult** with:
+- Severity (ALLOW/WARN/REQUIRE_ACK/BLOCK)
+- Message (human-readable explanation)
+- Attributions (which segment caused the problem)
+- Impacts (what else would break)
+- Remediation Actions (what can fix it)
+- Disclosures (what user must see in results)
+
+### The Semantic Loop
+
+```
+QueryPlan
+    ↓
+[Load Claims from Catalog]
+    ↓
+[Run Semantic Checks]
+    ↓
+CheckResults
+    ↓
+[Enrich with Attributions] (optional, via port)
+    ↓
+[Analyze Impacts]
+    ↓
+ValidationResult
+    ↓
+[Acknowledge / Rewrite / Block]
+    ↓
+Execute or Reject
+```
+
+This single loop covers:
+- AI correctness (agents get structured feedback)
+- Governance (violations are explainable)
+- Quality (guarantees are enforced at query time)
+- Comparability (mismatches are detected)
+- Trust (disclosures are attached to results)
+- Automation safety (remediations are bounded)
+
+---
+
+## AI/LLM Integration
+
+The kernel exposes **tool contracts** that describe available semantic operations.
+
+### Tool Contracts
+
+A contract is a schema describing what an operation does:
+- Name and description
+- Parameters with types
+- Return type
+- Examples
+
+AI agents can:
+1. Discover available tools via ToolRegistry
+2. Call tools via ExecuteTool use case
+3. Receive structured results (not prose)
+4. Get compact context via ContextSliceProjector
+
+### Context Slices
+
+Results are projected into LLM-safe, bounded outputs:
+- Validation summaries (not full issue trees)
+- Indicator explanations (not full catalog dumps)
+- Comparability reports (not raw constraint graphs)
+
+This keeps context windows manageable and responses focused.
+
+### Remediation Actions
+
+AI agents can request changes via typed, bounded actions:
+- `REWRITE_PLAN` - Transform query to valid form
+- `APPLY_CROSSWALK` - Use a specific crosswalk
+- `ACK_ONLY` - Acknowledge risk and proceed
+- `UPDATE_CATALOG` - Modify catalog entity (audited)
+
+Actions are **not** free-form mutations. The kernel controls what's possible.
+
+### Scope Boundary
+
+| In Scope | Out of Scope |
+|----------|--------------|
+| Tool contracts (schemas) | HTTP/MCP transport |
+| ExecuteTool use case | JSON-RPC implementation |
+| ContextSliceProjector | WebSocket handlers |
+| RemediationAction types | AI model integration |
+
+The kernel defines *what tools exist* and *what they mean*. Transport is infrastructure.

@@ -1,0 +1,623 @@
+/* ==========================================================================
+   Invariant Analytics Kernel - Custom Theme
+   A clean, technical documentation style with strong visual hierarchy
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   CSS Custom Properties (Design Tokens)
+   -------------------------------------------------------------------------- */
+:root {
+  /* Primary palette - Deep navy with warm accents */
+  --inv-primary: #1a365d;
+  --inv-primary-light: #2c5282;
+  --inv-primary-dark: #0f2540;
+  /* Header colors (separate from primary for dark mode) */
+  --inv-header: #1a365d;
+  --inv-header-dark: #0f2540;
+
+  /* Accent - Warm amber for CTAs and highlights */
+  --inv-accent: #d69e2e;
+  --inv-accent-light: #ecc94b;
+  --inv-accent-dark: #b7791f;
+
+  /* Semantic colors */
+  --inv-success: #38a169;
+  --inv-warning: #dd6b20;
+  --inv-error: #c53030;
+  --inv-info: #3182ce;
+
+  /* Neutrals */
+  --inv-gray-50: #f7fafc;
+  --inv-gray-100: #edf2f7;
+  --inv-gray-200: #e2e8f0;
+  --inv-gray-300: #cbd5e0;
+  --inv-gray-400: #a0aec0;
+  --inv-gray-500: #718096;
+  --inv-gray-600: #4a5568;
+  --inv-gray-700: #2d3748;
+  --inv-gray-800: #1a202c;
+  --inv-gray-900: #171923;
+
+  /* Typography scale */
+  --inv-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --inv-font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+
+  /* Spacing */
+  --inv-space-xs: 0.25rem;
+  --inv-space-sm: 0.5rem;
+  --inv-space-md: 1rem;
+  --inv-space-lg: 1.5rem;
+  --inv-space-xl: 2rem;
+  --inv-space-2xl: 3rem;
+
+  /* Border radius */
+  --inv-radius-sm: 4px;
+  --inv-radius-md: 6px;
+  --inv-radius-lg: 8px;
+
+  /* Shadows */
+  --inv-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --inv-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --inv-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode overrides */
+[data-md-color-scheme="slate"] {
+  /* Primary for links/accents - light blue for contrast on dark bg */
+  --inv-primary: #63b3ed;
+  --inv-primary-light: #90cdf4;
+  /* Keep header colors dark */
+  --inv-header-dark: #0d1520;
+  --inv-header: #1a2332;
+  --inv-accent: #ecc94b;
+  --inv-accent-light: #f6e05e;
+  /* Dark mode grays - keep numeric meaning (higher = darker) */
+  --inv-gray-50: #f7fafc;
+  --inv-gray-100: #edf2f7;
+  --inv-gray-200: #e2e8f0;
+  --inv-gray-300: #cbd5e0;
+  --inv-gray-400: #a0aec0;
+  --inv-gray-500: #718096;
+  --inv-gray-600: #4a5568;
+  --inv-gray-700: #2d3748;
+  --inv-gray-800: #1a202c;
+  --inv-gray-900: #171923;
+  /* Semantic colors for dark mode */
+  --inv-text: #e2e8f0;
+  --inv-text-muted: #a0aec0;
+  --inv-surface: #1a202c;
+  --inv-surface-raised: #2d3748;
+}
+
+/* --------------------------------------------------------------------------
+   Material Theme Overrides
+   -------------------------------------------------------------------------- */
+
+/* Primary color scheme */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--inv-primary);
+  --md-primary-fg-color--light: var(--inv-primary-light);
+  --md-primary-fg-color--dark: var(--inv-primary-dark);
+  --md-accent-fg-color: var(--inv-accent);
+  --md-typeset-a-color: var(--inv-primary);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--inv-primary);
+  --md-accent-fg-color: var(--inv-accent);
+}
+
+/* --------------------------------------------------------------------------
+   Header & Logo Area
+   -------------------------------------------------------------------------- */
+
+/* Logo container with generous space */
+.md-header__button.md-logo {
+  padding: var(--inv-space-sm);
+  margin-right: var(--inv-space-md);
+}
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 2rem;
+  width: auto;
+  /* Brighten logo for visibility on dark header */
+  filter: brightness(0) invert(1);
+}
+
+/* Header styling */
+.md-header {
+  background: linear-gradient(135deg, var(--inv-header-dark) 0%, var(--inv-header) 100%);
+  box-shadow: var(--inv-shadow-md);
+}
+
+.md-header[data-md-state="shadow"] {
+  box-shadow: var(--inv-shadow-lg);
+}
+
+/* Site title styling */
+.md-header__title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   Typography - Optimized for Technical Documentation
+   -------------------------------------------------------------------------- */
+
+/* Base typography */
+.md-typeset {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--inv-gray-700);
+}
+
+[data-md-color-scheme="slate"] .md-typeset {
+  color: var(--inv-text);
+}
+
+/* Headings - Clear hierarchy */
+.md-typeset h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--inv-primary);
+  margin-top: 0;
+  margin-bottom: var(--inv-space-lg);
+  padding-bottom: var(--inv-space-md);
+  border-bottom: 3px solid var(--inv-accent);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  color: var(--inv-gray-50);
+  border-bottom-color: var(--inv-accent);
+}
+
+.md-typeset h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--inv-primary);
+  margin-top: var(--inv-space-2xl);
+  margin-bottom: var(--inv-space-md);
+  padding-bottom: var(--inv-space-sm);
+  border-bottom: 1px solid var(--inv-gray-200);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h2 {
+  color: var(--inv-gray-100);
+  border-bottom-color: var(--inv-gray-600);
+}
+
+.md-typeset h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--inv-gray-800);
+  margin-top: var(--inv-space-xl);
+  margin-bottom: var(--inv-space-sm);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h3 {
+  color: var(--inv-gray-100);
+}
+
+.md-typeset h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--inv-gray-700);
+  margin-top: var(--inv-space-lg);
+}
+
+/* Paragraphs - Comfortable reading */
+.md-typeset p {
+  margin-bottom: var(--inv-space-md);
+}
+
+/* Strong emphasis */
+.md-typeset strong {
+  font-weight: 600;
+  color: var(--inv-gray-800);
+}
+
+[data-md-color-scheme="slate"] .md-typeset strong {
+  color: var(--inv-gray-50);
+}
+
+/* --------------------------------------------------------------------------
+   Code Blocks - Technical clarity
+   -------------------------------------------------------------------------- */
+
+/* Inline code */
+.md-typeset code {
+  font-family: var(--inv-font-mono);
+  font-size: 0.875em;
+  padding: 0.15em 0.4em;
+  background: var(--inv-gray-100);
+  border-radius: var(--inv-radius-sm);
+  color: var(--inv-primary-dark);
+  border: 1px solid var(--inv-gray-200);
+}
+
+[data-md-color-scheme="slate"] .md-typeset code {
+  background: var(--inv-surface-raised);
+  color: var(--inv-accent-light);
+  border-color: var(--inv-gray-600);
+}
+
+/* Code blocks */
+.md-typeset pre {
+  border-radius: var(--inv-radius-lg);
+  box-shadow: var(--inv-shadow-sm);
+  border: 1px solid var(--inv-gray-200);
+  margin: var(--inv-space-lg) 0;
+}
+
+[data-md-color-scheme="slate"] .md-typeset pre {
+  border-color: var(--inv-gray-600);
+}
+
+.md-typeset pre > code {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  padding: var(--inv-space-lg);
+  border: none;
+  background: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   Tables - Clean data presentation
+   -------------------------------------------------------------------------- */
+
+.md-typeset table:not([class]) {
+  font-size: 0.9rem;
+  border-collapse: collapse;
+  border-radius: var(--inv-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--inv-shadow-sm);
+  border: 1px solid var(--inv-gray-200);
+  margin: var(--inv-space-lg) 0;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  border-color: var(--inv-gray-600);
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--inv-primary);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: var(--inv-space-md) var(--inv-space-lg);
+  text-align: left;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background: var(--inv-surface-raised);
+  color: var(--inv-text);
+}
+
+.md-typeset table:not([class]) td {
+  padding: var(--inv-space-md) var(--inv-space-lg);
+  border-bottom: 1px solid var(--inv-gray-100);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) td {
+  border-bottom-color: var(--inv-gray-600);
+}
+
+.md-typeset table:not([class]) tr:hover td {
+  background: var(--inv-gray-50);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:hover td {
+  background: var(--inv-surface-raised);
+}
+
+/* --------------------------------------------------------------------------
+   Admonitions - Callout boxes
+   -------------------------------------------------------------------------- */
+
+.md-typeset .admonition,
+.md-typeset details {
+  border-radius: var(--inv-radius-lg);
+  box-shadow: var(--inv-shadow-sm);
+  border: none;
+  border-left: 4px solid;
+  margin: var(--inv-space-lg) 0;
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  font-weight: 600;
+  padding: var(--inv-space-md) var(--inv-space-lg);
+}
+
+/* Note admonition */
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-left-color: var(--inv-info);
+  background: rgba(49, 130, 206, 0.08);
+}
+
+/* Warning admonition */
+.md-typeset .admonition.warning,
+.md-typeset details.warning {
+  border-left-color: var(--inv-warning);
+  background: rgba(221, 107, 32, 0.08);
+}
+
+/* Tip/success admonition */
+.md-typeset .admonition.tip,
+.md-typeset details.tip,
+.md-typeset .admonition.success {
+  border-left-color: var(--inv-success);
+  background: rgba(56, 161, 105, 0.08);
+}
+
+/* Danger/error admonition */
+.md-typeset .admonition.danger,
+.md-typeset details.danger {
+  border-left-color: var(--inv-error);
+  background: rgba(197, 48, 48, 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   Navigation - Clean sidebar
+   -------------------------------------------------------------------------- */
+
+/* Navigation sidebar */
+.md-nav--primary .md-nav__title {
+  font-weight: 600;
+  color: var(--inv-primary);
+}
+
+.md-nav__link {
+  font-size: 0.9rem;
+  transition: color 0.15s ease, padding-left 0.15s ease;
+}
+
+.md-nav__link:hover {
+  color: var(--inv-accent-dark);
+}
+
+.md-nav__link--active {
+  font-weight: 600;
+  color: var(--inv-primary);
+}
+
+/* Section labels in nav */
+.md-nav__item--nested > .md-nav__link {
+  font-weight: 600;
+  color: var(--inv-gray-600);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+/* --------------------------------------------------------------------------
+   Cards (for grid layouts)
+   -------------------------------------------------------------------------- */
+
+.md-typeset .grid.cards > ul > li,
+.md-typeset .grid.cards > ol > li {
+  border: 1px solid var(--inv-gray-200);
+  border-radius: var(--inv-radius-lg);
+  box-shadow: var(--inv-shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  padding: var(--inv-space-lg);
+}
+
+.md-typeset .grid.cards > ul > li:hover,
+.md-typeset .grid.cards > ol > li:hover {
+  box-shadow: var(--inv-shadow-md);
+  transform: translateY(-2px);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li,
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > ol > li {
+  border-color: var(--inv-gray-600);
+  background: var(--inv-surface-raised);
+}
+
+/* Card titles */
+.md-typeset .grid.cards > ul > li > p:first-child strong,
+.md-typeset .grid.cards > ol > li > p:first-child strong {
+  font-size: 1.1rem;
+  color: var(--inv-primary);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li > p:first-child strong,
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > ol > li > p:first-child strong {
+  color: var(--inv-accent);
+}
+
+/* --------------------------------------------------------------------------
+   Links
+   -------------------------------------------------------------------------- */
+
+.md-typeset a {
+  color: var(--inv-primary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-bottom-color 0.15s ease;
+}
+
+.md-typeset a:hover {
+  border-bottom-color: var(--inv-accent);
+}
+
+/* Arrow links */
+.md-typeset a[href$=".md"]:not(.md-nav__link)::after,
+.md-typeset a:has(> :last-child:empty):not(.md-nav__link) {
+  content: "";
+}
+
+/* --------------------------------------------------------------------------
+   Lists
+   -------------------------------------------------------------------------- */
+
+.md-typeset ul,
+.md-typeset ol {
+  margin-bottom: var(--inv-space-md);
+}
+
+.md-typeset li {
+  margin-bottom: var(--inv-space-xs);
+}
+
+/* Checklist styling */
+.md-typeset ul li:has(input[type="checkbox"]) {
+  list-style: none;
+  margin-left: -1.5em;
+}
+
+/* --------------------------------------------------------------------------
+   Blockquotes - For key principles
+   -------------------------------------------------------------------------- */
+
+.md-typeset blockquote {
+  border-left: 4px solid var(--inv-accent);
+  background: var(--inv-gray-50);
+  padding: var(--inv-space-md) var(--inv-space-lg);
+  margin: var(--inv-space-lg) 0;
+  border-radius: 0 var(--inv-radius-md) var(--inv-radius-md) 0;
+  font-style: italic;
+}
+
+[data-md-color-scheme="slate"] .md-typeset blockquote {
+  background: var(--inv-surface-raised);
+}
+
+.md-typeset blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Horizontal rules
+   -------------------------------------------------------------------------- */
+
+.md-typeset hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--inv-gray-300) 20%,
+    var(--inv-gray-300) 80%,
+    transparent
+  );
+  margin: var(--inv-space-2xl) 0;
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.md-footer {
+  background: var(--inv-gray-800);
+}
+
+.md-footer-meta {
+  background: var(--inv-gray-900);
+}
+
+/* --------------------------------------------------------------------------
+   Search
+   -------------------------------------------------------------------------- */
+
+.md-search__form {
+  border-radius: var(--inv-radius-lg);
+}
+
+.md-search__input {
+  font-size: 0.9rem;
+}
+
+/* --------------------------------------------------------------------------
+   Table of Contents (Right sidebar)
+   -------------------------------------------------------------------------- */
+
+.md-nav--secondary .md-nav__link {
+  font-size: 0.85rem;
+}
+
+.md-nav--secondary .md-nav__link--active {
+  color: var(--inv-accent-dark);
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive adjustments
+   -------------------------------------------------------------------------- */
+
+@media screen and (max-width: 76.1875em) {
+  .md-typeset h1 {
+    font-size: 1.75rem;
+  }
+
+  .md-typeset h2 {
+    font-size: 1.35rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Print styles
+   -------------------------------------------------------------------------- */
+
+@media print {
+  .md-typeset h1 {
+    color: black;
+    border-bottom-color: black;
+  }
+
+  .md-typeset h2,
+  .md-typeset h3 {
+    color: black;
+  }
+
+  .md-typeset a {
+    color: black;
+    text-decoration: underline;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Custom utility classes
+   -------------------------------------------------------------------------- */
+
+/* Concept highlight - for key terms */
+.concept {
+  background: linear-gradient(120deg, var(--inv-accent-light) 0%, var(--inv-accent-light) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 0.3em;
+  background-position: 0 88%;
+  padding: 0 0.1em;
+}
+
+/* Status badges */
+.badge {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: var(--inv-radius-sm);
+}
+
+.badge--block {
+  background: var(--inv-error);
+  color: white;
+}
+
+.badge--warn {
+  background: var(--inv-warning);
+  color: white;
+}
+
+.badge--allow {
+  background: var(--inv-success);
+  color: white;
+}

@@ -3,39 +3,70 @@ site_description: Semantic validation layer for statistical data platforms
 
 theme:
   name: material
+  custom_dir: docs/overrides
   features:
     - navigation.sections
     - navigation.expand
+    - navigation.top
+    - navigation.tabs
+    - navigation.indexes
     - content.code.copy
+    - content.code.annotate
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  palette:
+    # Light mode
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font: false  # Using custom fonts via CSS
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/custom.css
 
 nav:
   - Home: index.md
-  - Overview:
-    - Project Scope: 00-project-scope.md
-    - Conceptual Model: 01-conceptual-model.md
-    - Glossary: 02-glossary.md
-  - Architecture:
-    - Overview: 03-architecture.md
-    - Data Model: 05-data-model.md
-    - Application Layer: 06-application-layer.md
-    - API Contracts: 07-api-contracts.md
-  - Guides:
-    - Capability Matrix: 04-capability-matrix.md
-    - Capability Examples: 08-capability-examples.md
-  - Developer Guide:
-    - Getting Started: developer/index.md
+  - Getting Started:
     - Quickstart: developer/quickstart.md
     - Core Concepts: developer/concepts.md
-    - Architecture: developer/architecture.md
+  - Concepts:
+    - Conceptual Model: 01-conceptual-model.md
+    - Glossary: 02-glossary.md
+    - Architecture: 03-architecture.md
+  - Integration:
+    - developer/index.md
+    - Clean Architecture: developer/architecture.md
+    - Implementing Ports: developer/integrating.md
     - Use Cases: developer/use-cases.md
     - Validation Rules: developer/validation-rules.md
-    - Integration: developer/integrating.md
     - CLI Patterns: developer/cli-patterns.md
   - Reference:
     - Glossary: generated/glossary.md
     - Validation Rules: generated/validation-rules.md
     - Aggregation Rules: generated/aggregation-rules.md
     - Examples: generated/examples.md
+  - Internals:
+    - Project Scope: 00-project-scope.md
+    - Capability Matrix: 04-capability-matrix.md
+    - Data Model: 05-data-model.md
+    - Application Layer: 06-application-layer.md
+    - API Contracts: 07-api-contracts.md
+    - Capability Examples: 08-capability-examples.md
 
 docs_dir: docs
 site_dir: site
@@ -43,5 +74,33 @@ site_dir: site
 markdown_extensions:
   - tables
   - admonition
-  - pymdownx.highlight
-  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - def_list
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/your-org/invariant
+      name: Invariant on GitHub

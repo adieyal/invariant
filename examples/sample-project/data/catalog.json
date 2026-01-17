@@ -1,0 +1,196 @@
+{
+  "studies": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "South Africa Census 2021",
+      "owner_org": "Statistics South Africa",
+      "description": "Decennial population and housing census",
+      "methodology_summary": "Full enumeration of all households",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "name": "Quarterly Labour Force Survey 2023",
+      "owner_org": "Statistics South Africa",
+      "description": "Quarterly survey of employment and unemployment",
+      "methodology_summary": "Stratified random sample of 30,000 households",
+      "license": "CC-BY-4.0"
+    }
+  ],
+  "universes": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "name": "All Residents",
+      "definition": "All persons resident in South Africa at the time of enumeration",
+      "inclusions": ["Citizens", "Permanent residents", "Temporary residents present on census night"],
+      "exclusions": ["Diplomatic personnel", "Foreign military"]
+    },
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440002",
+      "name": "Working Age Population",
+      "definition": "Persons aged 15-64 years",
+      "inclusions": ["All residents aged 15-64"],
+      "exclusions": ["Persons under 15", "Persons 65 and over"]
+    }
+  ],
+  "reference_systems": [
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440001",
+      "name": "South Africa Admin Boundaries",
+      "kind": "geography",
+      "authority": "Statistics South Africa"
+    }
+  ],
+  "reference_system_versions": [
+    {
+      "id": "880e8400-e29b-41d4-a716-446655440001",
+      "reference_system_id": "770e8400-e29b-41d4-a716-446655440001",
+      "name": "2021 Boundaries",
+      "valid_from": "2021-01-01",
+      "valid_to": null
+    }
+  ],
+  "datasets": [
+    {
+      "id": "990e8400-e29b-41d4-a716-446655440001",
+      "study_id": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "Census 2021 Demographics",
+      "description": "Population by geography, age, and sex",
+      "reference_date": "2021-10-10",
+      "collection_start": "2021-10-01",
+      "collection_end": "2021-10-31",
+      "reference_system_id": "770e8400-e29b-41d4-a716-446655440001",
+      "reference_system_version_id": "880e8400-e29b-41d4-a716-446655440001",
+      "universe_id": "660e8400-e29b-41d4-a716-446655440001"
+    },
+    {
+      "id": "990e8400-e29b-41d4-a716-446655440002",
+      "study_id": "550e8400-e29b-41d4-a716-446655440002",
+      "name": "QLFS 2023 Q3 Employment",
+      "description": "Employment statistics by geography",
+      "reference_date": "2023-09-15",
+      "collection_start": "2023-07-01",
+      "collection_end": "2023-09-30",
+      "reference_system_id": "770e8400-e29b-41d4-a716-446655440001",
+      "reference_system_version_id": "880e8400-e29b-41d4-a716-446655440001",
+      "universe_id": "660e8400-e29b-41d4-a716-446655440002"
+    }
+  ],
+  "data_products": [
+    {
+      "id": "aa0e8400-e29b-41d4-a716-446655440001",
+      "dataset_id": "990e8400-e29b-41d4-a716-446655440001",
+      "name": "Population by Geography and Demographics",
+      "kind": "FACT",
+      "is_public": true,
+      "grain_variable_names": ["geography_code", "age_group", "sex"],
+      "variables": [
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440001",
+          "name": "geography_code",
+          "role": "DIMENSION",
+          "data_type": "STRING",
+          "description": "Geographic area code (province or municipality)"
+        },
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440002",
+          "name": "geography_name",
+          "role": "DIMENSION",
+          "data_type": "STRING",
+          "description": "Geographic area name"
+        },
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440003",
+          "name": "age_group",
+          "role": "DIMENSION",
+          "data_type": "STRING",
+          "description": "Five-year age group",
+          "domain": {
+            "type": "enumerated",
+            "values": ["0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+"]
+          }
+        },
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440004",
+          "name": "sex",
+          "role": "DIMENSION",
+          "data_type": "STRING",
+          "description": "Sex",
+          "domain": {
+            "type": "enumerated",
+            "values": ["Male", "Female"]
+          }
+        },
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440005",
+          "name": "population",
+          "role": "MEASURE",
+          "data_type": "INT",
+          "description": "Number of persons",
+          "unit": "persons"
+        }
+      ]
+    },
+    {
+      "id": "aa0e8400-e29b-41d4-a716-446655440002",
+      "dataset_id": "990e8400-e29b-41d4-a716-446655440002",
+      "name": "Labour Force Indicators",
+      "kind": "INDICATOR",
+      "is_public": true,
+      "grain_variable_names": ["geography_code"],
+      "variables": [
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440010",
+          "name": "geography_code",
+          "role": "DIMENSION",
+          "data_type": "STRING",
+          "description": "Geographic area code"
+        },
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440011",
+          "name": "geography_name",
+          "role": "DIMENSION",
+          "data_type": "STRING",
+          "description": "Geographic area name"
+        },
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440012",
+          "name": "unemployment_rate",
+          "role": "INDICATOR",
+          "data_type": "FLOAT",
+          "description": "Unemployment rate as percentage of labour force",
+          "unit": "percent"
+        },
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440013",
+          "name": "labour_force",
+          "role": "MEASURE",
+          "data_type": "INT",
+          "description": "Total labour force (employed + unemployed)",
+          "unit": "persons"
+        },
+        {
+          "id": "bb0e8400-e29b-41d4-a716-446655440014",
+          "name": "unemployed",
+          "role": "MEASURE",
+          "data_type": "INT",
+          "description": "Number of unemployed persons",
+          "unit": "persons"
+        }
+      ]
+    }
+  ],
+  "indicator_definitions": [
+    {
+      "variable_id": "bb0e8400-e29b-41d4-a716-446655440012",
+      "indicator_type": "PERCENT",
+      "aggregation_policy": "RECOMPUTE",
+      "numerator_data_product_id": "aa0e8400-e29b-41d4-a716-446655440002",
+      "numerator_variable_id": "bb0e8400-e29b-41d4-a716-446655440014",
+      "denominator_data_product_id": "aa0e8400-e29b-41d4-a716-446655440002",
+      "denominator_variable_id": "bb0e8400-e29b-41d4-a716-446655440013",
+      "formula": "unemployed / labour_force * 100",
+      "weighting_method": "DENOM_WEIGHTED"
+    }
+  ]
+}
