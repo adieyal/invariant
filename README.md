@@ -36,6 +36,28 @@ uv run ruff format .
 uv run pre-commit run --all-files
 ```
 
+## Contrib Packages
+
+### Data Dictionary Generator
+
+Generate human-readable documentation from your catalog content.
+
+```python
+from new_wazi_contrib.datadictionary import GenerateDataDictionary
+from pathlib import Path
+
+# catalog_store implements the CatalogStore port
+use_case = GenerateDataDictionary(catalog_store)
+use_case.execute(Path("./data-dictionary"))
+```
+
+This creates a Markdown-based data dictionary with:
+- `index.md` - Catalog overview with links to studies
+- `studies/<id>.md` - Study details with datasets
+- `datasets/<id>.md` - Dataset details with variables, indicators, and metadata
+- `universes.md` - All universe definitions
+- `concepts.md` - All concept definitions
+
 ## Documentation
 
 - [Conceptual Model](docs/01-conceptual-model.md) - Core concepts: universe, variables, observations
