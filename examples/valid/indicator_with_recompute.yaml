@@ -1,0 +1,53 @@
+# Indicator with Recomputation Policy
+#
+# Demonstrates: Indicators CAN be aggregated when they have a RECOMPUTE policy
+# with defined numerator/denominator. The system will recompute the indicator
+# from the underlying measures rather than naively summing the derived value.
+
+id: indicator_with_recompute
+description: Aggregate an indicator that has a RECOMPUTE policy defined
+
+teaches:
+  - Indicators with RECOMPUTE policy can be aggregated
+  - The system recomputes from numerator/denominator, not by summing the indicator
+  - This is safe because employment_rate = employed / labor_force at any grain
+  - Always define numerator_ref and denominator_ref for recomputable indicators
+
+catalog:
+  data_products:
+    - id: dp-employment
+      name: "Employment Statistics"
+      kind: INDICATOR
+      variables:
+        - name: geography_code
+          role: DIMENSION
+          data_type: STRING
+        - name: employment_rate
+          role: INDICATOR
+          data_type: FLOAT
+      grain_keys:
+        - geography_code
+
+  indicator_definitions:
+    - variable_id: employment_rate
+      data_product_id: dp-employment
+      indicator_type: RATE
+      aggregation_policy: RECOMPUTE
+      numerator_ref: employed_count
+      denominator_ref: labor_force
+
+query:
+  intent: TABLE
+  selections:
+    - data_product_id: dp-employment
+      dimensions:
+        - geography_code
+      metrics:
+        - variable: employment_rate
+          aggregation: SUM
+
+expected:
+  status: ALLOW
+  issues: []
+  # Note: The system will internally rewrite this to fetch and aggregate
+  # the numerator/denominator, then recompute the rate.

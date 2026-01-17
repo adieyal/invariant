@@ -1,0 +1,55 @@
+# Averaging an Indicator Marked NOT_AGGREGATABLE
+#
+# Demonstrates: Some indicators explicitly forbid ANY aggregation.
+# Even AVG is blocked when the indicator's aggregation_policy is NOT_AGGREGATABLE.
+
+id: avg_indicator_not_aggregatable
+description: Attempting to AVG an indicator with NOT_AGGREGATABLE policy
+
+teaches:
+  - Indicators can be explicitly marked as NOT_AGGREGATABLE
+  - This is used when no valid aggregation exists (e.g., survey weights)
+  - Even "reasonable" aggregations like AVG are blocked
+  - The only option is to query at the indicator's native grain (NONE)
+
+violates:
+  rule: IndicatorAggregationRule
+  code: INDICATOR_AGG_NOT_ALLOWED
+
+catalog:
+  data_products:
+    - id: dp-survey
+      name: "Survey Confidence Scores"
+      kind: INDICATOR
+      variables:
+        - name: geography_code
+          role: DIMENSION
+          data_type: STRING
+        - name: confidence_index
+          role: INDICATOR
+          data_type: FLOAT
+      grain_keys:
+        - geography_code
+
+  indicator_definitions:
+    - variable_id: confidence_index
+      data_product_id: dp-survey
+      indicator_type: INDEX
+      aggregation_policy: NOT_AGGREGATABLE
+      # No numerator/denominator because this index is not recomputable
+
+query:
+  intent: TABLE
+  selections:
+    - data_product_id: dp-survey
+      dimensions:
+        - geography_code
+      metrics:
+        - variable: confidence_index
+          aggregation: AVG
+
+expected:
+  status: BLOCK
+  issues:
+    - code: INDICATOR_AGG_NOT_ALLOWED
+      severity: BLOCK

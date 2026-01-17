@@ -1,0 +1,42 @@
+# Simple Measure Aggregation
+#
+# Demonstrates: Measures can be safely summed across dimensions.
+# This is the most basic valid query pattern.
+
+id: simple_measure_sum
+description: Sum a measure (population count) grouped by geography
+
+teaches:
+  - Measures are numeric values that represent counts or quantities
+  - Measures can be aggregated with SUM because they are additive
+  - FACT data products contain raw measures that support direct aggregation
+  - Dimensions (like geography_code) define how data is grouped
+
+catalog:
+  data_products:
+    - id: dp-population
+      name: "Population by Geography"
+      kind: FACT
+      variables:
+        - name: geography_code
+          role: DIMENSION
+          data_type: STRING
+        - name: population
+          role: MEASURE
+          data_type: INT
+      grain_keys:
+        - geography_code
+
+query:
+  intent: TABLE
+  selections:
+    - data_product_id: dp-population
+      dimensions:
+        - geography_code
+      metrics:
+        - variable: population
+          aggregation: SUM
+
+expected:
+  status: ALLOW
+  issues: []

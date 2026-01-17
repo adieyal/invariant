@@ -1,0 +1,56 @@
+# Multiple Measures in One Query
+#
+# Demonstrates: You can query multiple measures from the same data product
+# in a single request. Each measure can have its own aggregation.
+
+id: multiple_measures
+description: Query multiple measures with different aggregations
+
+teaches:
+  - Multiple metrics can be requested in a single query
+  - Each metric specifies its own aggregation type
+  - SUM is typical for counts; MIN/MAX work for any numeric measure
+  - All measures must belong to the same data product in a selection
+
+catalog:
+  data_products:
+    - id: dp-demographics
+      name: "Demographics by Region"
+      kind: FACT
+      variables:
+        - name: region_code
+          role: DIMENSION
+          data_type: STRING
+        - name: year
+          role: DIMENSION
+          data_type: INT
+        - name: population
+          role: MEASURE
+          data_type: INT
+        - name: households
+          role: MEASURE
+          data_type: INT
+        - name: median_age
+          role: MEASURE
+          data_type: FLOAT
+      grain_keys:
+        - region_code
+        - year
+
+query:
+  intent: TABLE
+  selections:
+    - data_product_id: dp-demographics
+      dimensions:
+        - region_code
+      metrics:
+        - variable: population
+          aggregation: SUM
+        - variable: households
+          aggregation: SUM
+        - variable: median_age
+          aggregation: AVG
+
+expected:
+  status: ALLOW
+  issues: []

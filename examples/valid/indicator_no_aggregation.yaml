@@ -1,0 +1,48 @@
+# Indicator Without Aggregation
+#
+# Demonstrates: Indicators can always be queried without aggregation.
+# When you use NONE as the aggregation, the indicator is displayed as-is
+# at its native grain.
+
+id: indicator_no_aggregation
+description: Query an indicator without aggregation (display as-is)
+
+teaches:
+  - Indicators can be safely queried with aggregation=NONE
+  - NONE means "display the value at its stored grain"
+  - This is always safe because no mathematical operation is performed
+  - Use this when you want the pre-computed indicator values directly
+
+catalog:
+  data_products:
+    - id: dp-rates
+      name: "Disability Prevalence Rates"
+      kind: INDICATOR
+      variables:
+        - name: geography_code
+          role: DIMENSION
+          data_type: STRING
+        - name: age_group
+          role: DIMENSION
+          data_type: STRING
+        - name: prevalence_rate
+          role: INDICATOR
+          data_type: FLOAT
+      grain_keys:
+        - geography_code
+        - age_group
+
+query:
+  intent: TABLE
+  selections:
+    - data_product_id: dp-rates
+      dimensions:
+        - geography_code
+        - age_group
+      metrics:
+        - variable: prevalence_rate
+          aggregation: NONE
+
+expected:
+  status: ALLOW
+  issues: []

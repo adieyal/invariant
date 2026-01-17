@@ -1,0 +1,50 @@
+# Computing MEAN on an Indicator Without Proper Weighting
+#
+# Demonstrates: MEAN aggregation on indicators is dangerous without proper
+# weighting. An unweighted mean of rates treats all geographies equally,
+# regardless of population size.
+
+id: mean_indicator_no_weighting
+description: Attempting to compute MEAN on an indicator without recomputation
+
+teaches:
+  - MEAN of indicators is as dangerous as SUM
+  - Mean(50%, 60%) = 55%, but this ignores population weights
+  - A geography with 1000 people should count more than one with 100
+  - Use RECOMPUTE with proper denominator instead
+
+violates:
+  rule: IndicatorAggregationRule
+  code: INDICATOR_AGG_NOT_ALLOWED
+
+catalog:
+  data_products:
+    - id: dp-prevalence
+      name: "Disease Prevalence by Region"
+      kind: INDICATOR
+      variables:
+        - name: region_code
+          role: DIMENSION
+          data_type: STRING
+        - name: prevalence_rate
+          role: INDICATOR
+          data_type: FLOAT
+      grain_keys:
+        - region_code
+  # No indicator definition - system cannot recompute
+
+query:
+  intent: NUMBER
+  selections:
+    - data_product_id: dp-prevalence
+      dimensions:
+        - region_code
+      metrics:
+        - variable: prevalence_rate
+          aggregation: MEAN
+
+expected:
+  status: BLOCK
+  issues:
+    - code: INDICATOR_AGG_NOT_ALLOWED
+      severity: BLOCK

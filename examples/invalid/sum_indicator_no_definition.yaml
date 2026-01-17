@@ -1,0 +1,49 @@
+# Summing an Indicator Without Definition
+#
+# Demonstrates: Indicators CANNOT be summed when no IndicatorDefinition exists.
+# This is the most common mistake - treating an indicator like a measure.
+
+id: sum_indicator_no_definition
+description: Attempting to SUM an indicator without an IndicatorDefinition
+
+teaches:
+  - Indicators (rates, percentages, means) cannot be naively summed
+  - Summing 50% + 60% does NOT give a meaningful 110%
+  - Without an IndicatorDefinition, the system cannot recompute safely
+  - Define numerator/denominator to enable safe aggregation
+
+violates:
+  rule: IndicatorAggregationRule
+  code: INDICATOR_AGG_NOT_ALLOWED
+
+catalog:
+  data_products:
+    - id: dp-rates
+      name: "Employment Rates"
+      kind: INDICATOR
+      variables:
+        - name: geography_code
+          role: DIMENSION
+          data_type: STRING
+        - name: employment_rate
+          role: INDICATOR
+          data_type: FLOAT
+      grain_keys:
+        - geography_code
+  # Note: No indicator_definitions - this is the problem
+
+query:
+  intent: TABLE
+  selections:
+    - data_product_id: dp-rates
+      dimensions:
+        - geography_code
+      metrics:
+        - variable: employment_rate
+          aggregation: SUM
+
+expected:
+  status: BLOCK
+  issues:
+    - code: INDICATOR_AGG_NOT_ALLOWED
+      severity: BLOCK

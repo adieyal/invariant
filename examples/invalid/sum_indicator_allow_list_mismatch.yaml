@@ -1,0 +1,58 @@
+# Summing an Indicator with ALLOW_LIST Policy (Not in List)
+#
+# Demonstrates: When an indicator has ALLOW_LIST policy, only the
+# specified aggregations are permitted. SUM is rejected if not in the list.
+
+id: sum_indicator_allow_list_mismatch
+description: Attempting to SUM an indicator that only allows MIN/MAX
+
+teaches:
+  - ALLOW_LIST policy restricts which aggregations are valid
+  - The allowed_aggregations field specifies permitted operations
+  - MIN and MAX are often safe for indicators (preserve relative ordering)
+  - SUM is almost never valid for derived values
+
+violates:
+  rule: IndicatorAggregationRule
+  code: INDICATOR_AGG_NOT_ALLOWED
+
+catalog:
+  data_products:
+    - id: dp-scores
+      name: "Performance Scores"
+      kind: INDICATOR
+      variables:
+        - name: geography_code
+          role: DIMENSION
+          data_type: STRING
+        - name: performance_score
+          role: INDICATOR
+          data_type: FLOAT
+      grain_keys:
+        - geography_code
+
+  indicator_definitions:
+    - variable_id: performance_score
+      data_product_id: dp-scores
+      indicator_type: INDEX
+      aggregation_policy: ALLOW_LIST
+      allowed_aggregations:
+        - MIN
+        - MAX
+      # Note: SUM is not in the allowed list
+
+query:
+  intent: TABLE
+  selections:
+    - data_product_id: dp-scores
+      dimensions:
+        - geography_code
+      metrics:
+        - variable: performance_score
+          aggregation: SUM
+
+expected:
+  status: BLOCK
+  issues:
+    - code: INDICATOR_AGG_NOT_ALLOWED
+      severity: BLOCK
