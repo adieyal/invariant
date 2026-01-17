@@ -42,6 +42,21 @@ uv run pre-commit run --all-files
 
 Generate human-readable documentation from your catalog content.
 
+#### CLI Usage
+
+```bash
+# Generate data dictionary to a directory
+python -m invariant_contrib.datadictionary generate --output-dir ./data-dictionary
+
+# Generate for a specific study only
+python -m invariant_contrib.datadictionary generate --output-dir ./data-dictionary --study-id my-study
+
+# Specify output format (currently only markdown supported)
+python -m invariant_contrib.datadictionary generate --output-dir ./data-dictionary --format markdown
+```
+
+#### Programmatic Usage
+
 ```python
 from invariant_contrib.datadictionary import GenerateDataDictionary
 from pathlib import Path
@@ -51,12 +66,24 @@ use_case = GenerateDataDictionary(catalog_store)
 use_case.execute(Path("./data-dictionary"))
 ```
 
+#### Generated Output
+
 This creates a Markdown-based data dictionary with:
-- `index.md` - Catalog overview with links to studies
-- `studies/<id>.md` - Study details with datasets
-- `datasets/<id>.md` - Dataset details with variables, indicators, and metadata
-- `universes.md` - All universe definitions
-- `concepts.md` - All concept definitions
+
+**Core Pages:**
+- `index.md` - Catalog overview with links to all sections
+- `studies/<id>.md` - Study details with methodology and dataset links
+- `datasets/<id>.md` - Dataset details with variables table and indicator definitions
+
+**Cross-Cutting Views:**
+- `indicators.md` - All indicators across datasets with aggregation policy summary
+- `comparability.md` - Dataset comparability matrix by universe and reference system
+- `variable-lineage.md` - Concepts to variables mapping
+
+**Reference Pages:**
+- `universes.md` - All universe definitions with inclusions/exclusions
+- `concepts.md` - All concept definitions with canonical units
+- `reference-systems.md` - Reference systems with their versions
 
 ## Documentation
 

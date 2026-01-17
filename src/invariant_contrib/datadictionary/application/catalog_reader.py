@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from invariant.application.ports.catalog_store import CatalogStore
     from invariant.domain.model.data_product import DataProduct
     from invariant.domain.model.dataset import Dataset
-    from invariant.domain.model.ids import StudyId
+    from invariant.domain.model.ids import ReferenceSystemId, StudyId
     from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
     from invariant.domain.model.study import Study
     from invariant.domain.model.variable import Variable
@@ -47,9 +47,9 @@ class CatalogReader:
         universe_docs = [self._universe_to_doc(universe) for universe in universes]
         concept_docs = [self._concept_to_doc(concept) for concept in concepts]
 
-        # Reference systems - we get versions and dedupe by reference_system_id
-        # Note: CatalogStore doesn't have list_reference_systems, so we skip for now
-        reference_system_docs: list[ReferenceSystemDoc] = []
+        # Reference systems - collect from datasets since CatalogStore doesn't
+        # have list_reference_systems. We collect unique versions found.
+        reference_system_docs = self._collect_reference_systems_from_datasets()
 
         return CatalogDoc(
             generated_at=datetime.now(),
@@ -58,6 +58,43 @@ class CatalogReader:
             concepts=concept_docs,
             reference_systems=reference_system_docs,
         )
+
+    def _collect_reference_systems_from_datasets(self) -> list[ReferenceSystemDoc]:
+        """Collect reference systems from dataset metadata.
+
+        Since CatalogStore doesn't have list_reference_systems(), we collect
+        reference system versions from datasets and group them by reference_system_id.
+        """
+        # Map: reference_system_id -> (name/kind inferred, list of version labels)
+        ref_systems: dict[ReferenceSystemId, list[str]] = {}
+
+        datasets = self._catalog.list_datasets()
+        for dataset in datasets:
+            if dataset.reference_system_version_id is not None:
+                version = self._catalog.get_reference_system_version(
+                    dataset.reference_system_version_id
+                )
+                if version is not None:
+                    ref_sys_id = version.reference_system_id
+                    if ref_sys_id not in ref_systems:
+                        ref_systems[ref_sys_id] = []
+                    if version.label not in ref_systems[ref_sys_id]:
+                        ref_systems[ref_sys_id].append(version.label)
+
+        # Build docs - we only have version info, not full reference system details
+        docs: list[ReferenceSystemDoc] = []
+        for ref_sys_id, version_labels in ref_systems.items():
+            docs.append(
+                ReferenceSystemDoc(
+                    id=str(ref_sys_id.value),
+                    name=f"Reference System {ref_sys_id.value}",
+                    kind="UNKNOWN",  # Would need get_reference_system() to know
+                    authority=None,
+                    versions=sorted(version_labels),
+                )
+            )
+
+        return docs
 
     def read_study(self, study_id: StudyId) -> StudyDoc:
         """Read single study with all related entities."""

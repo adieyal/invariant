@@ -16,7 +16,7 @@ Enable data stewards and consumers to understand:
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│                  new_wazi_contrib                      │
+│                  invariant_contrib                      │
 │  ┌──────────────────────────────────────────────────┐  │
 │  │           datadictionary module                  │  │
 │  │                                                  │  │
@@ -26,7 +26,7 @@ Enable data stewards and consumers to understand:
                           │
                           ▼ uses
 ┌────────────────────────────────────────────────────────┐
-│                    new_wazi                            │
+│                    invariant                            │
 │  ┌─────────────────┐  ┌─────────────────┐             │
 │  │  CatalogStore   │  │  Domain Models  │             │
 │  │     (port)      │  │                 │             │
@@ -38,25 +38,28 @@ Enable data stewards and consumers to understand:
 
 ```
 src/
-├── new_wazi/                    # kernel (unchanged)
+├── invariant/                    # kernel (unchanged)
 │   ├── domain/
 │   └── application/
 │
-└── new_wazi_contrib/            # new package
+└── invariant_contrib/            # contrib package
     ├── __init__.py
     └── datadictionary/
         ├── __init__.py
-        ├── reader.py            # Reads from CatalogStore
-        ├── models.py            # Documentation-specific models
-        ├── renderers/
+        ├── __main__.py          # CLI entry point
+        ├── cli.py               # GenerateDataDictionary use case
+        ├── application/
         │   ├── __init__.py
-        │   ├── base.py          # Renderer protocol
-        │   └── markdown.py      # Markdown output
-        └── templates/           # Jinja2 or string templates
-            ├── study.md.j2
-            ├── dataset.md.j2
-            ├── indicator.md.j2
-            └── index.md.j2
+        │   ├── catalog_reader.py    # Reads from CatalogStore
+        │   └── ports/
+        │       ├── __init__.py
+        │       └── renderer.py      # Renderer protocol
+        ├── domain/
+        │   ├── __init__.py
+        │   └── models.py            # Documentation-specific models
+        └── infrastructure/
+            ├── __init__.py
+            └── markdown_renderer.py # Markdown output
 ```
 
 ## Core Components
@@ -183,17 +186,17 @@ class MarkdownRenderer(Renderer):
 
 ```
 data-dictionary/
-├── index.md                    # Overview with links
+├── index.md                    # Overview with links to all sections
 ├── studies/
-│   ├── index.md               # List of all studies
-│   └── {study-id}.md          # Per-study detail
+│   └── {study-id}.md          # Per-study detail with dataset links
 ├── datasets/
-│   ├── index.md               # List of all datasets
-│   └── {dataset-id}.md        # Per-dataset with variables
-├── indicators.md              # All indicators cross-study
-├── universes.md               # All universes
-├── concepts.md                # All concepts
-└── reference-systems.md       # Geography and other ref systems
+│   └── {dataset-id}.md        # Per-dataset with variables table
+├── indicators.md              # All indicators cross-study with summary
+├── comparability.md           # Dataset comparability matrix
+├── variable-lineage.md        # Concepts to variables mapping
+├── universes.md               # All universes with inclusions/exclusions
+├── concepts.md                # All concepts with canonical units
+└── reference-systems.md       # Geography and other ref systems with versions
 ```
 
 ## Example Output: Dataset Page
@@ -237,34 +240,35 @@ Census conducted via door-to-door enumeration...
 ## Implementation Phases
 
 ### Phase 1: Core Infrastructure
-- [ ] Create `new_wazi_contrib` package structure
-- [ ] Implement `CatalogReader` with `read_full_catalog()`
-- [ ] Define documentation dataclasses (`StudyDoc`, `DatasetDoc`, etc.)
+- [x] Create `invariant_contrib` package structure
+- [x] Implement `CatalogReader` with `read_full_catalog()`
+- [x] Define documentation dataclasses (`StudyDoc`, `DatasetDoc`, etc.)
 - [ ] Add unit tests with fake catalog data
 
 ### Phase 2: Markdown Renderer
-- [ ] Implement `MarkdownRenderer` with Jinja2 templates
-- [ ] Create templates for each documentation type
-- [ ] Generate index pages with cross-links
+- [x] Implement `MarkdownRenderer` (using string templates, not Jinja2)
+- [x] Create rendering methods for each documentation type
+- [x] Generate index pages with cross-links
 - [ ] Add integration test that generates full dictionary
 
 ### Phase 3: CLI Entry Point
-- [ ] Add CLI command: `python -m new_wazi_contrib.datadictionary generate`
-- [ ] Support options: `--output-dir`, `--format`, `--study-id` (filter)
-- [ ] Support reading from different CatalogStore implementations
+- [x] Add CLI command: `python -m invariant_contrib.datadictionary generate`
+- [x] Support options: `--output-dir`, `--format`, `--study-id` (filter)
+- [x] Support reading from different CatalogStore implementations
 
 ### Phase 4: Cross-Cutting Views
-- [ ] Indicators page (all indicators across datasets)
-- [ ] Comparability matrix (which datasets can be compared)
-- [ ] Variable lineage (concepts → variables across datasets)
+- [x] Indicators page (all indicators across datasets)
+- [x] Comparability matrix (which datasets can be compared)
+- [x] Variable lineage (concepts → variables across datasets)
+- [x] Reference systems page (collected from dataset metadata)
 
 ## Dependencies
 
 **Required:**
-- `new_wazi` (kernel) - for domain models and ports
-- `jinja2` - for templating
+- `invariant` (kernel) - for domain models and ports
 
 **Optional:**
+- `jinja2` - for custom templating (not currently used)
 - `mkdocs` - if we want to generate a static site
 
 ## Testing Strategy

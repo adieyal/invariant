@@ -56,6 +56,24 @@ class MarkdownRenderer(Renderer):
         # Write concepts
         (output_dir / "concepts.md").write_text(self._render_concepts(catalog))
 
+        # Write indicators (cross-cutting view)
+        (output_dir / "indicators.md").write_text(self._render_indicators(catalog))
+
+        # Write variable lineage (concepts -> variables)
+        (output_dir / "variable-lineage.md").write_text(
+            self._render_variable_lineage(catalog)
+        )
+
+        # Write comparability matrix
+        (output_dir / "comparability.md").write_text(
+            self._render_comparability_matrix(catalog)
+        )
+
+        # Write reference systems
+        (output_dir / "reference-systems.md").write_text(
+            self._render_reference_systems(catalog)
+        )
+
     def render_index(self, catalog: CatalogDoc) -> str:
         """Render catalog index page."""
         lines = [
@@ -71,6 +89,28 @@ class MarkdownRenderer(Renderer):
             for study in catalog.studies:
                 lines.append(f"- [{study.name}](studies/{study.id}.md)")
             lines.append("")
+
+        # Cross-cutting views
+        lines.append("## Cross-Cutting Views")
+        lines.append("")
+        lines.append("- [Indicators](indicators.md) - All indicators across datasets")
+        lines.append(
+            "- [Comparability Matrix](comparability.md) - Dataset comparability"
+        )
+        lines.append(
+            "- [Variable Lineage](variable-lineage.md) - Concepts to variables mapping"
+        )
+        lines.append("")
+
+        # Reference pages
+        lines.append("## Reference")
+        lines.append("")
+        lines.append("- [Universes](universes.md) - Population definitions")
+        lines.append("- [Concepts](concepts.md) - Semantic concepts")
+        lines.append(
+            "- [Reference Systems](reference-systems.md) - Geography and other unit systems"
+        )
+        lines.append("")
 
         return "\n".join(lines)
 
@@ -232,6 +272,246 @@ class MarkdownRenderer(Renderer):
                 lines.append("")
             if concept.canonical_unit:
                 lines.append(f"**Canonical Unit:** {concept.canonical_unit}")
+                lines.append("")
+
+        return "\n".join(lines)
+
+    def _render_indicators(self, catalog: CatalogDoc) -> str:
+        """Render cross-cutting indicators page."""
+        lines = [
+            "# Indicators",
+            "",
+            "All indicators across all datasets in the catalog.",
+            "",
+        ]
+
+        indicators = catalog.all_indicators
+        if not indicators:
+            lines.append("*No indicators defined.*")
+            return "\n".join(lines)
+
+        # Group indicators by aggregation policy
+        by_policy: dict[str, list[tuple[VariableDoc, DatasetDoc]]] = {}
+        for dataset in catalog.all_datasets:
+            for var in dataset.indicators:
+                if var.indicator:
+                    policy = var.indicator.aggregation_policy
+                    if policy not in by_policy:
+                        by_policy[policy] = []
+                    by_policy[policy].append((var, dataset))
+
+        # Summary table
+        lines.append("## Summary")
+        lines.append("")
+        lines.append(f"Total indicators: **{len(indicators)}**")
+        lines.append("")
+        lines.append("| Aggregation Policy | Count |")
+        lines.append("|-------------------|-------|")
+        for policy, items in sorted(by_policy.items()):
+            lines.append(f"| {policy} | {len(items)} |")
+        lines.append("")
+
+        # Full list
+        lines.append("## All Indicators")
+        lines.append("")
+        lines.append("| Indicator | Dataset | Type | Policy | Formula |")
+        lines.append("|-----------|---------|------|--------|---------|")
+
+        for dataset in catalog.all_datasets:
+            for var in dataset.indicators:
+                if var.indicator:
+                    ind = var.indicator
+                    formula = ind.formula or ""
+                    if ind.numerator and ind.denominator:
+                        formula = formula or f"{ind.numerator} / {ind.denominator}"
+                    lines.append(
+                        f"| [{var.name}](datasets/{dataset.id}.md) "
+                        f"| {dataset.name} "
+                        f"| {ind.indicator_type} "
+                        f"| {ind.aggregation_policy} "
+                        f"| {formula} |"
+                    )
+        lines.append("")
+
+        return "\n".join(lines)
+
+    def _render_variable_lineage(self, catalog: CatalogDoc) -> str:
+        """Render variable lineage page showing concepts -> variables mapping."""
+        lines = [
+            "# Variable Lineage",
+            "",
+            "Maps concepts to variables across datasets.",
+            "",
+        ]
+
+        if not catalog.concepts:
+            lines.append("*No concepts defined.*")
+            return "\n".join(lines)
+
+        # Build concept -> variables mapping
+        # Note: This requires VariableSemantics which links variables to concepts
+        # For now, we show concepts with placeholder for future linking
+        lines.append("## Concepts")
+        lines.append("")
+        lines.append(
+            "The following concepts provide semantic identity for cross-dataset alignment."
+        )
+        lines.append("")
+
+        for concept in catalog.concepts:
+            lines.append(f"### {concept.label}")
+            lines.append("")
+            if concept.description:
+                lines.append(concept.description)
+                lines.append("")
+            if concept.canonical_unit:
+                lines.append(f"**Canonical Unit:** {concept.canonical_unit}")
+                lines.append("")
+
+            # Note about linking
+            lines.append(
+                "*Variable linking requires VariableSemantics to be populated in the catalog.*"
+            )
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def _render_comparability_matrix(self, catalog: CatalogDoc) -> str:
+        """Render comparability matrix page."""
+        lines = [
+            "# Comparability Matrix",
+            "",
+            "Shows which datasets can be meaningfully compared based on shared characteristics.",
+            "",
+        ]
+
+        datasets = catalog.all_datasets
+        if len(datasets) < 2:
+            lines.append("*Need at least 2 datasets to show comparability.*")
+            return "\n".join(lines)
+
+        # Build comparability info
+        lines.append("## By Universe")
+        lines.append("")
+        lines.append("Datasets sharing the same universe can be compared directly.")
+        lines.append("")
+
+        # Group by universe
+        by_universe: dict[str, list[DatasetDoc]] = {}
+        no_universe: list[DatasetDoc] = []
+        for ds in datasets:
+            if ds.universe:
+                key = ds.universe.label
+                if key not in by_universe:
+                    by_universe[key] = []
+                by_universe[key].append(ds)
+            else:
+                no_universe.append(ds)
+
+        if by_universe:
+            for universe_label, ds_list in sorted(by_universe.items()):
+                lines.append(f"### {universe_label}")
+                lines.append("")
+                for ds in ds_list:
+                    lines.append(f"- [{ds.name}](datasets/{ds.id}.md)")
+                lines.append("")
+
+        if no_universe:
+            lines.append("### No Universe Defined")
+            lines.append("")
+            lines.append(
+                "*Comparability cannot be assessed without universe metadata.*"
+            )
+            lines.append("")
+            for ds in no_universe:
+                lines.append(f"- [{ds.name}](datasets/{ds.id}.md)")
+            lines.append("")
+
+        # By reference system
+        lines.append("## By Reference System")
+        lines.append("")
+        lines.append(
+            "Datasets using the same reference system version can be joined directly."
+        )
+        lines.append("")
+
+        by_refsys: dict[str, list[DatasetDoc]] = {}
+        no_refsys: list[DatasetDoc] = []
+        for ds in datasets:
+            if ds.reference_system:
+                key = ds.reference_system
+                if key not in by_refsys:
+                    by_refsys[key] = []
+                by_refsys[key].append(ds)
+            else:
+                no_refsys.append(ds)
+
+        if by_refsys:
+            for refsys_label, ds_list in sorted(by_refsys.items()):
+                lines.append(f"### {refsys_label}")
+                lines.append("")
+                for ds in ds_list:
+                    lines.append(f"- [{ds.name}](datasets/{ds.id}.md)")
+                lines.append("")
+
+        if no_refsys:
+            lines.append("### No Reference System")
+            lines.append("")
+            for ds in no_refsys:
+                lines.append(f"- [{ds.name}](datasets/{ds.id}.md)")
+            lines.append("")
+
+        # Comparability notes
+        lines.append("## Comparability Notes")
+        lines.append("")
+        lines.append("When comparing datasets, consider:")
+        lines.append("")
+        lines.append("1. **Universe compatibility** - Are the populations the same?")
+        lines.append(
+            "2. **Reference system version** - Do boundaries/codes match? "
+            "If not, a crosswalk may be needed."
+        )
+        lines.append(
+            "3. **Time period** - Are collection periods comparable for trend analysis?"
+        )
+        lines.append(
+            "4. **Methodology** - Were data collected using consistent methods?"
+        )
+        lines.append("")
+
+        return "\n".join(lines)
+
+    def _render_reference_systems(self, catalog: CatalogDoc) -> str:
+        """Render reference systems page."""
+        lines = [
+            "# Reference Systems",
+            "",
+            "Reference systems are collections of units used to organize data ",
+            "(e.g., geographic boundaries, facilities, organizations).",
+            "",
+        ]
+
+        if not catalog.reference_systems:
+            lines.append("*No reference systems found in catalog.*")
+            return "\n".join(lines)
+
+        for ref_sys in catalog.reference_systems:
+            lines.append(f"## {ref_sys.name}")
+            lines.append("")
+            lines.append(f"**ID:** `{ref_sys.id}`")
+            lines.append("")
+            if ref_sys.kind and ref_sys.kind != "UNKNOWN":
+                lines.append(f"**Kind:** {ref_sys.kind}")
+                lines.append("")
+            if ref_sys.authority:
+                lines.append(f"**Authority:** {ref_sys.authority}")
+                lines.append("")
+
+            if ref_sys.versions:
+                lines.append("### Versions")
+                lines.append("")
+                for version in ref_sys.versions:
+                    lines.append(f"- {version}")
                 lines.append("")
 
         return "\n".join(lines)
