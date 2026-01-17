@@ -14,11 +14,17 @@ from invariant.domain.model.dimension import (
     SemanticType,
 )
 from invariant.domain.model.enums import AggregationType, PresentationFormat
+from invariant.domain.model.geo_hierarchy import (
+    GeoHierarchy,
+    RollupOverride,
+    RollupRules,
+)
 from invariant.domain.model.ids import DataProductId, VariableId
 from invariant.domain.model.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
+    RollupPolicy,
 )
 from invariant.domain.model.metric import (
     Metric as DomainMetric,
@@ -35,6 +41,7 @@ from invariant.domain.model.ruleset_pack import RulesetPack
 from invariant.domain.model.semantic_catalog import SemanticCatalog
 from invariant.domain.model.validation import Disclosure, Severity, ValidationStatus
 from invariant.domain.services.semantic_validator import (
+    GeographyGrainRule,
     NameResolutionRule,
     SemanticCheck,
     SemanticValidator,
@@ -325,11 +332,13 @@ def _make_dimension(name: str, attributes: dict[str, str] | None = None) -> Dime
 def _make_catalog(
     metrics: list[DomainMetric] | None = None,
     dimensions: list[Dimension] | None = None,
+    geo_hierarchies: list[GeoHierarchy] | None = None,
 ) -> SemanticCatalog:
     """Create a catalog for testing."""
     return SemanticCatalog.create(
         metrics=metrics or [],
         dimensions=dimensions or [],
+        geo_hierarchies=geo_hierarchies or [],
     )
 
 
@@ -539,6 +548,303 @@ class TestNameResolutionRule:
         """Test that NameResolutionRule implements the SemanticQueryRule protocol."""
 
         rule = NameResolutionRule()
+        # Check that the rule can be used where SemanticQueryRule is expected
+        assert hasattr(rule, "evaluate")
+        assert callable(rule.evaluate)
+
+        # Actually call it to verify the signature matches
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        # This should work without type errors
+        issues: list = rule.evaluate(query, catalog)
+        assert isinstance(issues, list)
+
+
+# Helper functions for GeographyGrainRule tests
+
+
+def _make_metric_with_geo(
+    name: str,
+    valid_geo_levels: list[str] | None = None,
+    across_geo: bool = True,
+    rollup_policy: RollupPolicy = RollupPolicy.ALLOW,
+) -> DomainMetric:
+    """Create a simple metric with geography constraints for testing."""
+    return DomainMetric.create_simple_agg(
+        name=name,
+        dataset_name="test_dataset",
+        expr="count",
+        agg=AggregationFunction.SUM,
+        additivity=Additivity(
+            type=AdditivityType.ADDITIVE if across_geo else AdditivityType.NON_ADDITIVE,
+            across_geo=across_geo,
+            rollup_policy=rollup_policy,
+        ),
+        valid_geo_levels=valid_geo_levels,
+    )
+
+
+def _make_geo_hierarchy(
+    name: str = "admin",
+    levels: list[str] | None = None,
+    rollup_rules: RollupRules | None = None,
+) -> GeoHierarchy:
+    """Create a geo hierarchy for testing."""
+    if levels is None:
+        levels = ["country", "province", "municipality", "ward"]
+    return GeoHierarchy.create(
+        name=name,
+        levels=levels,
+        rollup_rules=rollup_rules,
+    )
+
+
+class TestGeographyGrainRule:
+    """Tests for GeographyGrainRule."""
+
+    def test_no_geo_group_by_returns_no_issues(self) -> None:
+        """Test that a query without geo group_by returns no issues."""
+        rule = GeographyGrainRule()
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_valid_geo_level_returns_no_issues(self) -> None:
+        """Test that a valid geo level returns no issues."""
+        rule = GeographyGrainRule()
+        metric = _make_metric_with_geo(
+            "population", valid_geo_levels=["province", "municipality", "ward"]
+        )
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[
+                GroupBySpec(dimension="geography", attribute="code", level="province")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_invalid_geo_level_returns_error(self) -> None:
+        """Test that an invalid geo level returns an error."""
+        rule = GeographyGrainRule()
+        metric = _make_metric_with_geo(
+            "population", valid_geo_levels=["municipality", "ward"]
+        )
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[
+                GroupBySpec(dimension="geography", attribute="code", level="province")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "INVALID_GEO_LEVEL"
+        assert issues[0].severity == Severity.BLOCK
+        assert "province" in issues[0].message
+        assert issues[0].details["metric"] == "population"
+        assert issues[0].details["query_geo_level"] == "province"
+        assert issues[0].details["valid_geo_levels"] == ["municipality", "ward"]
+
+    def test_metric_without_valid_geo_levels_allows_any_level(self) -> None:
+        """Test that a metric without valid_geo_levels allows any level."""
+        rule = GeographyGrainRule()
+        metric = _make_metric_with_geo("population", valid_geo_levels=None)
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[
+                GroupBySpec(dimension="geography", attribute="code", level="country")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_forbidden_rollup_returns_error(self) -> None:
+        """Test that a forbidden rollup returns an error."""
+        rule = GeographyGrainRule()
+        metric = _make_metric_with_geo(
+            "population", valid_geo_levels=["municipality", "ward"]
+        )
+        # Create hierarchy with forbidden rollup from ward to municipality
+        hierarchy = _make_geo_hierarchy(
+            rollup_rules=RollupRules(
+                default_allowed=True,
+                overrides=[
+                    RollupOverride(
+                        from_level="ward", to_level="municipality", allowed=False
+                    )
+                ],
+            )
+        )
+        catalog = _make_catalog(metrics=[metric], geo_hierarchies=[hierarchy])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[
+                GroupBySpec(
+                    dimension="geography", attribute="code", level="municipality"
+                )
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "FORBIDDEN_GEO_ROLLUP"
+        assert issues[0].severity == Severity.BLOCK
+        assert "ward" in issues[0].message
+        assert "municipality" in issues[0].message
+        assert issues[0].details["metric"] == "population"
+        assert issues[0].details["from_level"] == "ward"
+        assert issues[0].details["to_level"] == "municipality"
+
+    def test_allowed_rollup_returns_no_issues(self) -> None:
+        """Test that an allowed rollup returns no issues."""
+        rule = GeographyGrainRule()
+        metric = _make_metric_with_geo(
+            "population", valid_geo_levels=["municipality", "ward"]
+        )
+        hierarchy = _make_geo_hierarchy()  # Default allows all rollups
+        catalog = _make_catalog(metrics=[metric], geo_hierarchies=[hierarchy])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[
+                GroupBySpec(
+                    dimension="geography", attribute="code", level="municipality"
+                )
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_non_additive_metric_with_forbid_policy_returns_error(self) -> None:
+        """Test that a non-additive metric with FORBID policy returns error on rollup."""
+        rule = GeographyGrainRule()
+        metric = _make_metric_with_geo(
+            "rate",
+            valid_geo_levels=["municipality", "ward"],
+            across_geo=False,
+            rollup_policy=RollupPolicy.FORBID,
+        )
+        hierarchy = _make_geo_hierarchy()
+        catalog = _make_catalog(metrics=[metric], geo_hierarchies=[hierarchy])
+        query = SemanticQueryRequest(
+            metrics=["rate"],
+            group_by=[
+                GroupBySpec(
+                    dimension="geography", attribute="code", level="municipality"
+                )
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "ILLEGAL_GEO_ROLLUP"
+        assert issues[0].severity == Severity.BLOCK
+        assert "rate" in issues[0].message
+        assert "non-additive" in issues[0].message
+        assert issues[0].details["metric"] == "rate"
+        assert issues[0].details["rollup_policy"] == "FORBID"
+
+    def test_non_additive_metric_with_recompute_policy_returns_no_error(self) -> None:
+        """Test that a non-additive metric with RECOMPUTE policy returns no error."""
+        rule = GeographyGrainRule()
+        metric = _make_metric_with_geo(
+            "rate",
+            valid_geo_levels=["municipality", "ward"],
+            across_geo=False,
+            rollup_policy=RollupPolicy.RECOMPUTE,
+        )
+        hierarchy = _make_geo_hierarchy()
+        catalog = _make_catalog(metrics=[metric], geo_hierarchies=[hierarchy])
+        query = SemanticQueryRequest(
+            metrics=["rate"],
+            group_by=[
+                GroupBySpec(
+                    dimension="geography", attribute="code", level="municipality"
+                )
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_same_level_as_source_returns_no_rollup_issues(self) -> None:
+        """Test that querying at the same level as source returns no rollup issues."""
+        rule = GeographyGrainRule()
+        metric = _make_metric_with_geo("population", valid_geo_levels=["ward"])
+        hierarchy = _make_geo_hierarchy()
+        catalog = _make_catalog(metrics=[metric], geo_hierarchies=[hierarchy])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[
+                GroupBySpec(dimension="geography", attribute="code", level="ward")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_unknown_metric_skipped(self) -> None:
+        """Test that unknown metrics are skipped (handled by NameResolutionRule)."""
+        rule = GeographyGrainRule()
+        catalog = _make_catalog()  # Empty catalog
+        query = SemanticQueryRequest(
+            metrics=["unknown_metric"],
+            group_by=[
+                GroupBySpec(dimension="geography", attribute="code", level="province")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_multiple_metrics_with_different_geo_constraints(self) -> None:
+        """Test multiple metrics with different geo level constraints."""
+        rule = GeographyGrainRule()
+        metric1 = _make_metric_with_geo(
+            "population", valid_geo_levels=["province", "municipality", "ward"]
+        )
+        metric2 = _make_metric_with_geo(
+            "gdp",
+            valid_geo_levels=["municipality", "ward"],  # No province
+        )
+        catalog = _make_catalog(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(
+            metrics=["population", "gdp"],
+            group_by=[
+                GroupBySpec(dimension="geography", attribute="code", level="province")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        # Only gdp should have an issue
+        assert len(issues) == 1
+        assert issues[0].details["metric"] == "gdp"
+
+    def test_implements_semantic_query_rule_protocol(self) -> None:
+        """Test that GeographyGrainRule implements the SemanticQueryRule protocol."""
+        rule = GeographyGrainRule()
         # Check that the rule can be used where SemanticQueryRule is expected
         assert hasattr(rule, "evaluate")
         assert callable(rule.evaluate)
