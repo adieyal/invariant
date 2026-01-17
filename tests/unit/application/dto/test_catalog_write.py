@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from new_wazi.application.dto.catalog_write import (
+from invariant.application.dto.catalog_write import (
     CreateDataProductRequest,
     CreateDatasetRequest,
     CreateStudyRequest,

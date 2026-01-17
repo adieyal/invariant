@@ -1,5 +1,5 @@
 [project]
-name = "new-wazi"
+name = "invariant"
 version = "0.1.0"
 description = ""
 requires-python = ">=3.12"
@@ -16,7 +16,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/new_wazi"]
+packages = ["src/invariant"]
 
 [tool.ruff]
 target-version = "py312"
@@ -40,7 +40,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["new_wazi"]
+known-first-party = ["invariant"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

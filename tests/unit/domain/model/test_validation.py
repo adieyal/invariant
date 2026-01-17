@@ -1,14 +1,14 @@
 """Tests for validation value objects."""
 
-from new_wazi.domain.model.attribution import (
+from invariant.domain.model.attribution import (
     Attribution,
     AttributionDimension,
     AttributionSlice,
 )
-from new_wazi.domain.model.ids import VariableId
-from new_wazi.domain.model.impact import AffectedEntity, Impact, ImpactSeverity
-from new_wazi.domain.model.remediation_action import ActionType, RemediationAction
-from new_wazi.domain.model.validation import (
+from invariant.domain.model.ids import VariableId
+from invariant.domain.model.impact import AffectedEntity, Impact, ImpactSeverity
+from invariant.domain.model.remediation_action import ActionType, RemediationAction
+from invariant.domain.model.validation import (
     Disclosure,
     Issue,
     Remediation,

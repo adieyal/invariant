@@ -2,10 +2,10 @@
 
 import pytest
 
-from new_wazi.domain.model.data_product import DataProduct
-from new_wazi.domain.model.enums import DataProductKind
-from new_wazi.domain.model.ids import DataProductId, DatasetId, VariableId
-from new_wazi.domain.model.value_objects import GrainSpec
+from invariant.domain.model.data_product import DataProduct
+from invariant.domain.model.enums import DataProductKind
+from invariant.domain.model.ids import DataProductId, DatasetId, VariableId
+from invariant.domain.model.value_objects import GrainSpec
 from tests.unit.domain.conftest import make_dimension, make_indicator, make_measure
 
 

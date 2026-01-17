@@ -4,19 +4,19 @@ from datetime import date, datetime
 
 import pytest
 
-from new_wazi.domain.model.data_product import DataProduct
-from new_wazi.domain.model.dataset import Dataset
-from new_wazi.domain.model.enums import DataProductKind, DataType, VariableRole
-from new_wazi.domain.model.ids import (
+from invariant.domain.model.data_product import DataProduct
+from invariant.domain.model.dataset import Dataset
+from invariant.domain.model.enums import DataProductKind, DataType, VariableRole
+from invariant.domain.model.ids import (
     DataProductId,
     DatasetId,
     ReferenceSystemId,
     StudyId,
     VariableId,
 )
-from new_wazi.domain.model.study import Study
-from new_wazi.domain.model.value_objects import GrainSpec
-from new_wazi.domain.model.variable import Variable
+from invariant.domain.model.study import Study
+from invariant.domain.model.value_objects import GrainSpec
+from invariant.domain.model.variable import Variable
 from tests.unit.application.fakes import (
     FakeAuditLog,
     FakeCatalogStore,

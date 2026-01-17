@@ -4,8 +4,8 @@ from datetime import date
 
 import pytest
 
-from new_wazi.domain.model.dataset import Dataset
-from new_wazi.domain.model.ids import (
+from invariant.domain.model.dataset import Dataset
+from invariant.domain.model.ids import (
     DatasetId,
     ReferenceSystemId,
     ReferenceSystemVersionId,

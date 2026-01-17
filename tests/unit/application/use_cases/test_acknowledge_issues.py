@@ -2,8 +2,8 @@
 
 import pytest
 
-from new_wazi.application.dto.validation_dto import AcknowledgmentRequest
-from new_wazi.application.use_cases.acknowledge_issues import AcknowledgeIssuesUseCase
+from invariant.application.dto.validation_dto import AcknowledgmentRequest
+from invariant.application.use_cases.acknowledge_issues import AcknowledgeIssuesUseCase
 from tests.unit.application.fakes import FakeAuditLog
 
 

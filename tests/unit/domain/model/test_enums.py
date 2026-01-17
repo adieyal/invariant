@@ -1,6 +1,6 @@
 """Tests for domain enumerations."""
 
-from new_wazi.domain.model.enums import (
+from invariant.domain.model.enums import (
     AggregationPolicy,
     AggregationType,
     ComparabilityLevel,

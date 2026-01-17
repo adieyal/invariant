@@ -2,21 +2,21 @@
 
 import pytest
 
-from new_wazi.application.dto.query_request import (
+from invariant.application.dto.query_request import (
     DataProductSelectionRequest,
     MetricRequest,
     QueryRequest,
 )
-from new_wazi.application.exceptions import (
+from invariant.application.exceptions import (
     DataProductNotFoundError,
 )
-from new_wazi.application.ports.query_engine import RawQueryResult
-from new_wazi.application.use_cases.execute_query import ExecuteQueryUseCase
-from new_wazi.domain.model.data_product import DataProduct
-from new_wazi.domain.model.enums import DataProductKind, DataType, VariableRole
-from new_wazi.domain.model.ids import DataProductId, DatasetId, VariableId
-from new_wazi.domain.model.value_objects import GrainSpec
-from new_wazi.domain.model.variable import Variable
+from invariant.application.ports.query_engine import RawQueryResult
+from invariant.application.use_cases.execute_query import ExecuteQueryUseCase
+from invariant.domain.model.data_product import DataProduct
+from invariant.domain.model.enums import DataProductKind, DataType, VariableRole
+from invariant.domain.model.ids import DataProductId, DatasetId, VariableId
+from invariant.domain.model.value_objects import GrainSpec
+from invariant.domain.model.variable import Variable
 from tests.unit.application.fakes import (
     FakeAuditLog,
     FakeCatalogStore,

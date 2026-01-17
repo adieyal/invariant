@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from new_wazi_contrib.datadictionary.domain.models import (
+from invariant_contrib.datadictionary.domain.models import (
     CatalogDoc,
     ConceptDoc,
     DatasetDoc,

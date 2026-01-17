@@ -1,8 +1,8 @@
 """Tests for ComparabilityResolver domain service."""
 
-from new_wazi.domain.model.enums import ComparabilityLevel, IncompatibilityReason
-from new_wazi.domain.model.ids import ReferenceSystemVersionId, UniverseId
-from new_wazi.domain.services.comparability import (
+from invariant.domain.model.enums import ComparabilityLevel, IncompatibilityReason
+from invariant.domain.model.ids import ReferenceSystemVersionId, UniverseId
+from invariant.domain.services.comparability import (
     ComparabilityCheck,
     ComparabilityReport,
     ComparabilityResolver,

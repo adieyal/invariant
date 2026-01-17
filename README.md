@@ -1,4 +1,4 @@
-# new-wazi
+# invariant
 
 A data platform for managing statistical datasets with semantic validation. Designed for dashboard-first usage with opt-in rigor for cross-dataset operations.
 
@@ -16,7 +16,7 @@ Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 ```bash
 # Clone and install
 git clone <repo-url>
-cd new-wazi
+cd invariant
 uv sync --all-extras
 
 # Run tests
@@ -43,7 +43,7 @@ uv run pre-commit run --all-files
 Generate human-readable documentation from your catalog content.
 
 ```python
-from new_wazi_contrib.datadictionary import GenerateDataDictionary
+from invariant_contrib.datadictionary import GenerateDataDictionary
 from pathlib import Path
 
 # catalog_store implements the CatalogStore port

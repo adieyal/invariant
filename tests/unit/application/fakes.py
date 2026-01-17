@@ -11,17 +11,17 @@ from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from new_wazi.application.ports.audit_log import AuditLog
-from new_wazi.application.ports.catalog_store import CatalogStore
-from new_wazi.application.ports.clock import Clock
-from new_wazi.application.ports.id_gen import IdGenerator
-from new_wazi.application.ports.query_engine import (
+from invariant.application.ports.audit_log import AuditLog
+from invariant.application.ports.catalog_store import CatalogStore
+from invariant.application.ports.clock import Clock
+from invariant.application.ports.id_gen import IdGenerator
+from invariant.application.ports.query_engine import (
     CostEstimate,
     QueryEngine,
     RawQueryResult,
 )
-from new_wazi.application.ports.suppression_engine import SuppressionEngine
-from new_wazi.domain.model.ids import (
+from invariant.application.ports.suppression_engine import SuppressionEngine
+from invariant.domain.model.ids import (
     ConceptId,
     CrosswalkId,
     DataProductId,
@@ -32,18 +32,21 @@ from new_wazi.domain.model.ids import (
     UniverseId,
     VariableId,
 )
-from new_wazi.domain.model.validation import Disclosure, ValidationResult
-from new_wazi.domain.services.validator import CatalogSnapshot
+from invariant.domain.model.validation import Disclosure, ValidationResult
+from invariant.domain.services.validator import CatalogSnapshot
 
 if TYPE_CHECKING:
-    from new_wazi.domain.model.data_product import DataProduct
-    from new_wazi.domain.model.dataset import Dataset
-    from new_wazi.domain.model.geography import SuppressionPolicy
-    from new_wazi.domain.model.query_plan import QueryPlan
-    from new_wazi.domain.model.reference_system import Crosswalk, ReferenceSystemVersion
-    from new_wazi.domain.model.semantic import Concept, IndicatorDefinition, Universe
-    from new_wazi.domain.model.study import Study
-    from new_wazi.domain.model.variable import Variable
+    from invariant.domain.model.data_product import DataProduct
+    from invariant.domain.model.dataset import Dataset
+    from invariant.domain.model.geography import SuppressionPolicy
+    from invariant.domain.model.query_plan import QueryPlan
+    from invariant.domain.model.reference_system import (
+        Crosswalk,
+        ReferenceSystemVersion,
+    )
+    from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
+    from invariant.domain.model.study import Study
+    from invariant.domain.model.variable import Variable
 
 
 @dataclass

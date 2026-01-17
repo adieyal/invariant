@@ -1,8 +1,8 @@
 """Tests for geography entities."""
 
-from new_wazi.domain.model.enums import GeoType, SuppressionEncoding
-from new_wazi.domain.model.geography import GeographySystem, SuppressionPolicy
-from new_wazi.domain.model.ids import DatasetId, ReferenceSystemId
+from invariant.domain.model.enums import GeoType, SuppressionEncoding
+from invariant.domain.model.geography import GeographySystem, SuppressionPolicy
+from invariant.domain.model.ids import DatasetId, ReferenceSystemId
 
 
 class TestGeographySystem:

@@ -4,7 +4,7 @@ from uuid import UUID
 
 import pytest
 
-from new_wazi.domain.model.ids import (
+from invariant.domain.model.ids import (
     ConceptId,
     CrosswalkId,
     DataProductId,

@@ -1,9 +1,9 @@
 """Shared test fixtures for domain tests."""
 
-from new_wazi.domain.model.data_product import DataProduct
-from new_wazi.domain.model.dataset import Dataset
-from new_wazi.domain.model.enums import DataProductKind, DataType, VariableRole
-from new_wazi.domain.model.ids import (
+from invariant.domain.model.data_product import DataProduct
+from invariant.domain.model.dataset import Dataset
+from invariant.domain.model.enums import DataProductKind, DataType, VariableRole
+from invariant.domain.model.ids import (
     DataProductId,
     DatasetId,
     ReferenceSystemId,
@@ -12,8 +12,8 @@ from new_wazi.domain.model.ids import (
     UniverseId,
     VariableId,
 )
-from new_wazi.domain.model.value_objects import GrainSpec
-from new_wazi.domain.model.variable import Variable
+from invariant.domain.model.value_objects import GrainSpec
+from invariant.domain.model.variable import Variable
 
 
 def make_dimension(name: str, dp_id: DataProductId) -> Variable:

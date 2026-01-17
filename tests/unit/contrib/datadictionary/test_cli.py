@@ -3,9 +3,9 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from new_wazi.domain.model.ids import StudyId
-from new_wazi.domain.model.study import Study
-from new_wazi_contrib.datadictionary.cli import GenerateDataDictionary
+from invariant.domain.model.ids import StudyId
+from invariant.domain.model.study import Study
+from invariant_contrib.datadictionary.cli import GenerateDataDictionary
 from tests.unit.application.fakes import FakeCatalogStore
 
 

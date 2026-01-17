@@ -2,8 +2,8 @@
 
 import pytest
 
-from new_wazi.application.dto.catalog_write import CreateStudyRequest
-from new_wazi.application.use_cases.create_study import CreateStudyUseCase
+from invariant.application.dto.catalog_write import CreateStudyRequest
+from invariant.application.use_cases.create_study import CreateStudyUseCase
 from tests.unit.application.fakes import FakeCatalogStore, FakeIdGenerator
 
 

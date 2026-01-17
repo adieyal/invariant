@@ -2,8 +2,8 @@
 
 from datetime import datetime, timezone
 
-from new_wazi.domain.model.ids import StudyId
-from new_wazi.domain.model.study import Study
+from invariant.domain.model.ids import StudyId
+from invariant.domain.model.study import Study
 
 
 class TestStudy:

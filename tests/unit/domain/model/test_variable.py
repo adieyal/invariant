@@ -2,10 +2,10 @@
 
 import pytest
 
-from new_wazi.domain.model.enums import DataType, VariableRole
-from new_wazi.domain.model.ids import DataProductId, VariableId
-from new_wazi.domain.model.value_objects import EnumeratedDomain
-from new_wazi.domain.model.variable import Variable
+from invariant.domain.model.enums import DataType, VariableRole
+from invariant.domain.model.ids import DataProductId, VariableId
+from invariant.domain.model.value_objects import EnumeratedDomain
+from invariant.domain.model.variable import Variable
 
 
 class TestVariable:

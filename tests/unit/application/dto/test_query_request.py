@@ -1,6 +1,6 @@
 """Tests for query request DTOs."""
 
-from new_wazi.application.dto.query_request import (
+from invariant.application.dto.query_request import (
     CombineRequest,
     DataProductSelectionRequest,
     FilterRequest,

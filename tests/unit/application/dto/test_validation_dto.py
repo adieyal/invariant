@@ -1,6 +1,6 @@
 """Tests for validation DTOs."""
 
-from new_wazi.application.dto.validation_dto import (
+from invariant.application.dto.validation_dto import (
     AcknowledgmentRequest,
     AcknowledgmentResultDTO,
     DisclosureDTO,

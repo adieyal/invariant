@@ -16,14 +16,14 @@ from typing import Any
 import pytest
 import yaml
 
-from new_wazi.application.dto.query_request import (
+from invariant.application.dto.query_request import (
     DataProductSelectionRequest,
     MetricRequest,
     QueryRequest,
 )
-from new_wazi.application.use_cases.validate_query import ValidateQueryUseCase
-from new_wazi.domain.model.data_product import DataProduct
-from new_wazi.domain.model.enums import (
+from invariant.application.use_cases.validate_query import ValidateQueryUseCase
+from invariant.domain.model.data_product import DataProduct
+from invariant.domain.model.enums import (
     AggregationPolicy,
     AggregationType,
     DataProductKind,
@@ -31,10 +31,10 @@ from new_wazi.domain.model.enums import (
     IndicatorType,
     VariableRole,
 )
-from new_wazi.domain.model.ids import DataProductId, DatasetId, VariableId
-from new_wazi.domain.model.semantic import IndicatorDefinition
-from new_wazi.domain.model.value_objects import GrainSpec
-from new_wazi.domain.model.variable import Variable
+from invariant.domain.model.ids import DataProductId, DatasetId, VariableId
+from invariant.domain.model.semantic import IndicatorDefinition
+from invariant.domain.model.value_objects import GrainSpec
+from invariant.domain.model.variable import Variable
 from tests.unit.application.fakes import FakeCatalogStore, FakeIdGenerator
 
 EXAMPLES_DIR = Path(__file__).parent.parent.parent / "examples"

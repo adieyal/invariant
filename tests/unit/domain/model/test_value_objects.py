@@ -2,8 +2,8 @@
 
 import pytest
 
-from new_wazi.domain.model.ids import DataProductId, VariableId
-from new_wazi.domain.model.value_objects import (
+from invariant.domain.model.ids import DataProductId, VariableId
+from invariant.domain.model.value_objects import (
     CodeListDomain,
     EnumeratedDomain,
     GrainSpec,

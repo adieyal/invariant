@@ -4,9 +4,9 @@ from datetime import date
 
 import pytest
 
-from new_wazi.domain.model.data_product import DataProduct
-from new_wazi.domain.model.dataset import Dataset
-from new_wazi.domain.model.enums import (
+from invariant.domain.model.data_product import DataProduct
+from invariant.domain.model.dataset import Dataset
+from invariant.domain.model.enums import (
     AggregationPolicy,
     DataProductKind,
     DataType,
@@ -14,7 +14,7 @@ from new_wazi.domain.model.enums import (
     ReferenceSystemKind,
     VariableRole,
 )
-from new_wazi.domain.model.ids import (
+from invariant.domain.model.ids import (
     DataProductId,
     DatasetId,
     ReferenceSystemId,
@@ -23,16 +23,16 @@ from new_wazi.domain.model.ids import (
     UniverseId,
     VariableId,
 )
-from new_wazi.domain.model.reference_system import (
+from invariant.domain.model.reference_system import (
     ReferenceSystem,
     ReferenceSystemVersion,
 )
-from new_wazi.domain.model.semantic import IndicatorDefinition, Universe
-from new_wazi.domain.model.study import Study
-from new_wazi.domain.model.value_objects import GrainSpec
-from new_wazi.domain.model.variable import Variable
-from new_wazi_contrib.datadictionary.application.catalog_reader import CatalogReader
-from new_wazi_contrib.datadictionary.domain.models import (
+from invariant.domain.model.semantic import IndicatorDefinition, Universe
+from invariant.domain.model.study import Study
+from invariant.domain.model.value_objects import GrainSpec
+from invariant.domain.model.variable import Variable
+from invariant_contrib.datadictionary.application.catalog_reader import CatalogReader
+from invariant_contrib.datadictionary.domain.models import (
     VariableRole as DocVariableRole,
 )
 from tests.unit.application.fakes import FakeCatalogStore

@@ -34,9 +34,9 @@ if TYPE_CHECKING:
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from new_wazi.domain.model.data_product import DataProduct
-from new_wazi.domain.model.dataset import Dataset
-from new_wazi.domain.model.enums import (
+from invariant.domain.model.data_product import DataProduct
+from invariant.domain.model.dataset import Dataset
+from invariant.domain.model.enums import (
     AggregationPolicy,
     AggregationType,
     ComparabilityLevel,
@@ -52,8 +52,8 @@ from new_wazi.domain.model.enums import (
     VariableRole,
     WeightingMethod,
 )
-from new_wazi.domain.model.geography import GeographySystem
-from new_wazi.domain.model.query_plan import (
+from invariant.domain.model.geography import GeographySystem
+from invariant.domain.model.query_plan import (
     CombineMode,
     CombineOp,
     Filter,
@@ -64,19 +64,19 @@ from new_wazi.domain.model.query_plan import (
     QueryPlan,
     SelectOp,
 )
-from new_wazi.domain.model.reference_system import (
+from invariant.domain.model.reference_system import (
     Crosswalk,
     ReferenceSystem,
     ReferenceSystemVersion,
 )
-from new_wazi.domain.model.semantic import (
+from invariant.domain.model.semantic import (
     Concept,
     IndicatorDefinition,
     Universe,
     VariableSemantics,
 )
-from new_wazi.domain.model.study import Study
-from new_wazi.domain.model.validation import (
+from invariant.domain.model.study import Study
+from invariant.domain.model.validation import (
     Disclosure,
     Issue,
     Remediation,
@@ -84,15 +84,15 @@ from new_wazi.domain.model.validation import (
     ValidationResult,
     ValidationStatus,
 )
-from new_wazi.domain.model.value_objects import (
+from invariant.domain.model.value_objects import (
     CodeListDomain,
     EnumeratedDomain,
     GrainSpec,
     RangeDomain,
     VariableRef,
 )
-from new_wazi.domain.model.variable import Variable
-from new_wazi.domain.services.validator import (
+from invariant.domain.model.variable import Variable
+from invariant.domain.services.validator import (
     CatalogSnapshot,
     IndicatorAggregationRule,
 )

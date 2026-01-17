@@ -2,13 +2,13 @@
 
 from datetime import date
 
-from new_wazi.domain.model.enums import CrosswalkMethod, ReferenceSystemKind
-from new_wazi.domain.model.ids import (
+from invariant.domain.model.enums import CrosswalkMethod, ReferenceSystemKind
+from invariant.domain.model.ids import (
     CrosswalkId,
     ReferenceSystemId,
     ReferenceSystemVersionId,
 )
-from new_wazi.domain.model.reference_system import (
+from invariant.domain.model.reference_system import (
     Crosswalk,
     ReferenceSystem,
     ReferenceSystemVersion,

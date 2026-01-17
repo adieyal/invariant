@@ -2,19 +2,19 @@
 
 import pytest
 
-from new_wazi.domain.model.enums import (
+from invariant.domain.model.enums import (
     AggregationPolicy,
     IndicatorType,
     WeightingMethod,
 )
-from new_wazi.domain.model.ids import ConceptId, DataProductId, UniverseId, VariableId
-from new_wazi.domain.model.semantic import (
+from invariant.domain.model.ids import ConceptId, DataProductId, UniverseId, VariableId
+from invariant.domain.model.semantic import (
     Concept,
     IndicatorDefinition,
     Universe,
     VariableSemantics,
 )
-from new_wazi.domain.model.value_objects import VariableRef
+from invariant.domain.model.value_objects import VariableRef
 
 
 class TestUniverse:

@@ -1,23 +1,23 @@
 """Tests for Validator domain service."""
 
-from new_wazi.domain.model.enums import (
+from invariant.domain.model.enums import (
     AggregationPolicy,
     AggregationType,
     DataProductKind,
     IndicatorType,
     PresentationFormat,
 )
-from new_wazi.domain.model.ids import DataProductId
-from new_wazi.domain.model.query_plan import (
+from invariant.domain.model.ids import DataProductId
+from invariant.domain.model.query_plan import (
     Metric,
     PresentationSpec,
     QueryIntent,
     QueryPlan,
     SelectOp,
 )
-from new_wazi.domain.model.semantic import IndicatorDefinition
-from new_wazi.domain.model.validation import Severity, ValidationStatus
-from new_wazi.domain.services.validator import (
+from invariant.domain.model.semantic import IndicatorDefinition
+from invariant.domain.model.validation import Severity, ValidationStatus
+from invariant.domain.services.validator import (
     CatalogSnapshot,
     IndicatorAggregationRule,
     Validator,

@@ -2,9 +2,9 @@
 
 import pytest
 
-from new_wazi.domain.model.enums import AggregationType, PresentationFormat
-from new_wazi.domain.model.ids import DataProductId, VariableId
-from new_wazi.domain.model.query_plan import (
+from invariant.domain.model.enums import AggregationType, PresentationFormat
+from invariant.domain.model.ids import DataProductId, VariableId
+from invariant.domain.model.query_plan import (
     CombineMode,
     CombineOp,
     Filter,
