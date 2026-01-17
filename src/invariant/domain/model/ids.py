@@ -139,3 +139,93 @@ class CrosswalkId:
 
     def __str__(self) -> str:
         return str(self.value)
+
+
+@dataclass(frozen=True)
+class SemanticDatasetId:
+    """Unique identifier for a SemanticDataset."""
+
+    value: UUID
+
+    @classmethod
+    def create(cls) -> SemanticDatasetId:
+        """Generate a new SemanticDatasetId."""
+        return cls(uuid4())
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+@dataclass(frozen=True)
+class DimensionId:
+    """Unique identifier for a Dimension."""
+
+    value: UUID
+
+    @classmethod
+    def create(cls) -> DimensionId:
+        """Generate a new DimensionId."""
+        return cls(uuid4())
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+@dataclass(frozen=True)
+class GeoHierarchyId:
+    """Unique identifier for a GeoHierarchy."""
+
+    value: UUID
+
+    @classmethod
+    def create(cls) -> GeoHierarchyId:
+        """Generate a new GeoHierarchyId."""
+        return cls(uuid4())
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+@dataclass(frozen=True)
+class MetricId:
+    """Unique identifier for a Metric."""
+
+    value: UUID
+
+    @classmethod
+    def create(cls) -> MetricId:
+        """Generate a new MetricId."""
+        return cls(uuid4())
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+@dataclass(frozen=True)
+class MaterializationId:
+    """Unique identifier for a Materialization."""
+
+    value: UUID
+
+    @classmethod
+    def create(cls) -> MaterializationId:
+        """Generate a new MaterializationId."""
+        return cls(uuid4())
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+@dataclass(frozen=True)
+class ComparabilityRuleId:
+    """Unique identifier for a ComparabilityRule."""
+
+    value: UUID
+
+    @classmethod
+    def create(cls) -> ComparabilityRuleId:
+        """Generate a new ComparabilityRuleId."""
+        return cls(uuid4())
+
+    def __str__(self) -> str:
+        return str(self.value)
