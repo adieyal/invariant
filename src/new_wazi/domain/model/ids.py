@@ -97,14 +97,14 @@ class ConceptId:
 
 
 @dataclass(frozen=True)
-class GeoSystemId:
-    """Unique identifier for a GeographySystem."""
+class ReferenceSystemId:
+    """Unique identifier for a ReferenceSystem."""
 
     value: UUID
 
     @classmethod
-    def create(cls) -> GeoSystemId:
-        """Generate a new GeoSystemId."""
+    def create(cls) -> ReferenceSystemId:
+        """Generate a new ReferenceSystemId."""
         return cls(uuid4())
 
     def __str__(self) -> str:
@@ -112,14 +112,14 @@ class GeoSystemId:
 
 
 @dataclass(frozen=True)
-class GeoVersionId:
-    """Unique identifier for a GeographyVersion."""
+class ReferenceSystemVersionId:
+    """Unique identifier for a ReferenceSystemVersion."""
 
     value: UUID
 
     @classmethod
-    def create(cls) -> GeoVersionId:
-        """Generate a new GeoVersionId."""
+    def create(cls) -> ReferenceSystemVersionId:
+        """Generate a new ReferenceSystemVersionId."""
         return cls(uuid4())
 
     def __str__(self) -> str:
@@ -128,7 +128,7 @@ class GeoVersionId:
 
 @dataclass(frozen=True)
 class CrosswalkId:
-    """Unique identifier for a GeographyCrosswalk."""
+    """Unique identifier for a Crosswalk."""
 
     value: UUID
 

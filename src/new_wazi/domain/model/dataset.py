@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
     from new_wazi.domain.model.ids import (
         DatasetId,
-        GeoSystemId,
-        GeoVersionId,
+        ReferenceSystemId,
+        ReferenceSystemVersionId,
         StudyId,
         UniverseId,
     )
@@ -22,7 +22,7 @@ class Dataset:
     """A concrete table produced by a study.
 
     Datasets are produced at a specific level of aggregation and
-    reference a geography system.
+    reference a reference system (geography, facilities, etc.).
 
     Invariants:
     - collection_end must not be before collection_start (if both present)
@@ -31,14 +31,14 @@ class Dataset:
     id: DatasetId
     study_id: StudyId
     name: str
-    geography_system_id: GeoSystemId
     description: str | None = None
     source_ref: str | None = None
     release_date: date | None = None
     collection_start: date | None = None
     collection_end: date | None = None
     reference_date: date | None = None
-    geography_version_id: GeoVersionId | None = None
+    reference_system_id: ReferenceSystemId | None = None
+    reference_system_version_id: ReferenceSystemVersionId | None = None
     universe_id: UniverseId | None = None
     quality_notes: str | None = None
 
@@ -62,6 +62,11 @@ class Dataset:
         return self.universe_id is not None
 
     @property
-    def has_geography_version(self) -> bool:
-        """Check if a geography version is defined."""
-        return self.geography_version_id is not None
+    def has_reference_system(self) -> bool:
+        """Check if a reference system is defined."""
+        return self.reference_system_id is not None
+
+    @property
+    def has_reference_system_version(self) -> bool:
+        """Check if a reference system version is defined."""
+        return self.reference_system_version_id is not None

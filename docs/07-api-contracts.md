@@ -77,7 +77,7 @@ Single data product query:
   "data_product_id": "dp_001",
   "dimensions": ["geography_code"],
   "metrics": [
-    { "variable": "count", "agg": "SUM" }
+    { "variable": "count", "aggregation": "SUM" }
   ],
   "filters": [
     { "variable": "age", "op": "IN", "values": ["6-10"] },
@@ -97,14 +97,14 @@ Cross-dataset comparison:
     {
       "data_product_id": "dp_a",
       "dimensions": ["geography_code"],
-      "metrics": [{ "variable": "indicator1", "agg": "NONE" }],
+      "metrics": [{ "variable": "indicator1", "aggregation": "NONE" }],
       "filters": [],
       "group_by": ["geography_code"]
     },
     {
       "data_product_id": "dp_b",
       "dimensions": ["geography_code"],
-      "metrics": [{ "variable": "indicator1", "agg": "NONE" }],
+      "metrics": [{ "variable": "indicator1", "aggregation": "NONE" }],
       "filters": [],
       "group_by": ["geography_code"]
     }
@@ -133,7 +133,7 @@ The normalized plan persisted for auditability.
       "data_product_id": "dp_001",
       "dimensions": ["geography_code"],
       "metrics": [
-        { "variable": "count", "agg": "SUM" }
+        { "variable": "count", "aggregation": "SUM" }
       ],
       "filters": [
         { "variable": "age", "op": "IN", "values": ["6-10"] },
@@ -222,7 +222,7 @@ Warning with disclosure:
   ],
   "disclosures": [
     {
-      "type": "BOUNDARY_ADJUSTED",
+      "disclosure_type": "BOUNDARY_ADJUSTED",
       "text": "Geography crosswalk applied (area-weighted)."
     }
   ],

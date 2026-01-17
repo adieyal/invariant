@@ -6,8 +6,8 @@ from new_wazi.domain.model.enums import DataProductKind, DataType, VariableRole
 from new_wazi.domain.model.ids import (
     DataProductId,
     DatasetId,
-    GeoSystemId,
-    GeoVersionId,
+    ReferenceSystemId,
+    ReferenceSystemVersionId,
     StudyId,
     UniverseId,
     VariableId,
@@ -70,14 +70,14 @@ def make_data_product(
 
 def make_dataset(
     universe_id: UniverseId | None = None,
-    geo_version_id: GeoVersionId | None = None,
+    reference_system_version_id: ReferenceSystemVersionId | None = None,
 ) -> Dataset:
     """Helper to create a dataset."""
     return Dataset(
         id=DatasetId.create(),
         study_id=StudyId.create(),
         name="Test Dataset",
-        geography_system_id=GeoSystemId.create(),
+        reference_system_id=ReferenceSystemId.create(),
         universe_id=universe_id,
-        geography_version_id=geo_version_id,
+        reference_system_version_id=reference_system_version_id,
     )

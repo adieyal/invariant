@@ -210,11 +210,19 @@ class AuditLog(Protocol):
         acknowledged: bool = False,
     ) -> None: ...
 
+    def record_acknowledgment(
+        self,
+        query_id: str,
+        acknowledged_issues: list[str],
+        user_id: str | None = None,
+    ) -> None: ...
+
     def record_execution(
         self,
         query_id: str,
         success: bool,
         error: str | None = None,
+        row_count: int | None = None,
     ) -> None: ...
 ```
 
@@ -245,6 +253,33 @@ class IdGenerator(Protocol):
 
 ## 5. DTO Definitions
 
+### Type Aliases
+
+DTOs use `Literal` types for string enums to enable static type checking:
+
+```python
+from typing import Literal
+
+# Catalog types
+VariableRoleStr = Literal["DIMENSION", "MEASURE", "INDICATOR"]
+DataTypeStr = Literal["STRING", "INT", "FLOAT", "DATE", "BOOL"]
+DataProductKindStr = Literal["FACT", "INDICATOR"]
+IndicatorTypeStr = Literal["PERCENT", "RATE", "MEAN", "INDEX", "OTHER"]
+AggregationPolicyStr = Literal["NOT_AGGREGATABLE", "RECOMPUTE", "ALLOW_LIST"]
+
+# Query types
+FilterOpStr = Literal["EQ", "IN", "GT", "GTE", "LT", "LTE"]
+AggregationStr = Literal["SUM", "AVG", "MIN", "MAX", "COUNT", "NONE"]
+CombineModeStr = Literal["COMPARE", "JOIN"]
+QueryIntentStr = Literal["NUMBER", "CHART", "TABLE", "MAP"]
+
+# Validation types
+SeverityLevel = Literal["ALLOW", "WARN", "REQUIRE_ACK", "BLOCK"]
+
+# Result value types
+CellValue = str | int | float | bool | None
+```
+
 ### Catalog Write DTOs (dto/catalog_write.py)
 
 ```python
@@ -268,15 +303,15 @@ class CreateDatasetRequest:
 class CreateDataProductRequest:
     dataset_id: str
     name: str
-    kind: str  # "FACT" | "INDICATOR"
+    kind: DataProductKindStr
     grain_keys: list[str]  # Variable names
     variables: list[CreateVariableRequest]
 
 @dataclass(frozen=True)
 class CreateVariableRequest:
     name: str
-    role: str  # "DIMENSION" | "MEASURE" | "INDICATOR"
-    data_type: str
+    role: VariableRoleStr
+    data_type: DataTypeStr
     description: str | None = None
 ```
 
@@ -309,16 +344,16 @@ class DatasetDocDTO:
     geography_system: str
     geography_version: str | None
     collection_period: str | None
-    quality_notes: list[str]
-    data_products: list[DataProductSummaryDTO]
+    quality_notes: tuple[str, ...]
+    data_products: tuple[DataProductSummaryDTO, ...]
 
 @dataclass(frozen=True)
 class DataProductDocDTO:
     id: str
     name: str
-    kind: str
-    grain: list[str]
-    variables: list[VariableSummaryDTO]
+    kind: DataProductKindStr
+    grain: tuple[str, ...]
+    variables: tuple[VariableSummaryDTO, ...]
     default_time_dimension: str | None
     is_public: bool
 
@@ -326,11 +361,11 @@ class DataProductDocDTO:
 class VariableDocDTO:
     id: str
     name: str
-    role: str
-    data_type: str
+    role: VariableRoleStr
+    data_type: DataTypeStr
     description: str | None
     unit: str | None
-    domain: list[str] | None
+    domain: tuple[str, ...] | None
     concept: ConceptDTO | None
     indicator_definition: IndicatorDefinitionDTO | None
 ```
@@ -342,35 +377,35 @@ class VariableDocDTO:
 class QueryRequest:
     """High-level query request from UI/API."""
 
-    intent: str  # "NUMBER" | "CHART" | "TABLE" | "MAP"
-    data_products: list[DataProductSelection]
+    intent: QueryIntentStr
+    selections: tuple[DataProductSelectionRequest, ...]
     combine: CombineRequest | None = None
     presentation: PresentationRequest | None = None
 
 @dataclass(frozen=True)
-class DataProductSelection:
+class DataProductSelectionRequest:
     data_product_id: str
-    dimensions: list[str]  # Variable names
-    metrics: list[MetricRequest]
-    filters: list[FilterRequest]
-    group_by: list[str]
+    dimensions: tuple[str, ...]  # Variable names
+    metrics: tuple[MetricRequest, ...]
+    filters: tuple[FilterRequest, ...] = ()
+    group_by: tuple[str, ...] = ()  # Defaults to dimensions
 
 @dataclass(frozen=True)
 class MetricRequest:
     variable: str  # Variable name
-    aggregation: str  # "SUM" | "AVG" | "NONE" | etc.
+    aggregation: AggregationStr
 
 @dataclass(frozen=True)
 class FilterRequest:
     variable: str
-    op: str  # "EQ" | "IN" | "GT" | etc.
-    values: list[str]
+    op: FilterOpStr
+    values: tuple[str, ...]
 
 @dataclass(frozen=True)
 class CombineRequest:
-    mode: str  # "COMPARE" | "JOIN"
-    on: list[str]  # Join keys
-    labels: list[str] | None = None
+    mode: CombineModeStr
+    on: tuple[str, ...]  # Join keys
+    labels: tuple[str, ...] | None = None
 ```
 
 ### Validation DTO (dto/validation_dto.py)
@@ -379,35 +414,35 @@ class CombineRequest:
 @dataclass(frozen=True)
 class ValidationResultDTO:
     query_id: str
-    status: str  # "ALLOW" | "WARN" | "REQUIRE_ACK" | "BLOCK"
-    issues: list[IssueDTO]
-    disclosures: list[DisclosureDTO]
-    can_execute: bool
-    requires_acknowledgment: bool
+    status: SeverityLevel
+    issues: tuple[IssueDTO, ...]
+    disclosures: tuple[DisclosureDTO, ...]
+    can_execute: bool  # Computed: status in (ALLOW, WARN, REQUIRE_ACK)
+    requires_acknowledgment: bool  # Computed: status == REQUIRE_ACK
 
 @dataclass(frozen=True)
 class IssueDTO:
     code: str
-    severity: str
+    severity: SeverityLevel
     message: str
-    details: dict[str, Any]
-    remediations: list[RemediationDTO]
+    details: dict[str, CellValue]
+    remediations: tuple[RemediationDTO, ...]
 
 @dataclass(frozen=True)
 class RemediationDTO:
     action: str
     label: str
-    required_fields: list[str]
+    required_fields: tuple[str, ...] = ()
 
 @dataclass(frozen=True)
 class DisclosureDTO:
-    type: str
+    disclosure_type: str
     text: str
 
 @dataclass(frozen=True)
 class AcknowledgmentRequest:
     query_id: str
-    acknowledged_issues: list[str]  # Issue codes
+    acknowledged_issue_codes: tuple[str, ...]
     user_id: str | None = None
 ```
 
@@ -417,26 +452,27 @@ class AcknowledgmentRequest:
 @dataclass(frozen=True)
 class QueryResultDTO:
     query_id: str
-    columns: list[ColumnDTO]
-    rows: list[dict[str, Any]]
-    disclosures: list[DisclosureDTO]
-    suppressed_count: int
+    columns: tuple[ColumnDTO, ...]
+    rows: tuple[dict[str, CellValue], ...]
+    disclosures: tuple[DisclosureDTO, ...]
     metadata: ResultMetadataDTO
 
 @dataclass(frozen=True)
 class ColumnDTO:
     name: str
     label: str
-    data_type: str
-    role: str  # "DIMENSION" | "MEASURE" | "INDICATOR"
+    data_type: DataTypeStr
+    role: VariableRoleStr
     unit: str | None = None
+    is_suppressed_column: bool = False
 
 @dataclass(frozen=True)
 class ResultMetadataDTO:
     total_rows: int
     execution_time_ms: int
-    data_sources: list[str]
-    reference_periods: list[str]
+    data_sources: tuple[str, ...]
+    reference_periods: tuple[str, ...]
+    suppressed_count: int = 0
 ```
 
 ---

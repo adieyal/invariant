@@ -1,7 +1,7 @@
 """Tests for ComparabilityResolver domain service."""
 
 from new_wazi.domain.model.enums import ComparabilityLevel, IncompatibilityReason
-from new_wazi.domain.model.ids import GeoVersionId, UniverseId
+from new_wazi.domain.model.ids import ReferenceSystemVersionId, UniverseId
 from new_wazi.domain.services.comparability import (
     ComparabilityCheck,
     ComparabilityReport,
@@ -32,8 +32,8 @@ class TestComparabilityCheck:
     def test_partial_compatibility(self) -> None:
         check = ComparabilityCheck(
             level=ComparabilityLevel.PARTIAL,
-            reasons=[IncompatibilityReason.GEOGRAPHY_VERSION_MISMATCH],
-            remediations=["Apply geography crosswalk"],
+            reasons=[IncompatibilityReason.REFERENCE_SYSTEM_VERSION_MISMATCH],
+            remediations=["Apply crosswalk"],
         )
         assert check.is_compatible  # Partial is still usable
         assert check.level == ComparabilityLevel.PARTIAL
@@ -71,26 +71,32 @@ class TestComparabilityResolver:
 
         assert IncompatibilityReason.UNIVERSE_UNDEFINED in check.reasons
 
-    def test_same_geo_version_is_compatible(self) -> None:
-        geo_version_id = GeoVersionId.create()
-        ds1 = make_dataset(geo_version_id=geo_version_id)
-        ds2 = make_dataset(geo_version_id=geo_version_id)
+    def test_same_reference_system_version_is_compatible(self) -> None:
+        ref_version_id = ReferenceSystemVersionId.create()
+        ds1 = make_dataset(reference_system_version_id=ref_version_id)
+        ds2 = make_dataset(reference_system_version_id=ref_version_id)
 
         resolver = ComparabilityResolver()
         check = resolver.check_datasets(ds1, ds2)
 
-        assert IncompatibilityReason.GEOGRAPHY_VERSION_MISMATCH not in check.reasons
+        assert (
+            IncompatibilityReason.REFERENCE_SYSTEM_VERSION_MISMATCH not in check.reasons
+        )
 
-    def test_different_geo_versions_produce_partial(self) -> None:
-        ds1 = make_dataset(geo_version_id=GeoVersionId.create())
-        ds2 = make_dataset(geo_version_id=GeoVersionId.create())
+    def test_different_reference_system_versions_produce_partial(self) -> None:
+        ds1 = make_dataset(
+            reference_system_version_id=ReferenceSystemVersionId.create()
+        )
+        ds2 = make_dataset(
+            reference_system_version_id=ReferenceSystemVersionId.create()
+        )
 
         resolver = ComparabilityResolver()
         check = resolver.check_datasets(ds1, ds2)
 
-        # Different geo versions can be reconciled with crosswalk
+        # Different versions can be reconciled with crosswalk
         assert check.level == ComparabilityLevel.PARTIAL
-        assert IncompatibilityReason.GEOGRAPHY_VERSION_MISMATCH in check.reasons
+        assert IncompatibilityReason.REFERENCE_SYSTEM_VERSION_MISMATCH in check.reasons
 
     def test_both_datasets_without_universe_is_compatible(self) -> None:
         ds1 = make_dataset(universe_id=None)
@@ -141,7 +147,7 @@ class TestComparabilityReport:
                 ),
                 ComparabilityCheck(
                     level=ComparabilityLevel.PARTIAL,
-                    reasons=[IncompatibilityReason.GEOGRAPHY_VERSION_MISMATCH],
+                    reasons=[IncompatibilityReason.REFERENCE_SYSTEM_VERSION_MISMATCH],
                     remediations=["Apply crosswalk"],
                 ),
             ],

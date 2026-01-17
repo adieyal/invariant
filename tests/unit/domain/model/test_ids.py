@@ -9,8 +9,8 @@ from new_wazi.domain.model.ids import (
     CrosswalkId,
     DataProductId,
     DatasetId,
-    GeoSystemId,
-    GeoVersionId,
+    ReferenceSystemId,
+    ReferenceSystemVersionId,
     StudyId,
     UniverseId,
     VariableId,
@@ -115,26 +115,26 @@ class TestConceptId:
         assert isinstance(concept_id.value, UUID)
 
 
-class TestGeoSystemId:
+class TestReferenceSystemId:
     def test_create_from_uuid(self) -> None:
         uuid = UUID("12345678-1234-5678-1234-567812345678")
-        geo_id = GeoSystemId(uuid)
-        assert geo_id.value == uuid
+        ref_id = ReferenceSystemId(uuid)
+        assert ref_id.value == uuid
 
     def test_create_generates_new_uuid(self) -> None:
-        geo_id = GeoSystemId.create()
-        assert isinstance(geo_id.value, UUID)
+        ref_id = ReferenceSystemId.create()
+        assert isinstance(ref_id.value, UUID)
 
 
-class TestGeoVersionId:
+class TestReferenceSystemVersionId:
     def test_create_from_uuid(self) -> None:
         uuid = UUID("12345678-1234-5678-1234-567812345678")
-        geo_id = GeoVersionId(uuid)
-        assert geo_id.value == uuid
+        ref_ver_id = ReferenceSystemVersionId(uuid)
+        assert ref_ver_id.value == uuid
 
     def test_create_generates_new_uuid(self) -> None:
-        geo_id = GeoVersionId.create()
-        assert isinstance(geo_id.value, UUID)
+        ref_ver_id = ReferenceSystemVersionId.create()
+        assert isinstance(ref_ver_id.value, UUID)
 
 
 class TestCrosswalkId:

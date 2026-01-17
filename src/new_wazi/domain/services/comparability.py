@@ -67,11 +67,11 @@ class ComparabilityResolver:
     Given two datasets, checks various dimensions of comparability
     and produces a report with issues and recommended remediations.
 
-    Note: Current implementation only checks universe and geography_version.
+    Note: Current implementation only checks universe and reference_system_version.
     The following checks are NOT yet implemented:
     - TIME_PERIOD_MISMATCH: comparing data from incompatible time periods
     - METHODOLOGY_MISMATCH: comparing data collected with different methodologies
-    - GEOGRAPHY_SYSTEM_MISMATCH: comparing data with incompatible geo systems
+    - REFERENCE_SYSTEM_MISMATCH: comparing data with incompatible reference systems
 
     Until these checks are implemented, the resolver may over-claim PARTIAL
     compatibility for datasets that are actually incomparable.
@@ -91,10 +91,10 @@ class ComparabilityResolver:
         reasons.extend(universe_result[0])
         remediations.extend(universe_result[1])
 
-        # Check geography version compatibility
-        geo_result = self._check_geography(source, target)
-        reasons.extend(geo_result[0])
-        remediations.extend(geo_result[1])
+        # Check reference system version compatibility
+        ref_sys_result = self._check_reference_system(source, target)
+        reasons.extend(ref_sys_result[0])
+        remediations.extend(ref_sys_result[1])
 
         # Determine overall level
         level = self._compute_level(reasons)
@@ -133,24 +133,24 @@ class ComparabilityResolver:
 
         return reasons, remediations
 
-    def _check_geography(
+    def _check_reference_system(
         self, source: Dataset, target: Dataset
     ) -> tuple[list[IncompatibilityReason], list[str]]:
-        """Check geography version compatibility."""
+        """Check reference system version compatibility."""
         reasons: list[IncompatibilityReason] = []
         remediations: list[str] = []
 
-        source_geo = source.geography_version_id
-        target_geo = target.geography_version_id
+        source_ref_ver = source.reference_system_version_id
+        target_ref_ver = target.reference_system_version_id
 
-        if source_geo is None or target_geo is None:
-            # Geography not specified - no geographic comparison possible
+        if source_ref_ver is None or target_ref_ver is None:
+            # Reference system version not specified - no comparison possible
             return reasons, remediations
 
-        if source_geo != target_geo:
-            # Different geo versions - can be reconciled with crosswalk
-            reasons.append(IncompatibilityReason.GEOGRAPHY_VERSION_MISMATCH)
-            remediations.append("Apply geography crosswalk between versions")
+        if source_ref_ver != target_ref_ver:
+            # Different versions - can be reconciled with crosswalk
+            reasons.append(IncompatibilityReason.REFERENCE_SYSTEM_VERSION_MISMATCH)
+            remediations.append("Apply crosswalk between reference system versions")
             return reasons, remediations
 
         return reasons, remediations

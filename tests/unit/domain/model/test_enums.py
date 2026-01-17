@@ -203,16 +203,16 @@ class TestIncompatibilityReason:
     def test_has_universe_undefined_value(self) -> None:
         assert IncompatibilityReason.UNIVERSE_UNDEFINED.value == "UNIVERSE_UNDEFINED"
 
-    def test_has_geography_version_mismatch_value(self) -> None:
+    def test_has_reference_system_version_mismatch_value(self) -> None:
         assert (
-            IncompatibilityReason.GEOGRAPHY_VERSION_MISMATCH.value
-            == "GEOGRAPHY_VERSION_MISMATCH"
+            IncompatibilityReason.REFERENCE_SYSTEM_VERSION_MISMATCH.value
+            == "REFERENCE_SYSTEM_VERSION_MISMATCH"
         )
 
-    def test_has_geography_system_mismatch_value(self) -> None:
+    def test_has_reference_system_mismatch_value(self) -> None:
         assert (
-            IncompatibilityReason.GEOGRAPHY_SYSTEM_MISMATCH.value
-            == "GEOGRAPHY_SYSTEM_MISMATCH"
+            IncompatibilityReason.REFERENCE_SYSTEM_MISMATCH.value
+            == "REFERENCE_SYSTEM_MISMATCH"
         )
 
     def test_has_time_period_mismatch_value(self) -> None:

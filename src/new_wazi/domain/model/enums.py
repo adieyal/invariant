@@ -59,12 +59,23 @@ class GeoType(str, Enum):
     MIXED = "MIXED"
 
 
+class ReferenceSystemKind(str, Enum):
+    """Kind of reference system."""
+
+    GEOGRAPHY = "geography"
+    FACILITY = "facility"
+    ORGANIZATION = "organization"
+    PROGRAM = "program"
+    OTHER = "other"
+
+
 class CrosswalkMethod(str, Enum):
-    """Method used for geography crosswalk."""
+    """Method used for crosswalk between reference system versions."""
 
     ADMIN_MAP = "ADMIN_MAP"
     AREA_WEIGHTED = "AREA_WEIGHTED"
     POP_WEIGHTED = "POP_WEIGHTED"
+    DIRECT = "DIRECT"
 
 
 class SuppressionEncoding(str, Enum):
@@ -117,7 +128,7 @@ class IncompatibilityReason(str, Enum):
 
     UNIVERSE_MISMATCH = "UNIVERSE_MISMATCH"
     UNIVERSE_UNDEFINED = "UNIVERSE_UNDEFINED"
-    GEOGRAPHY_VERSION_MISMATCH = "GEOGRAPHY_VERSION_MISMATCH"
-    GEOGRAPHY_SYSTEM_MISMATCH = "GEOGRAPHY_SYSTEM_MISMATCH"
+    REFERENCE_SYSTEM_VERSION_MISMATCH = "REFERENCE_SYSTEM_VERSION_MISMATCH"
+    REFERENCE_SYSTEM_MISMATCH = "REFERENCE_SYSTEM_MISMATCH"
     TIME_PERIOD_MISMATCH = "TIME_PERIOD_MISMATCH"
     METHODOLOGY_MISMATCH = "METHODOLOGY_MISMATCH"

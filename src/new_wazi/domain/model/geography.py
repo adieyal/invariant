@@ -3,72 +3,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from new_wazi.domain.model.enums import (
-        CrosswalkMethod,
-        GeoType,
-        SuppressionEncoding,
-    )
-    from new_wazi.domain.model.ids import (
-        CrosswalkId,
-        DatasetId,
-        GeoSystemId,
-        GeoVersionId,
-    )
+    from new_wazi.domain.model.enums import GeoType, SuppressionEncoding
+    from new_wazi.domain.model.ids import DatasetId, ReferenceSystemId
 
 
-@dataclass
+@dataclass(frozen=True)
 class GeographySystem:
-    """A geographic reference system.
+    """Geography-specific profile for ReferenceSystem where kind=GEOGRAPHY.
 
-    Defines the set of geographic units (states, LGAs, facilities, etc.)
+    Adds geometry type and hierarchy levels to the base reference system.
+    This is a profile/extension, not a standalone entity.
     """
 
-    id: GeoSystemId
-    name: str
-    geo_type: GeoType
-    authority: str
-
-
-@dataclass
-class GeographyVersion:
-    """A specific version of a geography system.
-
-    Geographic boundaries change over time. This tracks which version
-    of boundaries a dataset uses.
-    """
-
-    id: GeoVersionId
-    geography_system_id: GeoSystemId
-    label: str
-    valid_from: date | None = None
-    valid_to: date | None = None
-    notes: str | None = None
-
-    @property
-    def is_current(self) -> bool:
-        """Check if this version is currently valid."""
-        if self.valid_to is None:
-            return True
-        return self.valid_to >= date.today()
-
-
-@dataclass
-class GeographyCrosswalk:
-    """A mapping between two geography versions.
-
-    Used to compare or aggregate data across boundary changes.
-    """
-
-    id: CrosswalkId
-    from_version_id: GeoVersionId
-    to_version_id: GeoVersionId
-    method: CrosswalkMethod
-    table_ref: str
-    quality_notes: str | None = None
+    reference_system_id: ReferenceSystemId
+    geometry_type: GeoType
+    levels: tuple[str, ...] = ()
 
 
 @dataclass

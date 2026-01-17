@@ -148,11 +148,19 @@ class AuditLog(Protocol):
         acknowledged: bool = False,
     ) -> None: ...
 
+    def record_acknowledgment(
+        self,
+        query_id: str,
+        acknowledged_issues: list[str],
+        user_id: str | None = None,
+    ) -> None: ...
+
     def record_execution(
         self,
         query_id: str,
         success: bool,
         error: str | None = None,
+        row_count: int | None = None,
     ) -> None: ...
 ```
 

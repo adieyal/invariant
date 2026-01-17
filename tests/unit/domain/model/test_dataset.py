@@ -7,8 +7,8 @@ import pytest
 from new_wazi.domain.model.dataset import Dataset
 from new_wazi.domain.model.ids import (
     DatasetId,
-    GeoSystemId,
-    GeoVersionId,
+    ReferenceSystemId,
+    ReferenceSystemVersionId,
     StudyId,
     UniverseId,
 )
@@ -20,7 +20,6 @@ class TestDataset:
             id=DatasetId.create(),
             study_id=StudyId.create(),
             name="Population by age/sex",
-            geography_system_id=GeoSystemId.create(),
         )
         assert dataset.name == "Population by age/sex"
 
@@ -35,8 +34,8 @@ class TestDataset:
             collection_start=date(2023, 1, 1),
             collection_end=date(2023, 12, 31),
             reference_date=date(2023, 6, 30),
-            geography_system_id=GeoSystemId.create(),
-            geography_version_id=GeoVersionId.create(),
+            reference_system_id=ReferenceSystemId.create(),
+            reference_system_version_id=ReferenceSystemVersionId.create(),
             universe_id=UniverseId.create(),
             quality_notes="Some missing data in rural areas",
         )
@@ -54,7 +53,6 @@ class TestDataset:
                 id=DatasetId.create(),
                 study_id=StudyId.create(),
                 name="Bad dates",
-                geography_system_id=GeoSystemId.create(),
                 collection_start=date(2023, 12, 31),
                 collection_end=date(2023, 1, 1),
             )
@@ -64,7 +62,6 @@ class TestDataset:
             id=DatasetId.create(),
             study_id=StudyId.create(),
             name="Same day collection",
-            geography_system_id=GeoSystemId.create(),
             collection_start=date(2023, 6, 15),
             collection_end=date(2023, 6, 15),
         )
@@ -75,7 +72,6 @@ class TestDataset:
             id=DatasetId.create(),
             study_id=StudyId.create(),
             name="Ongoing collection",
-            geography_system_id=GeoSystemId.create(),
             collection_start=date(2023, 1, 1),
             collection_end=None,
         )
@@ -87,7 +83,6 @@ class TestDataset:
             id=DatasetId.create(),
             study_id=StudyId.create(),
             name="Unknown start",
-            geography_system_id=GeoSystemId.create(),
             collection_start=None,
             collection_end=date(2023, 12, 31),
         )
@@ -99,7 +94,6 @@ class TestDataset:
             id=DatasetId.create(),
             study_id=StudyId.create(),
             name="No universe",
-            geography_system_id=GeoSystemId.create(),
         )
         assert dataset_without.has_universe is False
 
@@ -107,25 +101,38 @@ class TestDataset:
             id=DatasetId.create(),
             study_id=StudyId.create(),
             name="With universe",
-            geography_system_id=GeoSystemId.create(),
             universe_id=UniverseId.create(),
         )
         assert dataset_with.has_universe is True
 
-    def test_has_geography_version(self) -> None:
+    def test_has_reference_system(self) -> None:
+        dataset_without = Dataset(
+            id=DatasetId.create(),
+            study_id=StudyId.create(),
+            name="No reference system",
+        )
+        assert dataset_without.has_reference_system is False
+
+        dataset_with = Dataset(
+            id=DatasetId.create(),
+            study_id=StudyId.create(),
+            name="With reference system",
+            reference_system_id=ReferenceSystemId.create(),
+        )
+        assert dataset_with.has_reference_system is True
+
+    def test_has_reference_system_version(self) -> None:
         dataset_without = Dataset(
             id=DatasetId.create(),
             study_id=StudyId.create(),
             name="No version",
-            geography_system_id=GeoSystemId.create(),
         )
-        assert dataset_without.has_geography_version is False
+        assert dataset_without.has_reference_system_version is False
 
         dataset_with = Dataset(
             id=DatasetId.create(),
             study_id=StudyId.create(),
             name="With version",
-            geography_system_id=GeoSystemId.create(),
-            geography_version_id=GeoVersionId.create(),
+            reference_system_version_id=ReferenceSystemVersionId.create(),
         )
-        assert dataset_with.has_geography_version is True
+        assert dataset_with.has_reference_system_version is True
