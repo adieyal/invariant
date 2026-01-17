@@ -39,12 +39,21 @@ from invariant.domain.model.query_plan import (
 from invariant.domain.model.remediation_action import ActionType, RemediationAction
 from invariant.domain.model.ruleset_pack import RulesetPack
 from invariant.domain.model.semantic_catalog import SemanticCatalog
+from invariant.domain.model.semantic_dataset import (
+    DatasetKind,
+    GrainKeys,
+    PhysicalRef,
+    SemanticDataset,
+    TimeConfig,
+    TimeGrain,
+)
 from invariant.domain.model.validation import Disclosure, Severity, ValidationStatus
 from invariant.domain.services.semantic_validator import (
     GeographyGrainRule,
     NameResolutionRule,
     SemanticCheck,
     SemanticValidator,
+    TimeGrainRule,
 )
 from invariant.domain.services.validator import CatalogSnapshot
 
@@ -845,6 +854,338 @@ class TestGeographyGrainRule:
     def test_implements_semantic_query_rule_protocol(self) -> None:
         """Test that GeographyGrainRule implements the SemanticQueryRule protocol."""
         rule = GeographyGrainRule()
+        # Check that the rule can be used where SemanticQueryRule is expected
+        assert hasattr(rule, "evaluate")
+        assert callable(rule.evaluate)
+
+        # Actually call it to verify the signature matches
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        # This should work without type errors
+        issues: list = rule.evaluate(query, catalog)
+        assert isinstance(issues, list)
+
+
+# Helper functions for TimeGrainRule tests
+
+
+def _make_metric_with_time(
+    name: str,
+    dataset_name: str = "test_dataset",
+    valid_time_grains: list[TimeGrain] | None = None,
+) -> DomainMetric:
+    """Create a simple metric with time grain constraints for testing."""
+    return DomainMetric.create_simple_agg(
+        name=name,
+        dataset_name=dataset_name,
+        expr="count",
+        agg=AggregationFunction.SUM,
+        additivity=Additivity(type=AdditivityType.ADDITIVE),
+        valid_time_grains=valid_time_grains,
+    )
+
+
+def _make_dataset_with_time(
+    name: str,
+    time_config: TimeConfig | None = None,
+) -> SemanticDataset:
+    """Create a dataset for testing."""
+    grain_keys = GrainKeys(time=["date_col"]) if time_config else GrainKeys()
+    return SemanticDataset.create(
+        name=name,
+        physical_ref=PhysicalRef(schema="public", table=name),
+        kind=DatasetKind.FACT,
+        grain_keys=grain_keys,
+        time_config=time_config,
+    )
+
+
+def _make_catalog_with_time(
+    metrics: list[DomainMetric] | None = None,
+    datasets: list[SemanticDataset] | None = None,
+) -> SemanticCatalog:
+    """Create a catalog for time grain testing."""
+    return SemanticCatalog.create(
+        metrics=metrics or [],
+        datasets=datasets or [],
+    )
+
+
+class TestTimeGrainRule:
+    """Tests for TimeGrainRule."""
+
+    def test_no_time_group_by_returns_no_issues(self) -> None:
+        """Test that a query without time group_by returns no issues."""
+        rule = TimeGrainRule()
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_valid_time_grain_returns_no_issues(self) -> None:
+        """Test that a valid time grain returns no issues."""
+        rule = TimeGrainRule()
+        metric = _make_metric_with_time(
+            "population",
+            valid_time_grains=[TimeGrain.MONTH, TimeGrain.YEAR],
+        )
+        dataset = _make_dataset_with_time(
+            "test_dataset",
+            time_config=TimeConfig(
+                column="date_col",
+                grain=TimeGrain.DAY,
+                supported_grains=[TimeGrain.DAY, TimeGrain.MONTH, TimeGrain.YEAR],
+            ),
+        )
+        catalog = _make_catalog_with_time(metrics=[metric], datasets=[dataset])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="time", attribute="month", grain="MONTH")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_invalid_time_grain_value_returns_error(self) -> None:
+        """Test that an invalid time grain value returns an error."""
+        rule = TimeGrainRule()
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[
+                GroupBySpec(dimension="time", attribute="month", grain="INVALID_GRAIN")
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "INVALID_TIME_GRAIN"
+        assert issues[0].severity == Severity.BLOCK
+        assert "INVALID_GRAIN" in issues[0].message
+
+    def test_time_grain_not_in_metric_valid_grains_returns_error(self) -> None:
+        """Test that a time grain not in metric's valid_time_grains returns error."""
+        rule = TimeGrainRule()
+        metric = _make_metric_with_time(
+            "population",
+            valid_time_grains=[TimeGrain.MONTH, TimeGrain.YEAR],
+        )
+        dataset = _make_dataset_with_time(
+            "test_dataset",
+            time_config=TimeConfig(
+                column="date_col",
+                grain=TimeGrain.DAY,
+                supported_grains=[TimeGrain.DAY, TimeGrain.WEEK, TimeGrain.MONTH],
+            ),
+        )
+        catalog = _make_catalog_with_time(metrics=[metric], datasets=[dataset])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="time", attribute="day", grain="DAY")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        # Filter to just INVALID_METRIC_TIME_GRAIN errors
+        grain_issues = [i for i in issues if i.code == "INVALID_METRIC_TIME_GRAIN"]
+        assert len(grain_issues) == 1
+        assert grain_issues[0].severity == Severity.BLOCK
+        assert "DAY" in grain_issues[0].message
+        assert grain_issues[0].details["metric"] == "population"
+
+    def test_time_grain_not_in_dataset_supported_grains_returns_error(self) -> None:
+        """Test that a time grain not in dataset's supported_grains returns error."""
+        rule = TimeGrainRule()
+        metric = _make_metric_with_time(
+            "population",
+            dataset_name="test_dataset",
+        )
+        dataset = _make_dataset_with_time(
+            "test_dataset",
+            time_config=TimeConfig(
+                column="date_col",
+                grain=TimeGrain.MONTH,
+                supported_grains=[TimeGrain.MONTH, TimeGrain.YEAR],
+            ),
+        )
+        catalog = _make_catalog_with_time(metrics=[metric], datasets=[dataset])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="time", attribute="day", grain="DAY")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "UNSUPPORTED_DATASET_TIME_GRAIN"
+        assert issues[0].severity == Severity.BLOCK
+        assert "DAY" in issues[0].message
+        assert issues[0].details["dataset"] == "test_dataset"
+
+    def test_dataset_without_time_support_returns_warning(self) -> None:
+        """Test that a dataset without time support returns a warning."""
+        rule = TimeGrainRule()
+        metric = _make_metric_with_time(
+            "population",
+            dataset_name="test_dataset",
+        )
+        dataset = _make_dataset_with_time(
+            "test_dataset",
+            time_config=None,  # No time support
+        )
+        catalog = _make_catalog_with_time(metrics=[metric], datasets=[dataset])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="time", attribute="month", grain="MONTH")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "NO_TIME_SUPPORT"
+        assert issues[0].severity == Severity.WARN
+        assert "test_dataset" in issues[0].message
+
+    def test_metric_without_valid_time_grains_allows_any_grain(self) -> None:
+        """Test that a metric without valid_time_grains allows any grain."""
+        rule = TimeGrainRule()
+        metric = _make_metric_with_time(
+            "population",
+            valid_time_grains=None,  # No restrictions
+        )
+        dataset = _make_dataset_with_time(
+            "test_dataset",
+            time_config=TimeConfig(
+                column="date_col",
+                grain=TimeGrain.DAY,
+                supported_grains=[TimeGrain.DAY, TimeGrain.MONTH, TimeGrain.YEAR],
+            ),
+        )
+        catalog = _make_catalog_with_time(metrics=[metric], datasets=[dataset])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="time", attribute="day", grain="DAY")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_require_time_filter_raises_error_when_missing(self) -> None:
+        """Test that missing time filter raises error when required."""
+        rule = TimeGrainRule(require_time_filter=True)
+        metric = _make_metric_with_time("population")
+        dataset = _make_dataset_with_time(
+            "test_dataset",
+            time_config=TimeConfig(
+                column="date_col",
+                grain=TimeGrain.MONTH,
+                supported_grains=[TimeGrain.MONTH],
+            ),
+        )
+        catalog = _make_catalog_with_time(metrics=[metric], datasets=[dataset])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="time", attribute="month", grain="MONTH")],
+            # No filters
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        missing_filter_issues = [i for i in issues if i.code == "MISSING_TIME_FILTER"]
+        assert len(missing_filter_issues) == 1
+        assert missing_filter_issues[0].severity == Severity.BLOCK
+
+    def test_require_time_filter_passes_when_filter_present(self) -> None:
+        """Test that time filter requirement passes when filter is present."""
+        rule = TimeGrainRule(require_time_filter=True)
+        metric = _make_metric_with_time("population")
+        dataset = _make_dataset_with_time(
+            "test_dataset",
+            time_config=TimeConfig(
+                column="date_col",
+                grain=TimeGrain.MONTH,
+                supported_grains=[TimeGrain.MONTH],
+            ),
+        )
+        catalog = _make_catalog_with_time(metrics=[metric], datasets=[dataset])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            group_by=[GroupBySpec(dimension="time", attribute="month", grain="MONTH")],
+            filters=[
+                FilterSpec(
+                    dimension="time",
+                    attribute="year",
+                    op=FilterOp.EQ,
+                    value=2024,
+                )
+            ],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        # Should have no MISSING_TIME_FILTER issues
+        missing_filter_issues = [i for i in issues if i.code == "MISSING_TIME_FILTER"]
+        assert len(missing_filter_issues) == 0
+
+    def test_unknown_metric_skipped(self) -> None:
+        """Test that unknown metrics are skipped (handled by NameResolutionRule)."""
+        rule = TimeGrainRule()
+        catalog = _make_catalog()  # Empty catalog
+        query = SemanticQueryRequest(
+            metrics=["unknown_metric"],
+            group_by=[GroupBySpec(dimension="time", attribute="month", grain="MONTH")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        # No metric-specific issues for unknown metrics
+        assert len(issues) == 0
+
+    def test_multiple_metrics_with_different_time_constraints(self) -> None:
+        """Test multiple metrics with different time grain constraints."""
+        rule = TimeGrainRule()
+        metric1 = _make_metric_with_time(
+            "population",
+            valid_time_grains=[TimeGrain.MONTH, TimeGrain.YEAR],
+        )
+        metric2 = _make_metric_with_time(
+            "revenue",
+            valid_time_grains=[TimeGrain.DAY, TimeGrain.MONTH],  # Supports DAY
+        )
+        dataset = _make_dataset_with_time(
+            "test_dataset",
+            time_config=TimeConfig(
+                column="date_col",
+                grain=TimeGrain.DAY,
+                supported_grains=[TimeGrain.DAY, TimeGrain.MONTH, TimeGrain.YEAR],
+            ),
+        )
+        catalog = _make_catalog_with_time(
+            metrics=[metric1, metric2], datasets=[dataset]
+        )
+        query = SemanticQueryRequest(
+            metrics=["population", "revenue"],
+            group_by=[GroupBySpec(dimension="time", attribute="day", grain="DAY")],
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        # Only population should have an issue (doesn't support DAY)
+        assert len(issues) == 1
+        assert issues[0].details["metric"] == "population"
+
+    def test_implements_semantic_query_rule_protocol(self) -> None:
+        """Test that TimeGrainRule implements the SemanticQueryRule protocol."""
+        rule = TimeGrainRule()
         # Check that the rule can be used where SemanticQueryRule is expected
         assert hasattr(rule, "evaluate")
         assert callable(rule.evaluate)
