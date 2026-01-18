@@ -4,9 +4,14 @@ from invariant.application.dto.semantic_query import (
     FilterOp,
     FilterSpec,
     GroupBySpec,
+    QueryOptions,
     SemanticQueryRequest,
 )
 from invariant.domain.model.check_result import CheckResult
+from invariant.domain.model.comparability_rules import (
+    ComparabilityPolicy,
+    ComparabilityRules,
+)
 from invariant.domain.model.dimension import (
     DataType,
     Dimension,
@@ -24,6 +29,7 @@ from invariant.domain.model.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
+    Comparability,
     RollupPolicy,
 )
 from invariant.domain.model.metric import (
@@ -50,6 +56,7 @@ from invariant.domain.model.semantic_dataset import (
 from invariant.domain.model.validation import Disclosure, Severity, ValidationStatus
 from invariant.domain.services.semantic_validator import (
     AdditivityRule,
+    ComparabilityValidationRule,
     GeographyGrainRule,
     NameResolutionRule,
     SemanticCheck,
@@ -1583,6 +1590,355 @@ class TestAdditivityRule:
     def test_implements_semantic_query_rule_protocol(self) -> None:
         """Test that AdditivityRule implements the SemanticQueryRule protocol."""
         rule = AdditivityRule()
+        # Check that the rule can be used where SemanticQueryRule is expected
+        assert hasattr(rule, "evaluate")
+        assert callable(rule.evaluate)
+
+        # Actually call it to verify the signature matches
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        # This should work without type errors
+        issues: list = rule.evaluate(query, catalog)
+        assert isinstance(issues, list)
+
+
+# Helper functions for ComparabilityValidationRule tests
+
+
+def _make_metric_with_comparability(
+    name: str,
+    methodology_id: str | None = None,
+    methodology_version: str | None = None,
+    population_definition: str | None = None,
+) -> DomainMetric:
+    """Create a metric with comparability metadata for testing."""
+    comparability = None
+    if methodology_id is not None:
+        comparability = Comparability(
+            methodology_id=methodology_id,
+            methodology_version=methodology_version or "1.0",
+            population_definition=population_definition,
+        )
+    return DomainMetric.create_simple_agg(
+        name=name,
+        dataset_name="test_dataset",
+        expr="count",
+        agg=AggregationFunction.SUM,
+        additivity=Additivity(type=AdditivityType.ADDITIVE),
+        comparability=comparability,
+    )
+
+
+def _make_comparability_rules(
+    default_policy: ComparabilityPolicy = ComparabilityPolicy.WARN,
+    forbid_on_mismatch: list[str] | None = None,
+    warn_on_mismatch: list[str] | None = None,
+) -> ComparabilityRules:
+    """Create comparability rules for testing."""
+    return ComparabilityRules.create(
+        default_policy=default_policy,
+        forbid_on_mismatch=forbid_on_mismatch,
+        warn_on_mismatch=warn_on_mismatch,
+    )
+
+
+def _make_catalog_with_comparability(
+    metrics: list[DomainMetric] | None = None,
+    comparability_rules: ComparabilityRules | None = None,
+) -> SemanticCatalog:
+    """Create a catalog with comparability rules for testing."""
+    return SemanticCatalog.create(
+        metrics=metrics or [],
+        comparability_rules=comparability_rules,
+    )
+
+
+class TestComparabilityValidationRule:
+    """Tests for ComparabilityValidationRule."""
+
+    def test_single_metric_returns_no_issues(self) -> None:
+        """Test that a single metric returns no comparability issues."""
+        rules = _make_comparability_rules()
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric = _make_metric_with_comparability(
+            "population",
+            methodology_id="census",
+            methodology_version="1.0",
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_compatible_metrics_return_no_issues(self) -> None:
+        """Test that metrics with same methodology return no issues."""
+        rules = _make_comparability_rules()
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric1 = _make_metric_with_comparability(
+            "population",
+            methodology_id="census",
+            methodology_version="2.0",
+        )
+        metric2 = _make_metric_with_comparability(
+            "households",
+            methodology_id="census",
+            methodology_version="2.0",
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(metrics=["population", "households"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_methodology_id_mismatch_with_forbid_policy_returns_error(self) -> None:
+        """Test that methodology_id mismatch with FORBID policy returns error."""
+        rules = _make_comparability_rules(
+            forbid_on_mismatch=["methodology_id"],
+        )
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric1 = _make_metric_with_comparability(
+            "population",
+            methodology_id="census",
+            methodology_version="1.0",
+        )
+        metric2 = _make_metric_with_comparability(
+            "gdp",
+            methodology_id="economic_survey",
+            methodology_version="1.0",
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(metrics=["population", "gdp"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "COMPARABILITY_METHODOLOGY_ID_MISMATCH"
+        assert issues[0].severity == Severity.BLOCK
+        assert "population" in issues[0].message
+        assert "gdp" in issues[0].message
+        assert issues[0].details["field"] == "methodology_id"
+
+    def test_methodology_version_mismatch_with_warn_policy_returns_warning(
+        self,
+    ) -> None:
+        """Test that methodology_version mismatch with WARN policy returns warning."""
+        rules = _make_comparability_rules(
+            warn_on_mismatch=["methodology_version"],
+        )
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric1 = _make_metric_with_comparability(
+            "population_2020",
+            methodology_id="census",
+            methodology_version="1.0",
+        )
+        metric2 = _make_metric_with_comparability(
+            "population_2021",
+            methodology_id="census",
+            methodology_version="2.0",
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(metrics=["population_2020", "population_2021"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "COMPARABILITY_METHODOLOGY_VERSION_MISMATCH"
+        assert issues[0].severity == Severity.WARN
+
+    def test_population_definition_mismatch_returns_issue(self) -> None:
+        """Test that population_definition mismatch returns issue based on policy."""
+        rules = _make_comparability_rules(
+            warn_on_mismatch=["population_definition"],
+        )
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric1 = _make_metric_with_comparability(
+            "adult_population",
+            methodology_id="census",
+            methodology_version="1.0",
+            population_definition="adults_18_plus",
+        )
+        metric2 = _make_metric_with_comparability(
+            "youth_population",
+            methodology_id="census",
+            methodology_version="1.0",
+            population_definition="youth_under_18",
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(metrics=["adult_population", "youth_population"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "COMPARABILITY_POPULATION_DEFINITION_MISMATCH"
+        assert issues[0].severity == Severity.WARN
+
+    def test_allow_incomparable_option_overrides_issues(self) -> None:
+        """Test that allow_incomparable=True overrides comparability checks."""
+        rules = _make_comparability_rules(
+            forbid_on_mismatch=["methodology_id"],
+        )
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric1 = _make_metric_with_comparability(
+            "population",
+            methodology_id="census",
+        )
+        metric2 = _make_metric_with_comparability(
+            "gdp",
+            methodology_id="economic_survey",
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(
+            metrics=["population", "gdp"],
+            options=QueryOptions(allow_incomparable=True),
+        )
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_default_policy_forbid_returns_error(self) -> None:
+        """Test that default FORBID policy returns error on mismatch."""
+        rules = _make_comparability_rules(
+            default_policy=ComparabilityPolicy.FORBID,
+        )
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric1 = _make_metric_with_comparability(
+            "population",
+            methodology_id="census",
+        )
+        metric2 = _make_metric_with_comparability(
+            "gdp",
+            methodology_id="economic_survey",
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(metrics=["population", "gdp"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) >= 1
+        methodology_issues = [
+            i for i in issues if i.code == "COMPARABILITY_METHODOLOGY_ID_MISMATCH"
+        ]
+        assert len(methodology_issues) == 1
+        assert methodology_issues[0].severity == Severity.BLOCK
+
+    def test_default_policy_warn_returns_warning(self) -> None:
+        """Test that default WARN policy returns warning on mismatch."""
+        rules = _make_comparability_rules(
+            default_policy=ComparabilityPolicy.WARN,
+        )
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric1 = _make_metric_with_comparability(
+            "population",
+            methodology_id="census",
+        )
+        metric2 = _make_metric_with_comparability(
+            "gdp",
+            methodology_id="economic_survey",
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(metrics=["population", "gdp"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) >= 1
+        methodology_issues = [
+            i for i in issues if i.code == "COMPARABILITY_METHODOLOGY_ID_MISMATCH"
+        ]
+        assert len(methodology_issues) == 1
+        assert methodology_issues[0].severity == Severity.WARN
+
+    def test_metrics_without_comparability_skipped(self) -> None:
+        """Test that metrics without comparability metadata are skipped."""
+        rules = _make_comparability_rules()
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric1 = _make_metric_with_comparability(
+            "population",
+            methodology_id="census",
+        )
+        metric2 = _make_metric_with_comparability(
+            "gdp",
+            methodology_id=None,  # No comparability
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(metrics=["population", "gdp"])
+
+        issues = rule.evaluate(query, catalog)
+
+        # No issues because only one metric has comparability
+        assert len(issues) == 0
+
+    def test_unknown_metrics_skipped(self) -> None:
+        """Test that unknown metrics are skipped (handled by NameResolutionRule)."""
+        rules = _make_comparability_rules()
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        catalog = _make_catalog_with_comparability()  # Empty catalog
+        query = SemanticQueryRequest(metrics=["unknown_metric1", "unknown_metric2"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_uses_catalog_rules_when_not_provided(self) -> None:
+        """Test that rule uses catalog's comparability rules when not provided."""
+        catalog_rules = _make_comparability_rules(
+            forbid_on_mismatch=["methodology_id"],
+        )
+        rule = ComparabilityValidationRule()  # No rules provided
+        metric1 = _make_metric_with_comparability(
+            "population",
+            methodology_id="census",
+        )
+        metric2 = _make_metric_with_comparability(
+            "gdp",
+            methodology_id="economic_survey",
+        )
+        catalog = _make_catalog_with_comparability(
+            metrics=[metric1, metric2],
+            comparability_rules=catalog_rules,
+        )
+        query = SemanticQueryRequest(metrics=["population", "gdp"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].severity == Severity.BLOCK
+
+    def test_multiple_mismatches_return_multiple_issues(self) -> None:
+        """Test that multiple mismatches return multiple issues."""
+        rules = _make_comparability_rules(
+            warn_on_mismatch=["methodology_id", "methodology_version"],
+        )
+        rule = ComparabilityValidationRule(comparability_rules=rules)
+        metric1 = _make_metric_with_comparability(
+            "population",
+            methodology_id="census",
+            methodology_version="1.0",
+        )
+        metric2 = _make_metric_with_comparability(
+            "gdp",
+            methodology_id="economic_survey",
+            methodology_version="2.0",
+        )
+        catalog = _make_catalog_with_comparability(metrics=[metric1, metric2])
+        query = SemanticQueryRequest(metrics=["population", "gdp"])
+
+        issues = rule.evaluate(query, catalog)
+
+        # Should have issues for methodology_id and methodology_version mismatches
+        assert len(issues) == 2
+        codes = {issue.code for issue in issues}
+        assert "COMPARABILITY_METHODOLOGY_ID_MISMATCH" in codes
+        assert "COMPARABILITY_METHODOLOGY_VERSION_MISMATCH" in codes
+
+    def test_implements_semantic_query_rule_protocol(self) -> None:
+        """Test that ComparabilityValidationRule implements the SemanticQueryRule protocol."""
+        rule = ComparabilityValidationRule()
         # Check that the rule can be used where SemanticQueryRule is expected
         assert hasattr(rule, "evaluate")
         assert callable(rule.evaluate)
