@@ -1,0 +1,7 @@
+# Dimension with invalid data type
+name: bad_type_dim
+attributes:
+  my_attr:
+    expr: column_name
+    data_type: UNKNOWN_TYPE
+    semantic_type: CATEGORY

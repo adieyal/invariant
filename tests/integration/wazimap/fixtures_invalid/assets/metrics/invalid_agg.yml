@@ -1,0 +1,7 @@
+# Metric with invalid aggregation function
+name: bad_agg_metric
+kind: SIMPLE_AGG
+spec:
+  dataset_name: population
+  expr: count
+  agg: MEDIAN  # Not a valid aggregation function

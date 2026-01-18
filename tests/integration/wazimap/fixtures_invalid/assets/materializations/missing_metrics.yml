@@ -1,0 +1,11 @@
+# Materialization with empty metrics list
+name: empty_materialization
+dataset_name: population
+metrics: []  # Must not be empty
+source:
+  type: PROFILE
+refresh:
+  strategy: MANUAL
+storage:
+  schema: cache
+  table: test_cache

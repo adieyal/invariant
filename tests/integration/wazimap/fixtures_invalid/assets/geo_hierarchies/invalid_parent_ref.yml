@@ -1,0 +1,8 @@
+# GeoHierarchy with parent referencing unknown level
+name: broken_hierarchy
+levels:
+  - country
+  - province
+parent_relationships:
+  province:
+    parent_level: unknown_level  # Does not exist in levels

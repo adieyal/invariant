@@ -1,0 +1,10 @@
+# Dataset with invalid kind enum value
+name: bad_kind_dataset
+physical_ref:
+  schema: public
+  table: test
+kind: INVALID_KIND
+grain_keys:
+  geo: []
+  time: []
+  other: []

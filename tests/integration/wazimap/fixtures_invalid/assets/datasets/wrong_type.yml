@@ -1,0 +1,10 @@
+# Dataset with wrong field type
+name: 12345  # Should be a string
+physical_ref:
+  schema: public
+  table: test
+kind: FACT
+grain_keys:
+  geo: []
+  time: []
+  other: []

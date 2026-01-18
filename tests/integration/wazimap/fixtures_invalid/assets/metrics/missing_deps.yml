@@ -1,0 +1,6 @@
+# Derived metric with empty deps
+name: empty_deps_metric
+kind: DERIVED
+spec:
+  expr: a + b
+  deps: []  # Must not be empty

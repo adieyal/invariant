@@ -1,0 +1,7 @@
+# Dataset missing required 'physical_ref' field
+name: incomplete_dataset
+kind: FACT
+grain_keys:
+  geo: []
+  time: []
+  other: []

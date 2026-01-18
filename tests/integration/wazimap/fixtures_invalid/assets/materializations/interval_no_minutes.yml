@@ -1,0 +1,12 @@
+# Materialization with INTERVAL strategy but no interval_minutes
+name: broken_refresh_materialization
+dataset_name: population
+metrics:
+  - total_population
+source:
+  type: PROFILE
+refresh:
+  strategy: INTERVAL  # Requires interval_minutes
+storage:
+  schema: cache
+  table: test_cache

@@ -1,0 +1,6 @@
+# Invalid YAML syntax
+name: test
+kind: FACT
+physical_ref:
+  - this is wrong
+  schema: public  # Indentation error
