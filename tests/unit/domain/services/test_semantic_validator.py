@@ -54,13 +54,20 @@ from invariant.domain.model.semantic_dataset import (
     TimeConfig,
     TimeGrain,
 )
-from invariant.domain.model.validation import Disclosure, Severity, ValidationStatus
+from invariant.domain.model.validation import (
+    Disclosure,
+    Issue,
+    Severity,
+    ValidationStatus,
+)
 from invariant.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
     GeographyGrainRule,
     JoinSafetyRule,
     NameResolutionRule,
+    QueryRuleValidator,
+    QueryValidationResult,
     SemanticCheck,
     SemanticValidator,
     TimeGrainRule,
@@ -2336,3 +2343,352 @@ class TestJoinSafetyRule:
         # This should work without type errors
         issues: list = rule.evaluate(query, catalog)
         assert isinstance(issues, list)
+
+
+# ===== QueryValidationResult Tests =====
+
+
+class TestQueryValidationResult:
+    """Tests for QueryValidationResult value object."""
+
+    def test_empty_result_is_valid(self) -> None:
+        """Test that an empty result is valid."""
+        result = QueryValidationResult(issues=[])
+
+        assert result.is_valid is True
+        assert result.errors == []
+        assert result.warnings == []
+
+    def test_result_with_warning_is_valid(self) -> None:
+        """Test that a result with only warnings is valid."""
+        warning = Issue(
+            code="TEST_WARNING",
+            severity=Severity.WARN,
+            message="Test warning",
+        )
+        result = QueryValidationResult(issues=[warning])
+
+        assert result.is_valid is True
+        assert result.errors == []
+        assert result.warnings == [warning]
+
+    def test_result_with_error_is_not_valid(self) -> None:
+        """Test that a result with blocking errors is not valid."""
+        error = Issue(
+            code="TEST_ERROR",
+            severity=Severity.BLOCK,
+            message="Test error",
+        )
+        result = QueryValidationResult(issues=[error])
+
+        assert result.is_valid is False
+        assert result.errors == [error]
+        assert result.warnings == []
+
+    def test_result_with_mixed_issues(self) -> None:
+        """Test that a result with mixed issues separates them correctly."""
+        warning = Issue(
+            code="TEST_WARNING",
+            severity=Severity.WARN,
+            message="Test warning",
+        )
+        error = Issue(
+            code="TEST_ERROR",
+            severity=Severity.BLOCK,
+            message="Test error",
+        )
+        result = QueryValidationResult(issues=[warning, error])
+
+        assert result.is_valid is False
+        assert result.errors == [error]
+        assert result.warnings == [warning]
+
+    def test_result_issues_are_immutable(self) -> None:
+        """Test that result issues are immutable."""
+        result = QueryValidationResult(issues=[])
+        assert isinstance(result.issues, tuple)
+
+    def test_result_with_none_issues(self) -> None:
+        """Test that None issues are handled gracefully."""
+        result = QueryValidationResult(issues=None)
+
+        assert result.is_valid is True
+        assert result.issues == ()
+
+
+# ===== QueryRuleValidator Tests =====
+
+
+class AlwaysPassRule:
+    """Test rule that always passes (returns no issues)."""
+
+    def evaluate(
+        self, query: SemanticQueryRequest, catalog: SemanticCatalog
+    ) -> list[Issue]:
+        return []
+
+
+class AlwaysWarnRule:
+    """Test rule that always produces a warning."""
+
+    def evaluate(
+        self, query: SemanticQueryRequest, catalog: SemanticCatalog
+    ) -> list[Issue]:
+        return [
+            Issue(
+                code="ALWAYS_WARN",
+                severity=Severity.WARN,
+                message="Always warns",
+            )
+        ]
+
+
+class AlwaysBlockRule:
+    """Test rule that always produces a blocking error."""
+
+    def evaluate(
+        self, query: SemanticQueryRequest, catalog: SemanticCatalog
+    ) -> list[Issue]:
+        return [
+            Issue(
+                code="ALWAYS_BLOCK",
+                severity=Severity.BLOCK,
+                message="Always blocks",
+            )
+        ]
+
+
+class MultiIssueRule:
+    """Test rule that produces multiple issues."""
+
+    def evaluate(
+        self, query: SemanticQueryRequest, catalog: SemanticCatalog
+    ) -> list[Issue]:
+        return [
+            Issue(
+                code="ISSUE_1",
+                severity=Severity.WARN,
+                message="Issue 1",
+            ),
+            Issue(
+                code="ISSUE_2",
+                severity=Severity.BLOCK,
+                message="Issue 2",
+            ),
+        ]
+
+
+class TestQueryRuleValidator:
+    """Tests for QueryRuleValidator aggregate service."""
+
+    def test_validator_with_no_rules(self) -> None:
+        """Test that validator with no rules returns valid result."""
+        validator = QueryRuleValidator(rules=[])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is True
+        assert len(result.issues) == 0
+
+    def test_validator_runs_single_passing_rule(self) -> None:
+        """Test that validator runs a single passing rule."""
+        validator = QueryRuleValidator(rules=[AlwaysPassRule()])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is True
+        assert len(result.issues) == 0
+
+    def test_validator_runs_single_warning_rule(self) -> None:
+        """Test that validator runs a single warning rule."""
+        validator = QueryRuleValidator(rules=[AlwaysWarnRule()])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is True
+        assert len(result.issues) == 1
+        assert result.warnings[0].code == "ALWAYS_WARN"
+
+    def test_validator_runs_single_blocking_rule(self) -> None:
+        """Test that validator runs a single blocking rule."""
+        validator = QueryRuleValidator(rules=[AlwaysBlockRule()])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is False
+        assert len(result.issues) == 1
+        assert result.errors[0].code == "ALWAYS_BLOCK"
+
+    def test_validator_runs_multiple_rules(self) -> None:
+        """Test that validator runs all rules and aggregates issues."""
+        validator = QueryRuleValidator(
+            rules=[AlwaysPassRule(), AlwaysWarnRule(), AlwaysBlockRule()]
+        )
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is False
+        assert len(result.issues) == 2
+        assert len(result.warnings) == 1
+        assert len(result.errors) == 1
+
+    def test_validator_aggregates_issues_from_multi_issue_rule(self) -> None:
+        """Test that validator collects all issues from a multi-issue rule."""
+        validator = QueryRuleValidator(rules=[MultiIssueRule()])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is False
+        assert len(result.issues) == 2
+        assert result.issues[0].code == "ISSUE_1"
+        assert result.issues[1].code == "ISSUE_2"
+
+    def test_validator_strict_mode_elevates_warnings(self) -> None:
+        """Test that strict mode elevates warnings to errors."""
+        validator = QueryRuleValidator(rules=[AlwaysWarnRule()])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            options=QueryOptions(strict=True),
+        )
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is False
+        assert len(result.issues) == 1
+        assert result.issues[0].severity == Severity.BLOCK
+        assert result.issues[0].code == "ALWAYS_WARN"
+
+    def test_validator_strict_mode_keeps_errors_as_errors(self) -> None:
+        """Test that strict mode does not change existing errors."""
+        validator = QueryRuleValidator(rules=[AlwaysBlockRule()])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            options=QueryOptions(strict=True),
+        )
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is False
+        assert len(result.issues) == 1
+        assert result.issues[0].severity == Severity.BLOCK
+        assert result.issues[0].code == "ALWAYS_BLOCK"
+
+    def test_validator_strict_mode_with_mixed_issues(self) -> None:
+        """Test strict mode with both warnings and errors."""
+        validator = QueryRuleValidator(rules=[AlwaysWarnRule(), AlwaysBlockRule()])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            options=QueryOptions(strict=True),
+        )
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is False
+        assert len(result.issues) == 2
+        # Both should be BLOCK in strict mode
+        assert all(i.severity == Severity.BLOCK for i in result.issues)
+
+    def test_validator_without_strict_mode(self) -> None:
+        """Test that non-strict mode keeps warnings as warnings."""
+        validator = QueryRuleValidator(rules=[AlwaysWarnRule()])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            options=QueryOptions(strict=False),
+        )
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is True
+        assert len(result.issues) == 1
+        assert result.issues[0].severity == Severity.WARN
+
+    def test_validator_with_real_rules(self) -> None:
+        """Test validator with actual validation rules."""
+        validator = QueryRuleValidator(
+            rules=[
+                NameResolutionRule(),
+                GeographyGrainRule(),
+                TimeGrainRule(),
+            ]
+        )
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        result = validator.validate(query, catalog)
+
+        # Should pass with no issues for a simple valid query
+        assert result.is_valid is True
+
+    def test_validator_with_real_rules_detects_unknown_metric(self) -> None:
+        """Test that validator with real rules catches unknown metrics."""
+        validator = QueryRuleValidator(rules=[NameResolutionRule()])
+        catalog = _make_catalog(metrics=[])  # No metrics defined
+        query = SemanticQueryRequest(metrics=["unknown_metric"])
+
+        result = validator.validate(query, catalog)
+
+        assert result.is_valid is False
+        assert len(result.errors) == 1
+        assert result.errors[0].code == "UNKNOWN_METRIC"
+
+    def test_validator_rules_stored_as_tuple(self) -> None:
+        """Test that rules are stored as immutable tuple."""
+        rules = [AlwaysPassRule(), AlwaysWarnRule()]
+        validator = QueryRuleValidator(rules=rules)
+
+        assert isinstance(validator.rules, tuple)
+        assert len(validator.rules) == 2
+
+    def test_validator_preserves_issue_details(self) -> None:
+        """Test that validator preserves issue details through processing."""
+        validator = QueryRuleValidator(rules=[NameResolutionRule()])
+        catalog = _make_catalog(metrics=[])
+        query = SemanticQueryRequest(metrics=["test_metric"])
+
+        result = validator.validate(query, catalog)
+
+        assert len(result.issues) == 1
+        assert result.issues[0].details.get("metric") == "test_metric"
+
+    def test_validator_strict_preserves_issue_details(self) -> None:
+        """Test that strict mode preserves all issue details when elevating."""
+        validator = QueryRuleValidator(rules=[AlwaysWarnRule()])
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(
+            metrics=["population"],
+            options=QueryOptions(strict=True),
+        )
+
+        result = validator.validate(query, catalog)
+
+        # The elevated issue should preserve the original code and message
+        assert result.issues[0].code == "ALWAYS_WARN"
+        assert result.issues[0].message == "Always warns"
