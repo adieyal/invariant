@@ -61,6 +61,20 @@ class RatioFormat(str, Enum):
     PER_100000 = "PER_100000"
 
 
+class JoinIntent(str, Enum):
+    """Intent for join cardinality safety when metrics require cross-dataset joins.
+
+    Used to declare whether a metric that requires joining data from different
+    datasets has been verified for join safety.
+    """
+
+    N_TO_1_ONLY = "N_TO_1_ONLY"
+    """Default: only n:1 joins are safe (many-to-one cardinality)."""
+
+    SAFE_ONE_TO_MANY = "SAFE_ONE_TO_MANY"
+    """Explicitly declared as safe for 1:n joins with rationale."""
+
+
 @dataclass(frozen=True)
 class Additivity:
     """Additivity specification for a metric.
@@ -188,12 +202,16 @@ class RatioSpec:
     numerator: str
     denominator: str
     ratio_format: RatioFormat
+    join_intent: JoinIntent
+    join_intent_rationale: str | None
 
     def __init__(
         self,
         numerator: str,
         denominator: str,
         ratio_format: RatioFormat = RatioFormat.DECIMAL,
+        join_intent: JoinIntent = JoinIntent.N_TO_1_ONLY,
+        join_intent_rationale: str | None = None,
     ) -> None:
         if not numerator:
             raise ValueError("numerator must not be empty")
@@ -202,6 +220,8 @@ class RatioSpec:
         object.__setattr__(self, "numerator", numerator)
         object.__setattr__(self, "denominator", denominator)
         object.__setattr__(self, "ratio_format", ratio_format)
+        object.__setattr__(self, "join_intent", join_intent)
+        object.__setattr__(self, "join_intent_rationale", join_intent_rationale)
 
 
 @dataclass(frozen=True)
@@ -380,6 +400,8 @@ class Metric:
         additivity: Additivity,
         *,
         ratio_format: RatioFormat = RatioFormat.DECIMAL,
+        join_intent: JoinIntent = JoinIntent.N_TO_1_ONLY,
+        join_intent_rationale: str | None = None,
         valid_geo_levels: Sequence[str] | None = None,
         valid_time_grains: Sequence[TimeGrain] | None = None,
         unit: MetricUnit | None = None,
@@ -394,6 +416,8 @@ class Metric:
                 numerator=numerator,
                 denominator=denominator,
                 ratio_format=ratio_format,
+                join_intent=join_intent,
+                join_intent_rationale=join_intent_rationale,
             ),
             additivity=additivity,
             valid_geo_levels=tuple(valid_geo_levels) if valid_geo_levels else (),

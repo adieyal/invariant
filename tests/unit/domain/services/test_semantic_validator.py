@@ -30,6 +30,7 @@ from invariant.domain.model.metric import (
     AdditivityType,
     AggregationFunction,
     Comparability,
+    JoinIntent,
     RollupPolicy,
 )
 from invariant.domain.model.metric import (
@@ -58,6 +59,7 @@ from invariant.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
     GeographyGrainRule,
+    JoinSafetyRule,
     NameResolutionRule,
     SemanticCheck,
     SemanticValidator,
@@ -1939,6 +1941,389 @@ class TestComparabilityValidationRule:
     def test_implements_semantic_query_rule_protocol(self) -> None:
         """Test that ComparabilityValidationRule implements the SemanticQueryRule protocol."""
         rule = ComparabilityValidationRule()
+        # Check that the rule can be used where SemanticQueryRule is expected
+        assert hasattr(rule, "evaluate")
+        assert callable(rule.evaluate)
+
+        # Actually call it to verify the signature matches
+        metric = _make_metric("population")
+        catalog = _make_catalog(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        # This should work without type errors
+        issues: list = rule.evaluate(query, catalog)
+        assert isinstance(issues, list)
+
+
+# Helper functions for JoinSafetyRule tests
+
+
+def _make_simple_metric_for_dataset(
+    name: str,
+    dataset_name: str,
+) -> DomainMetric:
+    """Create a simple metric referencing a specific dataset."""
+    return DomainMetric.create_simple_agg(
+        name=name,
+        dataset_name=dataset_name,
+        expr="count",
+        agg=AggregationFunction.SUM,
+        additivity=Additivity(type=AdditivityType.ADDITIVE),
+    )
+
+
+def _make_ratio_metric_with_join_intent(
+    name: str,
+    numerator: str,
+    denominator: str,
+    join_intent: JoinIntent = JoinIntent.N_TO_1_ONLY,
+    join_intent_rationale: str | None = None,
+) -> DomainMetric:
+    """Create a ratio metric with join_intent for testing."""
+    return DomainMetric.create_ratio(
+        name=name,
+        numerator=numerator,
+        denominator=denominator,
+        additivity=Additivity(
+            type=AdditivityType.NON_ADDITIVE,
+            across_time=False,
+            across_geo=False,
+            rollup_policy=RollupPolicy.RECOMPUTE,
+        ),
+        join_intent=join_intent,
+        join_intent_rationale=join_intent_rationale,
+    )
+
+
+def _make_dataset_for_join(
+    name: str,
+    geo_keys: list[str] | None = None,
+    time_keys: list[str] | None = None,
+    other_keys: list[str] | None = None,
+) -> SemanticDataset:
+    """Create a dataset with grain keys for join testing."""
+    grain_keys = GrainKeys(
+        geo=geo_keys or [],
+        time=time_keys or [],
+        other=other_keys or [],
+    )
+    return SemanticDataset.create(
+        name=name,
+        physical_ref=PhysicalRef(schema="public", table=name),
+        kind=DatasetKind.FACT,
+        grain_keys=grain_keys,
+    )
+
+
+def _make_catalog_for_join(
+    metrics: list[DomainMetric] | None = None,
+    datasets: list[SemanticDataset] | None = None,
+) -> SemanticCatalog:
+    """Create a catalog for join safety testing."""
+    return SemanticCatalog.create(
+        metrics=metrics or [],
+        datasets=datasets or [],
+    )
+
+
+class TestJoinSafetyRule:
+    """Tests for JoinSafetyRule."""
+
+    def test_non_ratio_metric_returns_no_issues(self) -> None:
+        """Test that non-ratio metrics return no issues."""
+        rule = JoinSafetyRule()
+        metric = _make_simple_metric_for_dataset("population", "census_data")
+        catalog = _make_catalog_for_join(metrics=[metric])
+        query = SemanticQueryRequest(metrics=["population"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_same_dataset_ratio_returns_no_issues(self) -> None:
+        """Test that ratios from the same dataset return no issues."""
+        rule = JoinSafetyRule()
+        # Both numerator and denominator from the same dataset
+        count_metric = _make_simple_metric_for_dataset("count", "survey_data")
+        total_metric = _make_simple_metric_for_dataset("total", "survey_data")
+        ratio_metric = _make_ratio_metric_with_join_intent(
+            "rate",
+            numerator="count",
+            denominator="total",
+        )
+        dataset = _make_dataset_for_join("survey_data", geo_keys=["geo_code"])
+        catalog = _make_catalog_for_join(
+            metrics=[count_metric, total_metric, ratio_metric],
+            datasets=[dataset],
+        )
+        query = SemanticQueryRequest(metrics=["rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_n_to_1_join_returns_no_issues(self) -> None:
+        """Test that n:1 (safe) joins return no issues."""
+        rule = JoinSafetyRule()
+        # Numerator has finer grain (more keys) - n:1 join
+        numerator_metric = _make_simple_metric_for_dataset("ward_count", "ward_data")
+        denominator_metric = _make_simple_metric_for_dataset(
+            "province_total", "province_data"
+        )
+        ratio_metric = _make_ratio_metric_with_join_intent(
+            "ward_rate",
+            numerator="ward_count",
+            denominator="province_total",
+        )
+        # Ward data has more grain keys than province data
+        ward_dataset = _make_dataset_for_join(
+            "ward_data",
+            geo_keys=["province_code", "municipality_code", "ward_code"],
+        )
+        province_dataset = _make_dataset_for_join(
+            "province_data",
+            geo_keys=["province_code"],
+        )
+        catalog = _make_catalog_for_join(
+            metrics=[numerator_metric, denominator_metric, ratio_metric],
+            datasets=[ward_dataset, province_dataset],
+        )
+        query = SemanticQueryRequest(metrics=["ward_rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_1_to_1_join_returns_no_issues(self) -> None:
+        """Test that 1:1 joins return no issues."""
+        rule = JoinSafetyRule()
+        numerator_metric = _make_simple_metric_for_dataset("population", "census_data")
+        denominator_metric = _make_simple_metric_for_dataset(
+            "households", "housing_data"
+        )
+        ratio_metric = _make_ratio_metric_with_join_intent(
+            "persons_per_household",
+            numerator="population",
+            denominator="households",
+        )
+        # Both datasets have same grain level
+        census_dataset = _make_dataset_for_join(
+            "census_data",
+            geo_keys=["geo_code"],
+            time_keys=["year"],
+        )
+        housing_dataset = _make_dataset_for_join(
+            "housing_data",
+            geo_keys=["geo_code"],
+            time_keys=["year"],
+        )
+        catalog = _make_catalog_for_join(
+            metrics=[numerator_metric, denominator_metric, ratio_metric],
+            datasets=[census_dataset, housing_dataset],
+        )
+        query = SemanticQueryRequest(metrics=["persons_per_household"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_undeclared_1_to_n_join_returns_error(self) -> None:
+        """Test that undeclared 1:n joins return an error."""
+        rule = JoinSafetyRule()
+        # Denominator has finer grain - 1:n join (dangerous)
+        numerator_metric = _make_simple_metric_for_dataset(
+            "province_count", "province_data"
+        )
+        denominator_metric = _make_simple_metric_for_dataset("ward_total", "ward_data")
+        ratio_metric = _make_ratio_metric_with_join_intent(
+            "province_ward_ratio",
+            numerator="province_count",
+            denominator="ward_total",
+            join_intent=JoinIntent.N_TO_1_ONLY,  # Default, not safe for 1:n
+        )
+        province_dataset = _make_dataset_for_join(
+            "province_data",
+            geo_keys=["province_code"],
+        )
+        ward_dataset = _make_dataset_for_join(
+            "ward_data",
+            geo_keys=["province_code", "municipality_code", "ward_code"],
+        )
+        catalog = _make_catalog_for_join(
+            metrics=[numerator_metric, denominator_metric, ratio_metric],
+            datasets=[province_dataset, ward_dataset],
+        )
+        query = SemanticQueryRequest(metrics=["province_ward_ratio"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].code == "UNSAFE_ONE_TO_MANY_JOIN"
+        assert issues[0].severity == Severity.BLOCK
+        assert "province_ward_ratio" in issues[0].message
+        assert "1:n" in issues[0].message or "fanout" in issues[0].message
+        assert issues[0].details["metric"] == "province_ward_ratio"
+        assert issues[0].details["numerator_dataset"] == "province_data"
+        assert issues[0].details["denominator_dataset"] == "ward_data"
+        assert issues[0].details["join_cardinality"] == "1:n"
+        assert issues[0].details["join_intent"] == "N_TO_1_ONLY"
+
+    def test_declared_safe_1_to_n_join_returns_no_issues(self) -> None:
+        """Test that explicitly declared SAFE_ONE_TO_MANY 1:n joins return no issues."""
+        rule = JoinSafetyRule()
+        # Same as above but with explicit declaration
+        numerator_metric = _make_simple_metric_for_dataset(
+            "province_count", "province_data"
+        )
+        denominator_metric = _make_simple_metric_for_dataset("ward_total", "ward_data")
+        ratio_metric = _make_ratio_metric_with_join_intent(
+            "province_ward_ratio",
+            numerator="province_count",
+            denominator="ward_total",
+            join_intent=JoinIntent.SAFE_ONE_TO_MANY,
+            join_intent_rationale="Ward totals are pre-aggregated per province",
+        )
+        province_dataset = _make_dataset_for_join(
+            "province_data",
+            geo_keys=["province_code"],
+        )
+        ward_dataset = _make_dataset_for_join(
+            "ward_data",
+            geo_keys=["province_code", "municipality_code", "ward_code"],
+        )
+        catalog = _make_catalog_for_join(
+            metrics=[numerator_metric, denominator_metric, ratio_metric],
+            datasets=[province_dataset, ward_dataset],
+        )
+        query = SemanticQueryRequest(metrics=["province_ward_ratio"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_unknown_metric_skipped(self) -> None:
+        """Test that unknown metrics are skipped (handled by NameResolutionRule)."""
+        rule = JoinSafetyRule()
+        catalog = _make_catalog_for_join()  # Empty catalog
+        query = SemanticQueryRequest(metrics=["unknown_ratio"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_missing_numerator_metric_skipped(self) -> None:
+        """Test that ratios with missing numerator metrics are skipped."""
+        rule = JoinSafetyRule()
+        # Only denominator exists
+        denominator_metric = _make_simple_metric_for_dataset("total", "data")
+        ratio_metric = _make_ratio_metric_with_join_intent(
+            "rate",
+            numerator="missing_count",
+            denominator="total",
+        )
+        dataset = _make_dataset_for_join("data", geo_keys=["geo_code"])
+        catalog = _make_catalog_for_join(
+            metrics=[denominator_metric, ratio_metric],
+            datasets=[dataset],
+        )
+        query = SemanticQueryRequest(metrics=["rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_missing_denominator_metric_skipped(self) -> None:
+        """Test that ratios with missing denominator metrics are skipped."""
+        rule = JoinSafetyRule()
+        # Only numerator exists
+        numerator_metric = _make_simple_metric_for_dataset("count", "data")
+        ratio_metric = _make_ratio_metric_with_join_intent(
+            "rate",
+            numerator="count",
+            denominator="missing_total",
+        )
+        dataset = _make_dataset_for_join("data", geo_keys=["geo_code"])
+        catalog = _make_catalog_for_join(
+            metrics=[numerator_metric, ratio_metric],
+            datasets=[dataset],
+        )
+        query = SemanticQueryRequest(metrics=["rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 0
+
+    def test_missing_datasets_skipped(self) -> None:
+        """Test that ratios with missing datasets are skipped."""
+        rule = JoinSafetyRule()
+        numerator_metric = _make_simple_metric_for_dataset("count", "missing_data_1")
+        denominator_metric = _make_simple_metric_for_dataset("total", "missing_data_2")
+        ratio_metric = _make_ratio_metric_with_join_intent(
+            "rate",
+            numerator="count",
+            denominator="total",
+        )
+        # No datasets in catalog
+        catalog = _make_catalog_for_join(
+            metrics=[numerator_metric, denominator_metric, ratio_metric],
+        )
+        query = SemanticQueryRequest(metrics=["rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        # Should not error - assumes safe when datasets unknown
+        assert len(issues) == 0
+
+    def test_multiple_ratios_with_mixed_safety(self) -> None:
+        """Test multiple ratio metrics with different join safety status."""
+        rule = JoinSafetyRule()
+        # Safe ratio (same dataset)
+        safe_count = _make_simple_metric_for_dataset("safe_count", "same_data")
+        safe_total = _make_simple_metric_for_dataset("safe_total", "same_data")
+        safe_ratio = _make_ratio_metric_with_join_intent(
+            "safe_rate",
+            numerator="safe_count",
+            denominator="safe_total",
+        )
+        # Unsafe ratio (1:n join)
+        unsafe_num = _make_simple_metric_for_dataset("unsafe_num", "coarse_data")
+        unsafe_denom = _make_simple_metric_for_dataset("unsafe_denom", "fine_data")
+        unsafe_ratio = _make_ratio_metric_with_join_intent(
+            "unsafe_rate",
+            numerator="unsafe_num",
+            denominator="unsafe_denom",
+        )
+
+        same_dataset = _make_dataset_for_join("same_data", geo_keys=["geo_code"])
+        coarse_dataset = _make_dataset_for_join(
+            "coarse_data",
+            geo_keys=["province_code"],
+        )
+        fine_dataset = _make_dataset_for_join(
+            "fine_data",
+            geo_keys=["province_code", "ward_code"],
+        )
+        catalog = _make_catalog_for_join(
+            metrics=[
+                safe_count,
+                safe_total,
+                safe_ratio,
+                unsafe_num,
+                unsafe_denom,
+                unsafe_ratio,
+            ],
+            datasets=[same_dataset, coarse_dataset, fine_dataset],
+        )
+        query = SemanticQueryRequest(metrics=["safe_rate", "unsafe_rate"])
+
+        issues = rule.evaluate(query, catalog)
+
+        assert len(issues) == 1
+        assert issues[0].details["metric"] == "unsafe_rate"
+
+    def test_implements_semantic_query_rule_protocol(self) -> None:
+        """Test that JoinSafetyRule implements the SemanticQueryRule protocol."""
+        rule = JoinSafetyRule()
         # Check that the rule can be used where SemanticQueryRule is expected
         assert hasattr(rule, "evaluate")
         assert callable(rule.evaluate)
