@@ -1,0 +1,4 @@
+default_policy: WARN
+forbid_on_mismatch: []
+warn_on_mismatch: []
+allow_override_flag: allow_incomparable

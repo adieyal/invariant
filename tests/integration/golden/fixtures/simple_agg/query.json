@@ -1,0 +1,17 @@
+{
+  "metrics": ["total_population"],
+  "group_by": [
+    {
+      "dimension": "geography",
+      "attribute": "province",
+      "level": "province"
+    }
+  ],
+  "order_by": [
+    {
+      "field": "total_population",
+      "direction": "DESC"
+    }
+  ],
+  "limit": 10
+}

@@ -1,0 +1,1 @@
+SELECT * FROM (SELECT * FROM (SELECT "province", "total_population" FROM (SELECT "province", SUM(count) AS "total_population" FROM (SELECT * FROM "census"."population_data" AS "t_population") AS _agg GROUP BY "province") AS _proj) AS _sorted ORDER BY "total_population" DESC) AS _limited LIMIT :p_0_limit

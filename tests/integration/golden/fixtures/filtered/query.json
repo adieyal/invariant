@@ -1,0 +1,24 @@
+{
+  "metrics": ["event_count"],
+  "group_by": [
+    {
+      "dimension": "events",
+      "attribute": "event_type"
+    }
+  ],
+  "filters": [
+    {
+      "dimension": "events",
+      "attribute": "year",
+      "op": "EQ",
+      "value": 2023
+    }
+  ],
+  "order_by": [
+    {
+      "field": "event_count",
+      "direction": "DESC"
+    }
+  ],
+  "limit": 5
+}

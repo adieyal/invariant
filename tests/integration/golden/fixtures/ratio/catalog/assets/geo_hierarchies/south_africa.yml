@@ -1,0 +1,13 @@
+name: south_africa
+levels:
+  - country
+  - province
+  - district
+
+parent_relationships:
+  province: country
+  district: province
+
+rollup_rules:
+  default_allowed: true
+  overrides: []

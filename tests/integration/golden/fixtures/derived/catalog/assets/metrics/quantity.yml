@@ -1,0 +1,14 @@
+name: quantity
+kind: SIMPLE_AGG
+
+spec:
+  dataset_name: sales
+  expr: qty
+  agg: SUM
+  filters: []
+
+additivity:
+  type: ADDITIVE
+  across_time: true
+  across_geo: true
+  rollup_policy: ALLOW

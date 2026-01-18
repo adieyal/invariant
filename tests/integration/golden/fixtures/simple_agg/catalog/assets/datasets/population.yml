@@ -1,0 +1,25 @@
+name: population
+physical_ref:
+  schema: census
+  table: population_data
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_level
+    - geo_code
+  time:
+    - year
+  other: []
+
+time_config:
+  column: year
+  grain: YEAR
+  supported_grains:
+    - YEAR
+
+geography_config:
+  hierarchy_name: south_africa
+  level_column: geo_level
+  code_column: geo_code

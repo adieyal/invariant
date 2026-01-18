@@ -1,0 +1,19 @@
+name: land_area
+kind: SIMPLE_AGG
+
+spec:
+  dataset_name: geography_data
+  expr: area_km2
+  agg: SUM
+  filters: []
+
+additivity:
+  type: ADDITIVE
+  across_time: true
+  across_geo: true
+  rollup_policy: ALLOW
+
+valid_geo_levels:
+  - country
+  - province
+  - district

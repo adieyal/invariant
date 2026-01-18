@@ -1,0 +1,6 @@
+name: geography
+attributes:
+  province:
+    expr: province_name
+    data_type: STRING
+    semantic_type: CATEGORY

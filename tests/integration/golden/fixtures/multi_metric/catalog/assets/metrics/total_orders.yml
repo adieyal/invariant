@@ -1,0 +1,14 @@
+name: total_orders
+kind: SIMPLE_AGG
+
+spec:
+  dataset_name: orders
+  expr: order_id
+  agg: COUNT_DISTINCT
+  filters: []
+
+additivity:
+  type: ADDITIVE
+  across_time: true
+  across_geo: true
+  rollup_policy: ALLOW

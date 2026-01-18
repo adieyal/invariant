@@ -1,0 +1,1 @@
+SELECT * FROM (SELECT * FROM (SELECT "event_type", "event_count" FROM (SELECT "event_type", COUNT(*) AS "event_count" FROM (SELECT * FROM (SELECT * FROM "tracking"."user_events" AS "t_events") AS _filtered WHERE year = 2023) AS _agg GROUP BY "event_type") AS _proj) AS _sorted ORDER BY "event_count" DESC) AS _limited LIMIT :p_0_limit

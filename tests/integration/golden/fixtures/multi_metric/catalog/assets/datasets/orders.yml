@@ -1,0 +1,19 @@
+name: orders
+physical_ref:
+  schema: ecommerce
+  table: order_items
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - region_code
+  time:
+    - order_date
+  other:
+    - category_id
+
+geography_config:
+  hierarchy_name: regions
+  level_column: region_level
+  code_column: region_code

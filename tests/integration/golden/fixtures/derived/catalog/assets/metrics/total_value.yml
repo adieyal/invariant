@@ -1,0 +1,14 @@
+name: total_value
+kind: DERIVED
+
+spec:
+  expr: quantity * unit_price
+  deps:
+    - quantity
+    - unit_price
+
+additivity:
+  type: NON_ADDITIVE
+  across_time: false
+  across_geo: false
+  rollup_policy: RECOMPUTE

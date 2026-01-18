@@ -1,0 +1,19 @@
+name: total_population
+kind: SIMPLE_AGG
+
+spec:
+  dataset_name: population
+  expr: count
+  agg: SUM
+  filters: []
+
+additivity:
+  type: ADDITIVE
+  across_time: true
+  across_geo: true
+  rollup_policy: ALLOW
+
+valid_geo_levels:
+  - country
+  - province
+  - district

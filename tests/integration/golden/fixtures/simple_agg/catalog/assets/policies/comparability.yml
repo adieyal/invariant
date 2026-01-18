@@ -1,0 +1,5 @@
+default_policy: WARN
+forbid_on_mismatch: []
+warn_on_mismatch:
+  - methodology_version
+allow_override_flag: allow_incomparable

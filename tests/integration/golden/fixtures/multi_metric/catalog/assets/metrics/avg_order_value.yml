@@ -1,0 +1,14 @@
+name: avg_order_value
+kind: SIMPLE_AGG
+
+spec:
+  dataset_name: orders
+  expr: amount
+  agg: AVG
+  filters: []
+
+additivity:
+  type: NON_ADDITIVE
+  across_time: false
+  across_geo: false
+  rollup_policy: RECOMPUTE

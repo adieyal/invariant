@@ -1,0 +1,14 @@
+name: event_count
+kind: SIMPLE_AGG
+
+spec:
+  dataset_name: events
+  expr: "*"
+  agg: COUNT
+  filters: []
+
+additivity:
+  type: ADDITIVE
+  across_time: true
+  across_geo: true
+  rollup_policy: ALLOW

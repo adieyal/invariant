@@ -1,0 +1,14 @@
+name: unit_price
+kind: SIMPLE_AGG
+
+spec:
+  dataset_name: sales
+  expr: price
+  agg: AVG
+  filters: []
+
+additivity:
+  type: NON_ADDITIVE
+  across_time: false
+  across_geo: false
+  rollup_policy: RECOMPUTE

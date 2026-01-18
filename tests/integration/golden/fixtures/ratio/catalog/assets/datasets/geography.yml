@@ -1,0 +1,13 @@
+name: geography_data
+physical_ref:
+  schema: reference
+  table: geography_areas
+
+kind: DIMENSION
+
+grain_keys:
+  geo:
+    - geo_level
+    - geo_code
+  time: []
+  other: []

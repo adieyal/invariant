@@ -1,0 +1,10 @@
+{
+  "metrics": ["population_density"],
+  "group_by": [
+    {
+      "dimension": "geography",
+      "attribute": "province",
+      "level": "province"
+    }
+  ]
+}

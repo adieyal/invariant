@@ -1,0 +1,6 @@
+name: region
+attributes:
+  name:
+    expr: region_name
+    data_type: STRING
+    semantic_type: CATEGORY

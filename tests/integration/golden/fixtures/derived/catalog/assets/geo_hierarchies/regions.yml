@@ -1,0 +1,11 @@
+name: regions
+levels:
+  - country
+  - region
+
+parent_relationships:
+  region: country
+
+rollup_rules:
+  default_allowed: true
+  overrides: []

@@ -1,0 +1,14 @@
+name: events
+attributes:
+  event_type:
+    expr: event_type
+    data_type: STRING
+    semantic_type: CATEGORY
+  year:
+    expr: EXTRACT(YEAR FROM event_date)
+    data_type: INTEGER
+    semantic_type: ORDINAL
+  user_id:
+    expr: user_id
+    data_type: STRING
+    semantic_type: CATEGORY

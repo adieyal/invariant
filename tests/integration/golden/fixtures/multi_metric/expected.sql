@@ -1,0 +1,1 @@
+SELECT * FROM (SELECT "name", "total_orders", "total_revenue", "avg_order_value" FROM (SELECT "name", AVG(amount) AS "avg_order_value", COUNT(DISTINCT order_id) AS "total_orders", SUM(amount) AS "total_revenue" FROM (SELECT * FROM "ecommerce"."order_items" AS "t_orders") AS _agg GROUP BY "name") AS _proj) AS _sorted ORDER BY "total_revenue" DESC

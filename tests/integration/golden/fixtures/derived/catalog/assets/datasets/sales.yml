@@ -1,0 +1,18 @@
+name: sales
+physical_ref:
+  schema: analytics
+  table: daily_sales
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - region_code
+  time:
+    - date
+  other: []
+
+geography_config:
+  hierarchy_name: regions
+  level_column: region_level
+  code_column: region_code

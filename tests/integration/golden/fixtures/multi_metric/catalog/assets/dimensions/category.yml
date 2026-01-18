@@ -1,0 +1,10 @@
+name: category
+attributes:
+  name:
+    expr: category_name
+    data_type: STRING
+    semantic_type: CATEGORY
+  id:
+    expr: category_id
+    data_type: INTEGER
+    semantic_type: CATEGORY

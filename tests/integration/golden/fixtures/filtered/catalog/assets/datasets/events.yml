@@ -1,0 +1,28 @@
+name: events
+physical_ref:
+  schema: tracking
+  table: user_events
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - region_code
+  time:
+    - event_date
+  other:
+    - event_type
+
+geography_config:
+  hierarchy_name: regions
+  level_column: region_level
+  code_column: region_code
+
+time_config:
+  column: event_date
+  grain: DAY
+  supported_grains:
+    - DAY
+    - WEEK
+    - MONTH
+    - YEAR

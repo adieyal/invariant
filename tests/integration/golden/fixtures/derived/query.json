@@ -1,0 +1,9 @@
+{
+  "metrics": ["total_value"],
+  "group_by": [
+    {
+      "dimension": "region",
+      "attribute": "name"
+    }
+  ]
+}
