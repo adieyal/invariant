@@ -31,6 +31,20 @@ class SortDirection(str, Enum):
     DESC = "DESC"
 
 
+class MaterializationDecision(str, Enum):
+    """Decision on materialization usage for a query.
+
+    Indicates why a materialization was or was not used:
+    - NOT_EVALUATED: Materialization matching was not performed
+    - NO_MATCH: No suitable materialization found
+    - MATCH_SKIPPED_PHASE1: Match found but skipped in Phase 1
+    """
+
+    NOT_EVALUATED = "NOT_EVALUATED"
+    NO_MATCH = "NO_MATCH"
+    MATCH_SKIPPED_PHASE1 = "MATCH_SKIPPED_PHASE1"
+
+
 @dataclass(frozen=True)
 class GroupBySpec:
     """Specification for a group-by clause in a semantic query.
@@ -333,6 +347,51 @@ class ExplainResult:
         object.__setattr__(self, "logical_plan_summary", logical_plan_summary)
         object.__setattr__(self, "compiled_sql", compiled_sql)
         object.__setattr__(self, "materialization_decision", materialization_decision)
+
+
+@dataclass(frozen=True)
+class ExplainResultDTO:
+    """Response DTO for ExplainSemanticQueryUseCase.
+
+    Provides detailed explanation of query processing without execution:
+    - validation_trace: Trace of all validation steps and results
+    - logical_plan (JSON + pretty-printed format)
+    - compiled_sql (with comments in explain mode)
+    - materialization_decision (enum, not null)
+
+    Attributes:
+        validation_trace: Trace of validation steps and results
+        logical_plan_json: Logical query plan as JSON-serializable structure
+        logical_plan_pretty: Human-readable logical plan summary
+        compiled_sql: Generated SQL query with explain comments
+        materialization_decision: Decision on materialization usage (enum)
+    """
+
+    validation_trace: str
+    logical_plan_json: dict[str, Any]
+    logical_plan_pretty: str
+    compiled_sql: str
+    materialization_decision: MaterializationDecision
+
+    def __init__(
+        self,
+        validation_trace: str,
+        logical_plan_json: dict[str, Any],
+        logical_plan_pretty: str,
+        compiled_sql: str,
+        materialization_decision: MaterializationDecision | str,
+    ) -> None:
+        object.__setattr__(self, "validation_trace", validation_trace)
+        object.__setattr__(self, "logical_plan_json", dict(logical_plan_json))
+        object.__setattr__(self, "logical_plan_pretty", logical_plan_pretty)
+        object.__setattr__(self, "compiled_sql", compiled_sql)
+        # Convert string to enum if needed
+        decision_enum = (
+            MaterializationDecision(materialization_decision)
+            if isinstance(materialization_decision, str)
+            else materialization_decision
+        )
+        object.__setattr__(self, "materialization_decision", decision_enum)
 
 
 @dataclass(frozen=True)

@@ -60,9 +60,11 @@ from invariant.application.dto.results_dto import (
 )
 from invariant.application.dto.semantic_query import (
     ExplainResult,
+    ExplainResultDTO,
     FilterOp,
     FilterSpec,
     GroupBySpec,
+    MaterializationDecision,
     MetricProvenance,
     OrderBySpec,
     Provenance,
@@ -108,6 +110,7 @@ __all__ = [
     "DatasetSummaryDTO",
     "DisclosureDTO",
     "ExplainResult",
+    "ExplainResultDTO",
     "FilterOp",
     "FilterRequest",
     "FilterSpec",
@@ -115,6 +118,7 @@ __all__ = [
     "GroupBySpec",
     "IndicatorDefinitionDTO",
     "IssueDTO",
+    "MaterializationDecision",
     "MetricProvenance",
     "MetricRequest",
     "OrderBySpec",
