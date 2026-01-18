@@ -1,6 +1,6 @@
 [project]
 name = "invariant"
-version = "0.2.1"
+version = "0.2.2"
 description = "A semantic validation layer for statistical data platforms"
 readme = "README.md"
 license = "MIT"
@@ -41,7 +41,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/invariant"]
+packages = ["src/invariant", "src/invariant_contrib"]
 
 [tool.ruff]
 target-version = "py312"
@@ -65,7 +65,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["invariant"]
+known-first-party = ["invariant", "invariant_contrib"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
