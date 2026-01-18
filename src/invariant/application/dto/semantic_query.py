@@ -369,3 +369,77 @@ class SemanticQueryResultDTO:
         object.__setattr__(self, "provenance", provenance)
         object.__setattr__(self, "warnings", tuple(warnings) if warnings else ())
         object.__setattr__(self, "explain", explain)
+
+
+@dataclass(frozen=True)
+class SemanticIssueDTO:
+    """Validation issue DTO for semantic queries.
+
+    Attributes:
+        code: Issue code (e.g., UNKNOWN_METRIC, INVALID_GEO_LEVEL)
+        severity: Issue severity (ALLOW, WARN, REQUIRE_ACK, BLOCK)
+        message: Human-readable issue description
+        details: Additional structured details about the issue
+    """
+
+    code: str
+    severity: str
+    message: str
+    details: dict[str, Any]
+
+    def __init__(
+        self,
+        code: str,
+        severity: str,
+        message: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        if not code:
+            raise ValueError("code must not be empty")
+        if not severity:
+            raise ValueError("severity must not be empty")
+        if not message:
+            raise ValueError("message must not be empty")
+        object.__setattr__(self, "code", code)
+        object.__setattr__(self, "severity", severity)
+        object.__setattr__(self, "message", message)
+        object.__setattr__(self, "details", dict(details) if details else {})
+
+
+@dataclass(frozen=True)
+class SemanticValidationResultDTO:
+    """Result DTO for semantic query validation.
+
+    Provides validation results including:
+    - is_valid: Whether the query passed validation (no blocking issues)
+    - errors: List of blocking issues
+    - warnings: List of warning issues
+    - resolved_metrics: List of metric names that were resolved (for debugging)
+
+    Attributes:
+        is_valid: Whether the query can be executed
+        errors: Tuple of blocking validation issues
+        warnings: Tuple of warning validation issues
+        resolved_metrics: Tuple of successfully resolved metric names
+    """
+
+    is_valid: bool
+    errors: tuple[SemanticIssueDTO, ...]
+    warnings: tuple[SemanticIssueDTO, ...]
+    resolved_metrics: tuple[str, ...]
+
+    def __init__(
+        self,
+        is_valid: bool,
+        errors: Sequence[SemanticIssueDTO] | None = None,
+        warnings: Sequence[SemanticIssueDTO] | None = None,
+        resolved_metrics: Sequence[str] | None = None,
+    ) -> None:
+        object.__setattr__(self, "is_valid", is_valid)
+        object.__setattr__(self, "errors", tuple(errors) if errors else ())
+        object.__setattr__(self, "warnings", tuple(warnings) if warnings else ())
+        object.__setattr__(
+            self,
+            "resolved_metrics",
+            tuple(resolved_metrics) if resolved_metrics else (),
+        )

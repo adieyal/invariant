@@ -69,8 +69,10 @@ from invariant.application.dto.semantic_query import (
     QueryOptions,
     ResultFieldSchema,
     ResultSchema,
+    SemanticIssueDTO,
     SemanticQueryRequest,
     SemanticQueryResultDTO,
+    SemanticValidationResultDTO,
     SortDirection,
 )
 from invariant.application.dto.validation_dto import (
@@ -127,8 +129,10 @@ __all__ = [
     "ResultFieldSchema",
     "ResultMetadataDTO",
     "ResultSchema",
+    "SemanticIssueDTO",
     "SemanticQueryRequest",
     "SemanticQueryResultDTO",
+    "SemanticValidationResultDTO",
     "SortDirection",
     "StudyDTO",
     "UniverseDTO",
