@@ -4,6 +4,7 @@ from datetime import date, datetime
 
 import pytest
 
+from invariant.application.ports.sql_executor import ExecutionResult
 from invariant.domain.model.comparability_rules import (
     ComparabilityPolicy,
     ComparabilityRules,
@@ -49,12 +50,14 @@ from invariant.domain.model.semantic_dataset import (
 from invariant.domain.model.study import Study
 from invariant.domain.model.value_objects import GrainSpec
 from invariant.domain.model.variable import Variable
+from invariant.domain.services.postgres_compiler import CompiledQuery
 from tests.unit.application.fakes import (
     FakeAuditLog,
     FakeCatalogStore,
     FakeClock,
     FakeIdGenerator,
     FakeSemanticAssetStore,
+    FakeSqlExecutor,
 )
 
 
@@ -498,3 +501,194 @@ class TestFakeSemanticAssetStore:
             s.get_comparability_rules()
 
         use_store(store)  # Should not raise
+
+
+class TestFakeSqlExecutor:
+    @pytest.fixture
+    def executor(self) -> FakeSqlExecutor:
+        return FakeSqlExecutor()
+
+    @pytest.fixture
+    def sample_query(self) -> CompiledQuery:
+        return CompiledQuery(
+            sql='SELECT * FROM "public"."demographics"',
+            parameters={},
+        )
+
+    def test_execute_returns_empty_result_by_default(
+        self, executor: FakeSqlExecutor, sample_query: CompiledQuery
+    ) -> None:
+        result = executor.execute(sample_query)
+        assert result.rows == ()
+        assert result.row_count == 0
+        assert result.execution_time_ms >= 0
+
+    def test_execute_returns_result_for_matching_hash(
+        self, executor: FakeSqlExecutor, sample_query: CompiledQuery
+    ) -> None:
+        expected = ExecutionResult(
+            rows=[{"id": 1, "name": "test"}],
+            execution_time_ms=10.5,
+        )
+        executor.set_result_for_hash(sample_query.sql_hash, expected)
+
+        result = executor.execute(sample_query)
+
+        assert result.rows == ({"id": 1, "name": "test"},)
+        assert result.row_count == 1
+        assert result.execution_time_ms == 10.5
+
+    def test_execute_returns_result_for_matching_pattern(
+        self, executor: FakeSqlExecutor
+    ) -> None:
+        expected = ExecutionResult(
+            rows=[{"count": 100}],
+            execution_time_ms=5.0,
+        )
+        executor.set_result_for_pattern("demographics", expected)
+
+        query = CompiledQuery(
+            sql='SELECT COUNT(*) FROM "public"."demographics"',
+            parameters={},
+        )
+        result = executor.execute(query)
+
+        assert result.rows == ({"count": 100},)
+        assert result.row_count == 1
+
+    def test_hash_match_takes_precedence_over_pattern(
+        self, executor: FakeSqlExecutor, sample_query: CompiledQuery
+    ) -> None:
+        hash_result = ExecutionResult(
+            rows=[{"source": "hash"}],
+            execution_time_ms=1.0,
+        )
+        pattern_result = ExecutionResult(
+            rows=[{"source": "pattern"}],
+            execution_time_ms=1.0,
+        )
+
+        executor.set_result_for_hash(sample_query.sql_hash, hash_result)
+        executor.set_result_for_pattern("demographics", pattern_result)
+
+        result = executor.execute(sample_query)
+        assert result.rows[0]["source"] == "hash"
+
+    def test_default_result_is_used_when_no_match(
+        self, executor: FakeSqlExecutor
+    ) -> None:
+        default = ExecutionResult(
+            rows=[{"default": True}],
+            execution_time_ms=0.1,
+        )
+        executor.set_default_result(default)
+
+        query = CompiledQuery(
+            sql='SELECT * FROM "other_table"',
+            parameters={},
+        )
+        result = executor.execute(query)
+
+        assert result.rows == ({"default": True},)
+
+    def test_execute_records_query(
+        self, executor: FakeSqlExecutor, sample_query: CompiledQuery
+    ) -> None:
+        executor.execute(sample_query)
+
+        executed = executor.get_executed_queries()
+        assert len(executed) == 1
+        assert executed[0].query.sql_hash == sample_query.sql_hash
+
+    def test_get_last_executed_query(self, executor: FakeSqlExecutor) -> None:
+        query1 = CompiledQuery(sql="SELECT 1", parameters={})
+        query2 = CompiledQuery(sql="SELECT 2", parameters={})
+
+        executor.execute(query1)
+        executor.execute(query2)
+
+        last = executor.get_last_executed_query()
+        assert last is not None
+        assert last.query.sql == "SELECT 2"
+
+    def test_get_last_executed_query_returns_none_when_empty(
+        self, executor: FakeSqlExecutor
+    ) -> None:
+        assert executor.get_last_executed_query() is None
+
+    def test_clear_executed_queries(
+        self, executor: FakeSqlExecutor, sample_query: CompiledQuery
+    ) -> None:
+        executor.execute(sample_query)
+        assert len(executor.get_executed_queries()) == 1
+
+        executor.clear_executed_queries()
+
+        assert len(executor.get_executed_queries()) == 0
+
+    def test_explain_returns_default_output(
+        self, executor: FakeSqlExecutor, sample_query: CompiledQuery
+    ) -> None:
+        output = executor.explain(sample_query)
+        assert "EXPLAIN for query hash" in output
+        assert sample_query.sql_hash in output
+
+    def test_explain_returns_configured_output(
+        self, executor: FakeSqlExecutor, sample_query: CompiledQuery
+    ) -> None:
+        explain_output = (
+            "Seq Scan on demographics (cost=0.00..100.00 rows=1000 width=50)"
+        )
+        executor.set_explain_result(sample_query.sql_hash, explain_output)
+
+        result = executor.explain(sample_query)
+
+        assert result == explain_output
+
+    def test_clear_resets_all_state(
+        self, executor: FakeSqlExecutor, sample_query: CompiledQuery
+    ) -> None:
+        # Set up various state
+        executor.set_result_for_hash(
+            "hash1", ExecutionResult(rows=[], execution_time_ms=1.0)
+        )
+        executor.set_result_for_pattern(
+            "pattern", ExecutionResult(rows=[], execution_time_ms=1.0)
+        )
+        executor.set_explain_result("hash1", "EXPLAIN output")
+        executor.set_default_result(
+            ExecutionResult(rows=[{"x": 1}], execution_time_ms=1.0)
+        )
+        executor.execute(sample_query)
+
+        executor.clear()
+
+        # All state should be reset
+        assert len(executor.get_executed_queries()) == 0
+        result = executor.execute(sample_query)
+        # Should return empty since default was cleared
+        assert result.rows == ()
+
+    def test_multiple_queries_recorded(self, executor: FakeSqlExecutor) -> None:
+        queries = [CompiledQuery(sql=f"SELECT {i}", parameters={}) for i in range(5)]
+
+        for query in queries:
+            executor.execute(query)
+
+        executed = executor.get_executed_queries()
+        assert len(executed) == 5
+        for i, record in enumerate(executed):
+            assert record.query.sql == f"SELECT {i}"
+
+    def test_protocol_compliance(self, executor: FakeSqlExecutor) -> None:
+        """Verify FakeSqlExecutor implements SqlExecutor protocol."""
+        from invariant.application.ports.sql_executor import SqlExecutor
+
+        # Protocol compliance is verified by duck typing
+        # If this doesn't raise, the fake implements the protocol
+        def use_executor(e: SqlExecutor) -> None:
+            query = CompiledQuery(sql="SELECT 1", parameters={})
+            e.execute(query)
+            e.explain(query)
+
+        use_executor(executor)  # Should not raise

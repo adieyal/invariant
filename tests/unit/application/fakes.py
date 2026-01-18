@@ -21,6 +21,7 @@ from invariant.application.ports.query_engine import (
     RawQueryResult,
 )
 from invariant.application.ports.semantic_asset_store import SemanticAssetStore
+from invariant.application.ports.sql_executor import ExecutionResult, SqlExecutor
 from invariant.application.ports.suppression_engine import SuppressionEngine
 from invariant.domain.model.comparability_rules import (
     ComparabilityRules,
@@ -57,6 +58,7 @@ if TYPE_CHECKING:
     from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
     from invariant.domain.model.study import Study
     from invariant.domain.model.variable import Variable
+    from invariant.domain.services.postgres_compiler import CompiledQuery
 
 
 @dataclass
@@ -523,3 +525,111 @@ class FakeSemanticAssetStore(SemanticAssetStore):
         self._metrics.clear()
         self._materializations.clear()
         self._comparability_rules = None
+
+
+@dataclass
+class ExecutedQuery:
+    """Record of an executed query for assertion in tests."""
+
+    query: CompiledQuery
+    result: ExecutionResult
+
+
+@dataclass
+class FakeSqlExecutor(SqlExecutor):
+    """In-memory fake SQL executor for testing.
+
+    Explicitly implements the SqlExecutor protocol for type safety.
+    Provides configurable responses per SQL hash or pattern, records
+    executed queries for assertion, and returns a default empty result
+    for unmatched queries.
+    """
+
+    _results_by_hash: dict[str, ExecutionResult] = field(default_factory=dict)
+    _results_by_pattern: dict[str, ExecutionResult] = field(default_factory=dict)
+    _explain_results: dict[str, str] = field(default_factory=dict)
+    _executed_queries: list[ExecutedQuery] = field(default_factory=list)
+    _default_result: ExecutionResult | None = None
+
+    def execute(self, query: CompiledQuery) -> ExecutionResult:
+        """Execute a compiled SQL query.
+
+        Looks up result by:
+        1. Exact SQL hash match
+        2. Pattern match (substring in SQL)
+        3. Default result if configured
+        4. Empty result otherwise
+
+        Records the query for later assertion.
+        """
+        # Try exact hash match first
+        if query.sql_hash in self._results_by_hash:
+            result = self._results_by_hash[query.sql_hash]
+            self._executed_queries.append(ExecutedQuery(query, result))
+            return result
+
+        # Try pattern match
+        for pattern, result in self._results_by_pattern.items():
+            if pattern in query.sql:
+                self._executed_queries.append(ExecutedQuery(query, result))
+                return result
+
+        # Use default result if configured
+        if self._default_result is not None:
+            self._executed_queries.append(ExecutedQuery(query, self._default_result))
+            return self._default_result
+
+        # Return empty result
+        empty_result = ExecutionResult(rows=[], execution_time_ms=1.0)
+        self._executed_queries.append(ExecutedQuery(query, empty_result))
+        return empty_result
+
+    def explain(self, query: CompiledQuery) -> str:
+        """Get the EXPLAIN output for a compiled SQL query.
+
+        Returns a configured explain result if set, otherwise a default
+        placeholder explain output.
+        """
+        if query.sql_hash in self._explain_results:
+            return self._explain_results[query.sql_hash]
+        return f"EXPLAIN for query hash {query.sql_hash}"
+
+    # Helper methods for test setup
+
+    def set_result_for_hash(self, sql_hash: str, result: ExecutionResult) -> None:
+        """Configure a result to return for a specific SQL hash."""
+        self._results_by_hash[sql_hash] = result
+
+    def set_result_for_pattern(self, pattern: str, result: ExecutionResult) -> None:
+        """Configure a result to return when SQL contains the pattern."""
+        self._results_by_pattern[pattern] = result
+
+    def set_explain_result(self, sql_hash: str, explain_output: str) -> None:
+        """Configure an EXPLAIN result for a specific SQL hash."""
+        self._explain_results[sql_hash] = explain_output
+
+    def set_default_result(self, result: ExecutionResult) -> None:
+        """Set a default result for queries that don't match any pattern."""
+        self._default_result = result
+
+    def get_executed_queries(self) -> list[ExecutedQuery]:
+        """Get all executed queries for assertion."""
+        return list(self._executed_queries)
+
+    def get_last_executed_query(self) -> ExecutedQuery | None:
+        """Get the most recently executed query."""
+        if self._executed_queries:
+            return self._executed_queries[-1]
+        return None
+
+    def clear_executed_queries(self) -> None:
+        """Clear the record of executed queries."""
+        self._executed_queries.clear()
+
+    def clear(self) -> None:
+        """Clear all configured results and executed queries."""
+        self._results_by_hash.clear()
+        self._results_by_pattern.clear()
+        self._explain_results.clear()
+        self._executed_queries.clear()
+        self._default_result = None
