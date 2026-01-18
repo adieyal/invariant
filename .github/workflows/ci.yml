@@ -30,3 +30,13 @@ jobs:
 
       - name: Run tests
         run: pytest
+
+      - name: Validate semantic assets
+        run: |
+          # Validate test fixture assets
+          python scripts/validate_semantic_assets.py tests/integration/wazimap/fixtures
+          python scripts/validate_semantic_assets.py tests/integration/golden/fixtures/simple_agg/catalog
+          python scripts/validate_semantic_assets.py tests/integration/golden/fixtures/ratio/catalog
+          python scripts/validate_semantic_assets.py tests/integration/golden/fixtures/derived/catalog
+          python scripts/validate_semantic_assets.py tests/integration/golden/fixtures/multi_metric/catalog
+          python scripts/validate_semantic_assets.py tests/integration/golden/fixtures/filtered/catalog
