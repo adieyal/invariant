@@ -64,6 +64,12 @@ The semantic layer provides a metrics-first approach to analytical queries:
 3. **[YAML Asset Definitions](yaml-assets.md)** — Define assets in YAML files
 4. **[Golden Testing](golden-testing.md)** — Regression testing for SQL compilation
 
+## Contrib Modules
+
+Optional extensions that build on the kernel:
+
+1. **[Data Dictionary](data-dictionary-contrib.md)** — Generate Markdown documentation from catalog content
+
 ## Sample Project
 
 The best way to understand integration is to study the [sample project](../../examples/sample-project/):

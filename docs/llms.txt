@@ -27,6 +27,10 @@ Invariant is a business layer, not a stack. It runs in-memory with fake reposito
 - [YAML Asset Definitions](developer/yaml-assets/): Define assets in YAML files with CI validation
 - [Golden Testing](developer/golden-testing/): Regression testing for SQL compilation
 
+## Contrib Modules
+
+- [Data Dictionary](developer/data-dictionary-contrib/): Generate Markdown documentation from catalog content
+
 ## API & Implementation
 
 - [Data Model](05-data-model/): Domain entities and relationships
