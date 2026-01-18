@@ -1,0 +1,10 @@
+default_policy: WARN
+
+forbid_on_mismatch:
+  - methodology_id
+
+warn_on_mismatch:
+  - methodology_version
+  - population_definition
+
+allow_override_flag: allow_incomparable

@@ -1,0 +1,27 @@
+# Environment overlay for staging
+datasets:
+  - name: population
+    physical_ref:
+      schema: staging_census
+      table: population_2022
+
+metrics:
+  - name: total_population
+    kind: SIMPLE_AGG
+    spec:
+      dataset_name: population
+      expr: count
+      agg: SUM
+    additivity:
+      type: ADDITIVE
+      across_time: true
+      across_geo: true
+      rollup_policy: ALLOW
+    valid_geo_levels:
+      - country
+      - province
+    valid_time_grains:
+      - YEAR
+    unit:
+      name: people
+      scale: 1

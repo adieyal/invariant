@@ -1,0 +1,14 @@
+name: age_group
+attributes:
+  age_band:
+    expr: age_band
+    data_type: STRING
+    semantic_type: ORDINAL
+  age_start:
+    expr: age_start
+    data_type: INTEGER
+    semantic_type: CONTINUOUS
+  age_end:
+    expr: age_end
+    data_type: INTEGER
+    semantic_type: CONTINUOUS

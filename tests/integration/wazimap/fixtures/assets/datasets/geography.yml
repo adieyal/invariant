@@ -1,0 +1,18 @@
+name: geography
+physical_ref:
+  schema: reference
+  table: geography_2022
+
+kind: DIMENSION
+
+grain_keys:
+  geo:
+    - geo_level
+    - geo_code
+  time: []
+  other: []
+
+geography_config:
+  hierarchy_name: south_africa
+  level_column: geo_level
+  code_column: geo_code

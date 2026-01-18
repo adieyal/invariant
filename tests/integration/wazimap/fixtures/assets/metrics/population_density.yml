@@ -1,0 +1,26 @@
+name: population_density
+kind: RATIO
+
+spec:
+  numerator: total_population
+  denominator: land_area
+  ratio_format: DECIMAL
+  join_intent: N_TO_1_ONLY
+
+additivity:
+  type: NON_ADDITIVE
+  across_time: false
+  across_geo: false
+  rollup_policy: RECOMPUTE
+
+valid_geo_levels:
+  - province
+  - district
+  - municipality
+
+valid_time_grains:
+  - YEAR
+
+unit:
+  name: people/km2
+  scale: 1

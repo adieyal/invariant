@@ -1,0 +1,21 @@
+name: pop_by_province
+dataset_name: population
+
+source:
+  type: PROFILE
+  profile_id: census_profile
+
+grain:
+  geo_level: province
+  time_grain: YEAR
+  dimensions: []
+
+metrics:
+  - total_population
+
+refresh:
+  strategy: DATASET_RELEASE
+
+storage:
+  schema: materialized
+  table: pop_by_province

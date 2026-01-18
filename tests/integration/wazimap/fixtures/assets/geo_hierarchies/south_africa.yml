@@ -1,0 +1,20 @@
+name: south_africa
+levels:
+  - country
+  - province
+  - district
+  - municipality
+  - ward
+
+parent_relationships:
+  province: country
+  district: province
+  municipality: district
+  ward: municipality
+
+rollup_rules:
+  default_allowed: true
+  overrides:
+    - from_level: ward
+      to_level: country
+      allowed: false
