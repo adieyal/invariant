@@ -8,6 +8,7 @@ from invariant.application.ports.id_gen import IdGenerator
 from invariant.application.ports.indicator_engine import IndicatorEngine
 from invariant.application.ports.query_engine import QueryEngine
 from invariant.application.ports.semantic_asset_store import SemanticAssetStore
+from invariant.application.ports.sql_executor import ExecutionResult, SqlExecutor
 from invariant.application.ports.suppression_engine import SuppressionEngine
 
 __all__ = [
@@ -15,9 +16,11 @@ __all__ = [
     "CatalogStore",
     "Clock",
     "CrosswalkService",
+    "ExecutionResult",
     "IdGenerator",
     "IndicatorEngine",
     "QueryEngine",
     "SemanticAssetStore",
+    "SqlExecutor",
     "SuppressionEngine",
 ]
