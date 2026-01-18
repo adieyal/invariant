@@ -147,3 +147,12 @@ Invariant uses a "two planes + gate" design:
 | [Architecture](03-architecture.md) | Two planes + gate design |
 | [Reference](generated/glossary.md) | Generated glossary and rule documentation |
 | [Internals](00-project-scope.md) | Scope boundaries and design decisions |
+
+### Semantic Layer
+
+| Section | Description |
+|---------|-------------|
+| [Semantic Layer](developer/semantic-layer.md) | Metrics, dimensions, datasets, and query execution |
+| [Validation Rules](developer/semantic-validation-rules.md) | How semantic queries are validated |
+| [YAML Assets](developer/yaml-assets.md) | Define assets in YAML files with CI validation |
+| [Golden Testing](developer/golden-testing.md) | Regression testing for SQL compilation |

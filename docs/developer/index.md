@@ -55,6 +55,15 @@ These enable advanced features:
 5. **[Validation Rules](validation-rules.md)** — Configure rule strictness
 6. **[CLI Patterns](cli-patterns.md)** — Build command-line tools
 
+## Semantic Layer
+
+The semantic layer provides a metrics-first approach to analytical queries:
+
+1. **[Semantic Layer Overview](semantic-layer.md)** — Metrics, dimensions, datasets, and query execution
+2. **[Semantic Validation Rules](semantic-validation-rules.md)** — How queries are validated
+3. **[YAML Asset Definitions](yaml-assets.md)** — Define assets in YAML files
+4. **[Golden Testing](golden-testing.md)** — Regression testing for SQL compilation
+
 ## Sample Project
 
 The best way to understand integration is to study the [sample project](../../examples/sample-project/):
@@ -105,3 +114,5 @@ elif result.status == "BLOCK":
 - [Implementing Ports](integrating.md) — Detailed port interface documentation
 - [Use Cases](use-cases.md) — All available use cases
 - [Architecture](../03-architecture.md) — Design philosophy and the validation gate
+- [Semantic Layer](semantic-layer.md) — Metrics-first query approach
+- [YAML Assets](yaml-assets.md) — Define assets declaratively
