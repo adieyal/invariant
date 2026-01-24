@@ -5,10 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from invariant.application.dto.semantic_query import (
-    SemanticIssueDTO,
-    SemanticValidationResultDTO,
-)
+from invariant.application.dto.semantic_query import SemanticValidationResultDTO
+from invariant.application.services.dto_translators import issue_to_dto
 from invariant.domain.model.validation import Severity
 from invariant.domain.services.semantic_validator import (
     AdditivityRule,
@@ -24,7 +22,6 @@ from invariant.domain.services.semantic_validator import (
 if TYPE_CHECKING:
     from invariant.application.dto.semantic_query import SemanticQueryRequest
     from invariant.application.ports.semantic_asset_store import SemanticAssetStore
-    from invariant.domain.model.validation import Issue
 
 
 @dataclass
@@ -109,13 +106,13 @@ class ValidateSemanticQueryUseCase:
             SemanticValidationResultDTO with all validation information.
         """
         errors = [
-            self._issue_to_dto(issue)
+            issue_to_dto(issue)
             for issue in validation_result.issues
             if issue.severity == Severity.BLOCK
         ]
 
         warnings = [
-            self._issue_to_dto(issue)
+            issue_to_dto(issue)
             for issue in validation_result.issues
             if issue.severity == Severity.WARN
         ]
@@ -125,20 +122,4 @@ class ValidateSemanticQueryUseCase:
             errors=errors,
             warnings=warnings,
             resolved_metrics=resolved_metrics,
-        )
-
-    def _issue_to_dto(self, issue: Issue) -> SemanticIssueDTO:
-        """Convert domain Issue to DTO.
-
-        Args:
-            issue: The domain Issue.
-
-        Returns:
-            SemanticIssueDTO representation.
-        """
-        return SemanticIssueDTO(
-            code=issue.code,
-            severity=issue.severity.name,
-            message=issue.message,
-            details=dict(issue.details),
         )

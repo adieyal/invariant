@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any
 from invariant.application.dto.semantic_query import (
     ExplainResultDTO,
     MaterializationDecision,
-    SemanticIssueDTO,
 )
 from invariant.domain.model.validation import Severity
 from invariant.domain.services.postgres_compiler import (
@@ -35,7 +34,6 @@ if TYPE_CHECKING:
     from invariant.application.dto.semantic_query import SemanticQueryRequest
     from invariant.application.ports.semantic_asset_store import SemanticAssetStore
     from invariant.domain.model.plan_ir import PlanNode
-    from invariant.domain.model.validation import Issue
 
 
 @dataclass
@@ -365,19 +363,3 @@ class ExplainSemanticQueryUseCase:
         lines.append(sql)
 
         return "\n".join(lines)
-
-    def _issue_to_dto(self, issue: Issue) -> SemanticIssueDTO:
-        """Convert domain Issue to DTO.
-
-        Args:
-            issue: The domain Issue.
-
-        Returns:
-            SemanticIssueDTO representation.
-        """
-        return SemanticIssueDTO(
-            code=issue.code,
-            severity=issue.severity.name,
-            message=issue.message,
-            details=dict(issue.details),
-        )

@@ -16,6 +16,7 @@ from invariant.application.dto.semantic_query import (
     SemanticQueryResultDTO,
 )
 from invariant.application.exceptions import ApplicationError
+from invariant.application.services.dto_translators import issue_to_dto
 from invariant.domain.model.metric import SimpleAggSpec
 from invariant.domain.model.validation import Severity
 from invariant.domain.services.postgres_compiler import PostgresCompiler
@@ -35,7 +36,9 @@ if TYPE_CHECKING:
     from invariant.application.ports.semantic_asset_store import SemanticAssetStore
     from invariant.application.ports.sql_executor import SqlExecutor
     from invariant.domain.model.metric import Metric
-    from invariant.domain.model.validation import Issue
+    from invariant.domain.model.semantic_catalog import SemanticCatalog
+    from invariant.domain.services.query_planner import LogicalPlan
+    from invariant.domain.services.semantic_validator import QueryValidationResult
 
 
 class SemanticQueryValidationError(ApplicationError):
@@ -120,7 +123,7 @@ class ExecuteSemanticQueryUseCase:
         # If validation fails with blocking errors, raise exception
         if not validation_result.is_valid:
             error_dtos = [
-                self._issue_to_dto(issue)
+                issue_to_dto(issue)
                 for issue in validation_result.issues
                 if issue.severity == Severity.BLOCK
             ]
@@ -128,7 +131,7 @@ class ExecuteSemanticQueryUseCase:
 
         # Capture warnings for the result
         warnings = [
-            self._issue_to_dto(issue)
+            issue_to_dto(issue)
             for issue in validation_result.issues
             if issue.severity == Severity.WARN
         ]
@@ -169,26 +172,10 @@ class ExecuteSemanticQueryUseCase:
             explain=explain,
         )
 
-    def _issue_to_dto(self, issue: Issue) -> SemanticIssueDTO:
-        """Convert domain Issue to DTO.
-
-        Args:
-            issue: The domain Issue.
-
-        Returns:
-            SemanticIssueDTO representation.
-        """
-        return SemanticIssueDTO(
-            code=issue.code,
-            severity=issue.severity.name,
-            message=issue.message,
-            details=dict(issue.details),
-        )
-
     def _build_provenance(
         self,
         metrics: list[Metric],
-        catalog: Any,  # SemanticCatalog, but avoiding import for type hint
+        catalog: SemanticCatalog,
     ) -> Provenance:
         """Build provenance information for the query result.
 
@@ -312,10 +299,10 @@ class ExecuteSemanticQueryUseCase:
 
     def _build_explain(
         self,
-        validation_result: Any,  # QueryValidationResult
-        plan: Any,  # LogicalPlan
+        validation_result: QueryValidationResult,
+        plan: LogicalPlan,
         sql: str,
-        catalog: Any,  # SemanticCatalog
+        catalog: SemanticCatalog,
     ) -> ExplainResult:
         """Build explain information for debugging.
 
@@ -349,7 +336,7 @@ class ExecuteSemanticQueryUseCase:
             materialization_decision=materialization_decision,
         )
 
-    def _build_validation_trace(self, validation_result: Any) -> str:
+    def _build_validation_trace(self, validation_result: QueryValidationResult) -> str:
         """Build a trace of validation steps.
 
         Args:
@@ -371,7 +358,7 @@ class ExecuteSemanticQueryUseCase:
 
         return "\n".join(lines)
 
-    def _build_plan_summary(self, plan: Any) -> str:
+    def _build_plan_summary(self, plan: LogicalPlan) -> str:
         """Build a summary of the logical plan.
 
         Args:
