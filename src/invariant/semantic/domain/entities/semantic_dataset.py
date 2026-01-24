@@ -7,15 +7,46 @@ a logical dataset backed by a physical Postgres relation.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
     from invariant.domain.model.time_series import TimeSeriesSpec
 
 from invariant.domain.model.ids import DimensionId, SemanticDatasetId
+
+T = TypeVar("T")
+
+
+def _check_unique(
+    items: Sequence[T],
+    key_fn: Callable[[T], str],
+    field_name: str,
+    key_name: str | None = None,
+) -> None:
+    """Check that all items have unique keys, raise ValueError if duplicates found.
+
+    Args:
+        items: Sequence of items to check for uniqueness.
+        key_fn: Function to extract the comparison key from each item.
+        field_name: Name of the field to include in error message.
+        key_name: Optional name of the key attribute (e.g. "base_name").
+                  If provided, error message includes it.
+
+    Raises:
+        ValueError: If duplicate keys are found.
+    """
+    if not items:
+        return
+    keys = [key_fn(item) for item in items]
+    if len(keys) != len(set(keys)):
+        if key_name:
+            raise ValueError(f"{field_name} must not have duplicate {key_name} values")
+        raise ValueError(f"{field_name} must not have duplicate values")
 
 
 class DatasetKind(str, Enum):
@@ -234,6 +265,66 @@ class ColumnDefinition:
         object.__setattr__(self, "nullable", nullable)
         object.__setattr__(self, "stats", stats)
 
+    def get_typed_sample_values(
+        self,
+    ) -> (
+        tuple[int, ...]
+        | tuple[float, ...]
+        | tuple[Decimal, ...]
+        | tuple[bool, ...]
+        | tuple[str, ...]
+        | tuple[date, ...]
+        | tuple[datetime, ...]
+        | tuple[()]
+    ):
+        """Return sample values converted to appropriate types based on data_type.
+
+        If conversion fails for any value, all values are returned as the original
+        strings to preserve data integrity.
+
+        Returns:
+            Tuple of typed values, or empty tuple if no stats or sample_values.
+        """
+        if self.stats is None or not self.stats.sample_values:
+            return ()
+
+        sample_values = self.stats.sample_values
+
+        try:
+            if self.data_type == ColumnDataType.INTEGER:
+                return tuple(int(v) for v in sample_values)
+
+            if self.data_type == ColumnDataType.FLOAT:
+                return tuple(float(v) for v in sample_values)
+
+            if self.data_type == ColumnDataType.DECIMAL:
+                return tuple(Decimal(v) for v in sample_values)
+
+            if self.data_type == ColumnDataType.BOOLEAN:
+                return tuple(self._parse_boolean(v) for v in sample_values)
+
+            if self.data_type == ColumnDataType.DATE:
+                return tuple(date.fromisoformat(v) for v in sample_values)
+
+            if self.data_type == ColumnDataType.TIMESTAMP:
+                return tuple(datetime.fromisoformat(v) for v in sample_values)
+
+            # STRING and JSON remain as strings
+            return sample_values
+
+        except (ValueError, InvalidOperation):
+            # If any conversion fails, return original strings
+            return sample_values
+
+    @staticmethod
+    def _parse_boolean(value: str) -> bool:
+        """Parse a boolean string value."""
+        if value.lower() in ("true", "1"):
+            return True
+        if value.lower() in ("false", "0"):
+            return False
+        raise ValueError(f"Cannot parse boolean from: {value}")
+
 
 @dataclass
 class SemanticDataset:
@@ -260,7 +351,21 @@ class SemanticDataset:
     time_series: tuple[TimeSeriesSpec, ...] = ()
     columns: tuple[ColumnDefinition, ...] = ()
 
+    # Internal indexes for O(1) lookups
+    _columns_by_name: dict[str, ColumnDefinition] = field(
+        init=False, repr=False, compare=False
+    )
+    _time_series_by_name: dict[str, TimeSeriesSpec] = field(
+        init=False, repr=False, compare=False
+    )
+
     def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "_columns_by_name", {col.name: col for col in self.columns}
+        )
+        object.__setattr__(
+            self, "_time_series_by_name", {ts.base_name: ts for ts in self.time_series}
+        )
         self._validate_invariants()
 
     def _validate_invariants(self) -> None:
@@ -278,17 +383,11 @@ class SemanticDataset:
                 "grain_keys.geo must be non-empty when geography_config is present"
             )
 
-        # Validate no duplicate base_name in time_series
-        if self.time_series:
-            base_names = [ts.base_name for ts in self.time_series]
-            if len(base_names) != len(set(base_names)):
-                raise ValueError("time_series must not have duplicate base_name values")
-
-        # Validate no duplicate column names
-        if self.columns:
-            col_names = [col.name for col in self.columns]
-            if len(col_names) != len(set(col_names)):
-                raise ValueError("columns must not have duplicate name values")
+        # Validate uniqueness constraints
+        _check_unique(
+            self.time_series, lambda ts: ts.base_name, "time_series", "base_name"
+        )
+        _check_unique(self.columns, lambda col: col.name, "columns", "name")
 
     @classmethod
     def create(
@@ -326,14 +425,8 @@ class SemanticDataset:
 
     def get_time_series(self, base_name: str) -> TimeSeriesSpec | None:
         """Get a time series spec by base_name."""
-        for ts in self.time_series:
-            if ts.base_name == base_name:
-                return ts
-        return None
+        return self._time_series_by_name.get(base_name)
 
     def get_column(self, name: str) -> ColumnDefinition | None:
         """Get a column definition by name."""
-        for col in self.columns:
-            if col.name == name:
-                return col
-        return None
+        return self._columns_by_name.get(name)

@@ -18,6 +18,7 @@ from invariant.semantic.domain.entities.semantic_dataset import (
     SemanticDataset,
     TimeConfig,
     TimeGrain,
+    _check_unique,
 )
 
 __all__ = [
@@ -33,4 +34,5 @@ __all__ = [
     "SemanticDataset",
     "TimeConfig",
     "TimeGrain",
+    "_check_unique",
 ]
