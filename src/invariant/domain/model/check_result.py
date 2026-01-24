@@ -5,13 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from invariant.validation import Issue, Severity
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from invariant.domain.model.attribution import Attribution
     from invariant.domain.model.impact import Impact
     from invariant.domain.model.remediation_action import RemediationAction
-    from invariant.domain.model.validation import Disclosure, Issue, Severity
+    from invariant.domain.model.validation import Disclosure
 
 
 @dataclass(frozen=True, init=False)
@@ -42,10 +44,8 @@ class CheckResult:
         remediation_actions: Sequence[RemediationAction] | None = None,
         disclosures: Sequence[Disclosure] | None = None,
     ) -> None:
-        from invariant.domain.model.validation import Severity as SeverityEnum
-
         object.__setattr__(self, "passed", passed)
-        object.__setattr__(self, "severity", severity or SeverityEnum.ALLOW)
+        object.__setattr__(self, "severity", severity or Severity.ALLOW)
         object.__setattr__(self, "code", code)
         object.__setattr__(self, "message", message)
         object.__setattr__(self, "attributions", tuple(attributions or []))
@@ -58,14 +58,10 @@ class CheckResult:
     @classmethod
     def passed_result(cls) -> CheckResult:
         """Create a passing result."""
-        from invariant.domain.model.validation import Severity
-
         return cls(passed=True, severity=Severity.ALLOW)
 
     def to_issue(self, subject_id: str | None = None) -> Issue:
         """Convert this CheckResult to an Issue for inclusion in ValidationResult."""
-        from invariant.domain.model.validation import Issue
-
         details: dict = {}
         if subject_id:
             details["subject_id"] = subject_id

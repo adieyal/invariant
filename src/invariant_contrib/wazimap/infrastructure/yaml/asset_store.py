@@ -10,7 +10,7 @@ from invariant.domain.model.comparability_rules import ComparabilityRules
 from invariant.domain.model.semantic_catalog import SemanticCatalog
 
 from .base import load_yaml_file
-from .comparability_parser import load_comparability_rules
+from .comparability_parser import load_comparability_rules, parse_comparability_rules
 from .dataset_parser import load_datasets, parse_dataset
 from .dimension_parser import load_dimensions, parse_dimension
 from .geo_hierarchy_parser import load_geo_hierarchies, parse_geo_hierarchy
@@ -165,8 +165,6 @@ class YamlSemanticAssetStore:
 
         # Override comparability rules
         if "comparability_rules" in data:
-            from .comparability_parser import parse_comparability_rules
-
             self._comparability_rules = parse_comparability_rules(
                 data["comparability_rules"], env_path
             )

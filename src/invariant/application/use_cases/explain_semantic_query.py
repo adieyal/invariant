@@ -9,6 +9,15 @@ from invariant.application.dto.semantic_query import (
     ExplainResultDTO,
     MaterializationDecision,
 )
+from invariant.domain.model.plan_ir import (
+    AggregateNode,
+    FilterNode,
+    JoinNode,
+    LimitNode,
+    ProjectNode,
+    ScanNode,
+    SortNode,
+)
 from invariant.domain.model.validation import Severity
 from invariant.domain.services.postgres_compiler import (
     PostgresCompiler,
@@ -185,16 +194,6 @@ class ExplainSemanticQueryUseCase:
         Returns:
             Dict representation of the node.
         """
-        from invariant.domain.model.plan_ir import (
-            AggregateNode,
-            FilterNode,
-            JoinNode,
-            LimitNode,
-            ProjectNode,
-            ScanNode,
-            SortNode,
-        )
-
         result: dict[str, Any] = {"type": type(node).__name__}
 
         if isinstance(node, ScanNode):
@@ -271,16 +270,6 @@ class ExplainSemanticQueryUseCase:
             lines: List to append lines to.
             indent: Current indentation level.
         """
-        from invariant.domain.model.plan_ir import (
-            AggregateNode,
-            FilterNode,
-            JoinNode,
-            LimitNode,
-            ProjectNode,
-            ScanNode,
-            SortNode,
-        )
-
         prefix = " " * indent
 
         if isinstance(node, ScanNode):
