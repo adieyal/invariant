@@ -119,7 +119,7 @@ The kernel runs entirely in-memory with fake repositories for testing. If it req
 | **Validation Gate** | The checkpoint that allows, warns, or blocks queries |
 | **Disclosure** | Provenance information attached to results |
 
-[Full glossary →](02-glossary.md)
+[Full glossary →](generated/glossary.md)
 
 ---
 
@@ -133,7 +133,7 @@ Invariant uses a "two planes + gate" design:
 
 **The Gate:** When a query does something questionable (compare across studies, aggregate indicators, mix universes), the gate either warns, requires acknowledgment, or blocks.
 
-[Architecture details →](03-architecture.md)
+[Architecture details →](user-guide/architecture.md)
 
 ---
 
@@ -157,13 +157,3 @@ Invariant uses a "two planes + gate" design:
 | [YAML Assets](developer/yaml-assets.md) | Define assets in YAML files with CI validation |
 | [Golden Testing](developer/golden-testing.md) | Regression testing for SQL compilation |
 
-### Component Charters
-
-| Component | Description |
-|-----------|-------------|
-| [Catalog](charters/catalog-charter.md) | Physical data products and metadata |
-| [Identity](charters/identity-charter.md) | Semantic concepts and comparability |
-| [Semantic](charters/semantic-charter.md) | Metrics, dimensions, hierarchies |
-| [Query](charters/query-charter.md) | Query planning and IR |
-| [Validation](charters/validation-charter.md) | Rules, issues, disclosures |
-| [Reference](charters/reference-charter.md) | Reference systems and versioning |

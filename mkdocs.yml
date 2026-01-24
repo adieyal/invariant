@@ -47,10 +47,6 @@ nav:
   - Getting Started:
     - Quickstart: developer/quickstart.md
     - Core Concepts: developer/concepts.md
-  - Concepts:
-    - Conceptual Model: 01-conceptual-model.md
-    - Glossary: 02-glossary.md
-    - Architecture: 03-architecture.md
   - Integration:
     - developer/index.md
     - Clean Architecture: developer/architecture.md
@@ -63,20 +59,6 @@ nav:
     - Validation Rules: generated/validation-rules.md
     - Aggregation Rules: generated/aggregation-rules.md
     - Examples: generated/examples.md
-  - Internals:
-    - Project Scope: 00-project-scope.md
-    - Capability Matrix: 04-capability-matrix.md
-    - Data Model: 05-data-model.md
-    - Application Layer: 06-application-layer.md
-    - API Contracts: 07-api-contracts.md
-    - Capability Examples: 08-capability-examples.md
-  - Component Charters:
-    - Catalog: charters/catalog-charter.md
-    - Identity: charters/identity-charter.md
-    - Semantic: charters/semantic-charter.md
-    - Query: charters/query-charter.md
-    - Validation: charters/validation-charter.md
-    - Reference: charters/reference-charter.md
 
 docs_dir: docs
 site_dir: site
