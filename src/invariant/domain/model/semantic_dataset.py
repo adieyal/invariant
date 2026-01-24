@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
+    from invariant.domain.model.time_series import TimeSeriesSpec
+
 from invariant.domain.model.ids import DimensionId, SemanticDatasetId
 
 
@@ -165,6 +167,7 @@ class SemanticDataset:
     Invariants:
     - If time_config is present, grain_keys.time must be non-empty
     - If geography_config is present, grain_keys.geo must be non-empty
+    - No duplicate base_name values in time_series
     """
 
     id: SemanticDatasetId
@@ -176,6 +179,7 @@ class SemanticDataset:
     geography_config: GeographyConfig | None = None
     dimensions: dict[str, DimensionSpec] = field(default_factory=dict)
     quality: QualityConfig | None = None
+    time_series: tuple[TimeSeriesSpec, ...] = ()
 
     def __post_init__(self) -> None:
         self._validate_invariants()
@@ -195,6 +199,12 @@ class SemanticDataset:
                 "grain_keys.geo must be non-empty when geography_config is present"
             )
 
+        # Validate no duplicate base_name in time_series
+        if self.time_series:
+            base_names = [ts.base_name for ts in self.time_series]
+            if len(base_names) != len(set(base_names)):
+                raise ValueError("time_series must not have duplicate base_name values")
+
     @classmethod
     def create(
         cls,
@@ -207,6 +217,7 @@ class SemanticDataset:
         geography_config: GeographyConfig | None = None,
         dimensions: Mapping[str, DimensionSpec] | None = None,
         quality: QualityConfig | None = None,
+        time_series: Sequence[TimeSeriesSpec] | None = None,
     ) -> SemanticDataset:
         """Factory method to create a SemanticDataset with a new ID."""
         return cls(
@@ -219,8 +230,16 @@ class SemanticDataset:
             geography_config=geography_config,
             dimensions=dict(dimensions) if dimensions else {},
             quality=quality,
+            time_series=tuple(time_series) if time_series else (),
         )
 
     def get_dimension_spec(self, name: str) -> DimensionSpec | None:
         """Get a dimension spec by name."""
         return self.dimensions.get(name)
+
+    def get_time_series(self, base_name: str) -> TimeSeriesSpec | None:
+        """Get a time series spec by base_name."""
+        for ts in self.time_series:
+            if ts.base_name == base_name:
+                return ts
+        return None

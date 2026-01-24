@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -30,7 +31,7 @@ class TestYamlSemanticAssetStoreLoading:
         store = YamlSemanticAssetStore(base_path=fixtures_path)
         catalog = store.load_catalog()
 
-        assert len(catalog.datasets) == 2
+        assert len(catalog.datasets) == 3  # population, geography, census_wide
         assert len(catalog.dimensions) == 1
         assert len(catalog.geo_hierarchies) == 1
         assert len(catalog.metrics) == 3
@@ -112,9 +113,38 @@ class TestYamlSemanticAssetStoreLoading:
         assert metric is not None
         assert metric.name == "population_density"
         assert metric.kind == MetricKind.RATIO
-        assert metric.spec.numerator == "total_population"
-        assert metric.spec.denominator == "land_area"
-        assert metric.spec.ratio_format == RatioFormat.DECIMAL
+        assert metric.spec.numerator == "total_population"  # type: ignore[union-attr]
+        assert metric.spec.denominator == "land_area"  # type: ignore[union-attr]
+        assert metric.spec.ratio_format == RatioFormat.DECIMAL  # type: ignore[union-attr]
+
+    def test_loads_dataset_with_time_series(self, fixtures_path: Path) -> None:
+        """Test loading a dataset with time series from YAML."""
+        store = YamlSemanticAssetStore(base_path=fixtures_path)
+        dataset = store.get_dataset("census_wide")
+
+        assert dataset is not None
+        assert dataset.name == "census_wide"
+        assert len(dataset.time_series) == 2
+
+        # Check population time series
+        pop_ts = dataset.get_time_series("population")
+        assert pop_ts is not None
+        assert pop_ts.base_name == "population"
+        assert len(pop_ts.columns) == 3
+        assert pop_ts.grain == TimeGrain.YEAR
+        assert pop_ts.start_period == date(2011, 1, 1)
+        assert pop_ts.end_period == date(2022, 1, 1)
+
+        # Check specific column
+        col_2016 = pop_ts.get_column_for_period(date(2016, 1, 1))
+        assert col_2016 is not None
+        assert col_2016.column_name == "population_2016"
+
+        # Check households time series
+        hh_ts = dataset.get_time_series("households")
+        assert hh_ts is not None
+        assert hh_ts.base_name == "households"
+        assert len(hh_ts.columns) == 3
 
     def test_loads_materialization(self, fixtures_path: Path) -> None:
         """Test loading a materialization from YAML."""

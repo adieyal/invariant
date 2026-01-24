@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Datasets - Data Dictionary{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+    <h1 class="detail-title">Datasets</h1>
+    <p class="detail-subtitle">Fact and dimension tables in your semantic catalog</p>
+</div>
+
+{% if search_query %}
+<div class="filters">
+    <span class="filter-chip">
+        Search: {{ search_query }}
+        <a href="{{ url_for('datasets_list') }}">&times;</a>
+    </span>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">{{ datasets|length }} Dataset{% if datasets|length != 1 %}s{% endif %}</h2>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Source</th>
+                    <th>Grain Keys</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dataset in datasets %}
+                <tr>
+                    <td><a href="{{ url_for('dataset_detail', name=dataset.name) }}">{{ dataset.name }}</a></td>
+                    <td>
+                        {% if dataset.kind.value == 'FACT' %}
+                        <span class="badge badge-fact">Fact</span>
+                        {% else %}
+                        <span class="badge badge-dimension">Dimension</span>
+                        {% endif %}
+                    </td>
+                    <td class="description">{{ dataset.physical_ref.qualified_name }}</td>
+                    <td>{{ dataset.grain_keys.all_keys|join(', ') or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">No datasets found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+name: census_wide
+physical_ref:
+  schema: census
+  table: census_wide_format
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_level
+    - geo_code
+  time: []
+  other: []
+
+geography_config:
+  hierarchy_name: south_africa
+  level_column: geo_level
+  code_column: geo_code
+
+# Time series for wide-format data (columns for each time period)
+time_series:
+  - base_name: population
+    columns:
+      - column: population_2011
+        period: "2011-01-01"
+        grain: YEAR
+      - column: population_2016
+        period: "2016-01-01"
+        grain: YEAR
+      - column: population_2022
+        period: "2022-01-01"
+        grain: YEAR
+
+  - base_name: households
+    columns:
+      - column: households_2011
+        period: "2011-01-01"
+        grain: YEAR
+      - column: households_2016
+        period: "2016-01-01"
+        grain: YEAR
+      - column: households_2022
+        period: "2022-01-01"
+        grain: YEAR

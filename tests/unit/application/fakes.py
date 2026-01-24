@@ -33,6 +33,7 @@ from invariant.domain.model.ids import (
     CrosswalkId,
     DataProductId,
     DatasetId,
+    MetricId,
     ReferenceSystemId,
     ReferenceSystemVersionId,
     StudyId,
@@ -40,9 +41,20 @@ from invariant.domain.model.ids import (
     VariableId,
 )
 from invariant.domain.model.materialization import Materialization  # noqa: TC001
-from invariant.domain.model.metric import Metric  # noqa: TC001
+from invariant.domain.model.metric import (
+    Additivity,
+    AdditivityType,
+    AggregationFunction,
+    Metric,
+    MetricKind,
+    RollupPolicy,
+    SimpleAggSpec,
+)
 from invariant.domain.model.semantic_catalog import SemanticCatalog
-from invariant.domain.model.semantic_dataset import SemanticDataset  # noqa: TC001
+from invariant.domain.model.semantic_dataset import (
+    SemanticDataset,  # noqa: TC001
+    TimeGrain,  # noqa: TC001
+)
 from invariant.domain.model.validation import Disclosure, ValidationResult
 from invariant.domain.services.validator import CatalogSnapshot
 
@@ -633,3 +645,54 @@ class FakeSqlExecutor(SqlExecutor):
         self._explain_results.clear()
         self._executed_queries.clear()
         self._default_result = None
+
+
+def create_test_metric(
+    name: str,
+    kind: MetricKind = MetricKind.SIMPLE_AGG,
+    dataset_name: str = "test_dataset",
+    expr: str = "value",
+    agg: AggregationFunction = AggregationFunction.SUM,
+    tags: tuple[str, ...] = (),
+    description: str | None = None,
+    valid_geo_levels: tuple[str, ...] = (),
+    valid_time_grains: tuple[TimeGrain, ...] = (),
+) -> Metric:
+    """Factory helper for creating test metrics.
+
+    Creates a SIMPLE_AGG metric by default with sensible test values.
+
+    Args:
+        name: Metric name.
+        kind: Metric kind (default SIMPLE_AGG).
+        dataset_name: Dataset name for SIMPLE_AGG spec.
+        expr: Expression for SIMPLE_AGG spec.
+        agg: Aggregation function for SIMPLE_AGG spec.
+        tags: Optional tags for categorization.
+        description: Optional description.
+        valid_geo_levels: Optional valid geography levels.
+        valid_time_grains: Optional valid time grains.
+
+    Returns:
+        A Metric instance suitable for testing.
+    """
+    return Metric(
+        id=MetricId.create(),
+        name=name,
+        kind=kind,
+        spec=SimpleAggSpec(
+            dataset_name=dataset_name,
+            expr=expr,
+            agg=agg,
+        ),
+        additivity=Additivity(
+            type=AdditivityType.ADDITIVE,
+            across_time=True,
+            across_geo=True,
+            rollup_policy=RollupPolicy.ALLOW,
+        ),
+        valid_geo_levels=valid_geo_levels,
+        valid_time_grains=valid_time_grains,
+        tags=tags,
+        description=description,
+    )

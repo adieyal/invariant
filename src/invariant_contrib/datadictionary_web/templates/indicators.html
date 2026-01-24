@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Indicators - Data Dictionary{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+    <h1 class="detail-title">Indicators</h1>
+    <p class="detail-subtitle">Metrics and calculated measures in your semantic catalog</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Filters</h2>
+    </div>
+    <form action="{{ url_for('indicators_list') }}" method="get">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+            <div>
+                <label for="q" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Search</label>
+                <input type="text" id="q" name="q" value="{{ search_query }}" placeholder="Search by name or description..." style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px;">
+            </div>
+            <div>
+                <label for="tag" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Tag</label>
+                <select id="tag" name="tag" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                    <option value="">All tags</option>
+                    {% for tag in all_tags %}
+                    <option value="{{ tag }}" {% if tag == tag_filter %}selected{% endif %}>{{ tag }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="kind" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Kind</label>
+                <select id="kind" name="kind" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                    <option value="">All kinds</option>
+                    {% for kind in metric_kinds %}
+                    <option value="{{ kind }}" {% if kind == kind_filter %}selected{% endif %}>{{ kind }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" style="padding: 0.5rem 1rem; background-color: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">Apply</button>
+            {% if search_query or tag_filter or kind_filter %}
+            <a href="{{ url_for('indicators_list') }}" style="padding: 0.5rem 1rem; color: var(--text-muted);">Clear</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+{% if search_query or tag_filter or kind_filter %}
+<div class="filters">
+    {% if search_query %}
+    <span class="filter-chip">
+        Search: {{ search_query }}
+        <a href="{{ url_for('indicators_list', tag=tag_filter, kind=kind_filter) }}">&times;</a>
+    </span>
+    {% endif %}
+    {% if tag_filter %}
+    <span class="filter-chip">
+        Tag: {{ tag_filter }}
+        <a href="{{ url_for('indicators_list', q=search_query, kind=kind_filter) }}">&times;</a>
+    </span>
+    {% endif %}
+    {% if kind_filter %}
+    <span class="filter-chip">
+        Kind: {{ kind_filter }}
+        <a href="{{ url_for('indicators_list', q=search_query, tag=tag_filter) }}">&times;</a>
+    </span>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">{{ metrics|length }} Indicator{% if metrics|length != 1 %}s{% endif %}</h2>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Kind</th>
+                    <th>Tags</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for metric in metrics %}
+                <tr>
+                    <td><a href="{{ url_for('indicator_detail', name=metric.name) }}">{{ metric.name }}</a></td>
+                    <td><span class="badge badge-{{ metric.kind.value|lower|replace('_', '-') }}">{{ metric.kind.value }}</span></td>
+                    <td>
+                        <div class="tags">
+                            {% for tag in metric.tags %}
+                            <a href="{{ url_for('indicators_list', tag=tag) }}" class="tag">{{ tag }}</a>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="description">{{ metric.description or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">No indicators found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,5 +1,7 @@
 """Tests for SemanticDataset domain entity and value objects."""
 
+from datetime import date
+
 import pytest
 
 from invariant.domain.model.ids import DimensionId, SemanticDatasetId
@@ -14,6 +16,7 @@ from invariant.domain.model.semantic_dataset import (
     TimeConfig,
     TimeGrain,
 )
+from invariant.domain.model.time_series import TimeSeriesColumn, TimeSeriesSpec
 
 
 class TestPhysicalRef:
@@ -336,3 +339,122 @@ class TestDatasetKind:
     def test_kinds_exist(self) -> None:
         assert DatasetKind.FACT.value == "FACT"
         assert DatasetKind.DIMENSION.value == "DIMENSION"
+
+
+class TestSemanticDatasetTimeSeries:
+    def test_create_with_time_series(self) -> None:
+        ts = TimeSeriesSpec(
+            base_name="population",
+            columns=[
+                TimeSeriesColumn("pop_2020", date(2020, 1, 1), TimeGrain.YEAR),
+                TimeSeriesColumn("pop_2021", date(2021, 1, 1), TimeGrain.YEAR),
+            ],
+        )
+        dataset = SemanticDataset.create(
+            name="census_wide",
+            physical_ref=PhysicalRef(schema="public", table="census_wide"),
+            kind=DatasetKind.FACT,
+            grain_keys=GrainKeys(geo=["geo_code"]),
+            time_series=[ts],
+        )
+        assert dataset.time_series == (ts,)
+
+    def test_time_series_default_empty(self) -> None:
+        dataset = SemanticDataset.create(
+            name="census",
+            physical_ref=PhysicalRef(schema="public", table="census"),
+            kind=DatasetKind.FACT,
+            grain_keys=GrainKeys(other=["id"]),
+        )
+        assert dataset.time_series == ()
+
+    def test_get_time_series_found(self) -> None:
+        ts1 = TimeSeriesSpec(
+            base_name="population",
+            columns=[
+                TimeSeriesColumn("pop_2020", date(2020, 1, 1), TimeGrain.YEAR),
+            ],
+        )
+        ts2 = TimeSeriesSpec(
+            base_name="households",
+            columns=[
+                TimeSeriesColumn("hh_2020", date(2020, 1, 1), TimeGrain.YEAR),
+            ],
+        )
+        dataset = SemanticDataset.create(
+            name="census_wide",
+            physical_ref=PhysicalRef(schema="public", table="census_wide"),
+            kind=DatasetKind.FACT,
+            grain_keys=GrainKeys(geo=["geo_code"]),
+            time_series=[ts1, ts2],
+        )
+        result = dataset.get_time_series("households")
+        assert result is not None
+        assert result.base_name == "households"
+
+    def test_get_time_series_not_found(self) -> None:
+        ts = TimeSeriesSpec(
+            base_name="population",
+            columns=[
+                TimeSeriesColumn("pop_2020", date(2020, 1, 1), TimeGrain.YEAR),
+            ],
+        )
+        dataset = SemanticDataset.create(
+            name="census_wide",
+            physical_ref=PhysicalRef(schema="public", table="census_wide"),
+            kind=DatasetKind.FACT,
+            grain_keys=GrainKeys(geo=["geo_code"]),
+            time_series=[ts],
+        )
+        result = dataset.get_time_series("nonexistent")
+        assert result is None
+
+    def test_duplicate_base_name_raises(self) -> None:
+        ts1 = TimeSeriesSpec(
+            base_name="population",
+            columns=[
+                TimeSeriesColumn("pop_2020", date(2020, 1, 1), TimeGrain.YEAR),
+            ],
+        )
+        ts2 = TimeSeriesSpec(
+            base_name="population",  # duplicate!
+            columns=[
+                TimeSeriesColumn("pop_v2_2020", date(2020, 1, 1), TimeGrain.YEAR),
+            ],
+        )
+        with pytest.raises(
+            ValueError, match="time_series must not have duplicate base_name values"
+        ):
+            SemanticDataset.create(
+                name="census_wide",
+                physical_ref=PhysicalRef(schema="public", table="census_wide"),
+                kind=DatasetKind.FACT,
+                grain_keys=GrainKeys(geo=["geo_code"]),
+                time_series=[ts1, ts2],
+            )
+
+    def test_multiple_time_series(self) -> None:
+        ts1 = TimeSeriesSpec(
+            base_name="population",
+            columns=[
+                TimeSeriesColumn("pop_2020", date(2020, 1, 1), TimeGrain.YEAR),
+                TimeSeriesColumn("pop_2021", date(2021, 1, 1), TimeGrain.YEAR),
+            ],
+        )
+        ts2 = TimeSeriesSpec(
+            base_name="households",
+            columns=[
+                TimeSeriesColumn("hh_2020", date(2020, 1, 1), TimeGrain.YEAR),
+                TimeSeriesColumn("hh_2021", date(2021, 1, 1), TimeGrain.YEAR),
+            ],
+        )
+        dataset = SemanticDataset.create(
+            name="census_wide",
+            physical_ref=PhysicalRef(schema="public", table="census_wide"),
+            kind=DatasetKind.FACT,
+            grain_keys=GrainKeys(geo=["geo_code"]),
+            time_series=[ts1, ts2],
+        )
+        assert len(dataset.time_series) == 2
+        assert dataset.get_time_series("population") is not None
+        assert dataset.get_time_series("households") is not None

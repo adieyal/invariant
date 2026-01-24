@@ -282,6 +282,7 @@ class Metric:
       - RATIO -> RatioSpec
       - DERIVED -> DerivedSpec
       - WEIGHTED_AVG -> WeightedAvgSpec
+    - tags are normalized (lowercase, stripped whitespace)
     """
 
     id: MetricId
@@ -293,6 +294,8 @@ class Metric:
     valid_time_grains: tuple[TimeGrain, ...] = ()
     unit: MetricUnit | None = None
     comparability: Comparability | None = None
+    tags: tuple[str, ...] = ()
+    description: str | None = None
 
     # Internal cache fields
     _spec_kind_map: dict[type, MetricKind] = field(
@@ -300,6 +303,14 @@ class Metric:
     )
 
     def __post_init__(self) -> None:
+        # Normalize tags (lowercase, strip whitespace)
+        if self.tags:
+            object.__setattr__(
+                self,
+                "tags",
+                tuple(tag.lower().strip() for tag in self.tags),
+            )
+
         # Build spec kind map
         object.__setattr__(
             self,
@@ -372,6 +383,8 @@ class Metric:
         valid_time_grains: Sequence[TimeGrain] | None = None,
         unit: MetricUnit | None = None,
         comparability: Comparability | None = None,
+        tags: Sequence[str] | None = None,
+        description: str | None = None,
     ) -> Metric:
         """Factory method to create a simple aggregation metric."""
         return cls(
@@ -389,6 +402,8 @@ class Metric:
             valid_time_grains=tuple(valid_time_grains) if valid_time_grains else (),
             unit=unit,
             comparability=comparability,
+            tags=tuple(tags) if tags else (),
+            description=description,
         )
 
     @classmethod
@@ -406,6 +421,8 @@ class Metric:
         valid_time_grains: Sequence[TimeGrain] | None = None,
         unit: MetricUnit | None = None,
         comparability: Comparability | None = None,
+        tags: Sequence[str] | None = None,
+        description: str | None = None,
     ) -> Metric:
         """Factory method to create a ratio metric."""
         return cls(
@@ -424,6 +441,8 @@ class Metric:
             valid_time_grains=tuple(valid_time_grains) if valid_time_grains else (),
             unit=unit,
             comparability=comparability,
+            tags=tuple(tags) if tags else (),
+            description=description,
         )
 
     @classmethod
@@ -438,6 +457,8 @@ class Metric:
         valid_time_grains: Sequence[TimeGrain] | None = None,
         unit: MetricUnit | None = None,
         comparability: Comparability | None = None,
+        tags: Sequence[str] | None = None,
+        description: str | None = None,
     ) -> Metric:
         """Factory method to create a derived metric."""
         return cls(
@@ -453,6 +474,8 @@ class Metric:
             valid_time_grains=tuple(valid_time_grains) if valid_time_grains else (),
             unit=unit,
             comparability=comparability,
+            tags=tuple(tags) if tags else (),
+            description=description,
         )
 
     @classmethod
@@ -467,6 +490,8 @@ class Metric:
         valid_time_grains: Sequence[TimeGrain] | None = None,
         unit: MetricUnit | None = None,
         comparability: Comparability | None = None,
+        tags: Sequence[str] | None = None,
+        description: str | None = None,
     ) -> Metric:
         """Factory method to create a weighted average metric."""
         return cls(
@@ -482,4 +507,6 @@ class Metric:
             valid_time_grains=tuple(valid_time_grains) if valid_time_grains else (),
             unit=unit,
             comparability=comparability,
+            tags=tuple(tags) if tags else (),
+            description=description,
         )

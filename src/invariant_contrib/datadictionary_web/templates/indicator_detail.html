@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}{{ metric.name }} - Data Dictionary{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+    <h1 class="detail-title">{{ metric.name }}</h1>
+    <p class="detail-subtitle">
+        <span class="badge badge-{{ metric.kind.value|lower|replace('_', '-') }}">{{ metric.kind.value }}</span>
+    </p>
+</div>
+
+{% if metric.description %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Description</h2>
+    </div>
+    <p>{{ metric.description }}</p>
+</div>
+{% endif %}
+
+{% if metric.tags %}
+<div class="detail-section">
+    <h2>Tags</h2>
+    <div class="tags">
+        {% for tag in metric.tags %}
+        <a href="{{ url_for('indicators_list', tag=tag) }}" class="tag">{{ tag }}</a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="detail-section">
+    <h2>Specification</h2>
+    <div class="detail-grid">
+        {% if metric.spec.dataset_name is defined %}
+        <div class="detail-item">
+            <div class="detail-label">Dataset</div>
+            <div class="detail-value"><a href="{{ url_for('dataset_detail', name=metric.spec.dataset_name) }}">{{ metric.spec.dataset_name }}</a></div>
+        </div>
+        {% endif %}
+        {% if metric.spec.expr is defined and metric.kind.value == 'SIMPLE_AGG' %}
+        <div class="detail-item">
+            <div class="detail-label">Expression</div>
+            <div class="detail-value"><code>{{ metric.spec.expr }}</code></div>
+        </div>
+        {% endif %}
+        {% if metric.spec.agg is defined %}
+        <div class="detail-item">
+            <div class="detail-label">Aggregation</div>
+            <div class="detail-value">{{ metric.spec.agg.value }}</div>
+        </div>
+        {% endif %}
+        {% if metric.spec.numerator is defined %}
+        <div class="detail-item">
+            <div class="detail-label">Numerator</div>
+            <div class="detail-value"><a href="{{ url_for('indicator_detail', name=metric.spec.numerator) }}">{{ metric.spec.numerator }}</a></div>
+        </div>
+        {% endif %}
+        {% if metric.spec.denominator is defined %}
+        <div class="detail-item">
+            <div class="detail-label">Denominator</div>
+            <div class="detail-value"><a href="{{ url_for('indicator_detail', name=metric.spec.denominator) }}">{{ metric.spec.denominator }}</a></div>
+        </div>
+        {% endif %}
+        {% if metric.spec.expr is defined and metric.kind.value == 'DERIVED' %}
+        <div class="detail-item">
+            <div class="detail-label">Expression</div>
+            <div class="detail-value"><code>{{ metric.spec.expr }}</code></div>
+        </div>
+        {% endif %}
+        {% if metric.spec.value_expr is defined %}
+        <div class="detail-item">
+            <div class="detail-label">Value Expression</div>
+            <div class="detail-value"><code>{{ metric.spec.value_expr }}</code></div>
+        </div>
+        {% endif %}
+        {% if metric.spec.weight_metric is defined %}
+        <div class="detail-item">
+            <div class="detail-label">Weight Metric</div>
+            <div class="detail-value"><a href="{{ url_for('indicator_detail', name=metric.spec.weight_metric) }}">{{ metric.spec.weight_metric }}</a></div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if dependencies %}
+<div class="detail-section">
+    <h2>Dependencies</h2>
+    <ul class="list-inline">
+        {% for dep_name, exists in dependencies %}
+        <li>
+            {% if exists %}
+            <a href="{{ url_for('indicator_detail', name=dep_name) }}">{{ dep_name }}</a>
+            {% else %}
+            {{ dep_name }} <span style="color: var(--error-color);">(not found)</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="detail-section">
+    <h2>Aggregation Rules</h2>
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="detail-label">Additivity Type</div>
+            <div class="detail-value">{{ metric.additivity.type.value }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Rollup Policy</div>
+            <div class="detail-value">{{ metric.additivity.rollup_policy.value }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Additive Across Time</div>
+            <div class="detail-value">{{ 'Yes' if metric.additivity.across_time else 'No' }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Additive Across Geo</div>
+            <div class="detail-value">{{ 'Yes' if metric.additivity.across_geo else 'No' }}</div>
+        </div>
+    </div>
+</div>
+
+{% if metric.valid_geo_levels or metric.valid_time_grains %}
+<div class="detail-section">
+    <h2>Valid Dimensions</h2>
+    <div class="detail-grid">
+        {% if metric.valid_geo_levels %}
+        <div class="detail-item">
+            <div class="detail-label">Geo Levels</div>
+            <div class="detail-value">{{ metric.valid_geo_levels|join(', ') }}</div>
+        </div>
+        {% endif %}
+        {% if metric.valid_time_grains %}
+        <div class="detail-item">
+            <div class="detail-label">Time Grains</div>
+            <div class="detail-value">{{ metric.valid_time_grains|map(attribute='value')|join(', ') }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if metric.comparability %}
+<div class="detail-section">
+    <h2>Comparability</h2>
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="detail-label">Methodology ID</div>
+            <div class="detail-value">{{ metric.comparability.methodology_id }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Methodology Version</div>
+            <div class="detail-value">{{ metric.comparability.methodology_version }}</div>
+        </div>
+        {% if metric.comparability.population_definition %}
+        <div class="detail-item">
+            <div class="detail-label">Population Definition</div>
+            <div class="detail-value">{{ metric.comparability.population_definition }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<p><a href="{{ url_for('indicators_list') }}">&larr; Back to Indicators</a></p>
+{% endblock %}

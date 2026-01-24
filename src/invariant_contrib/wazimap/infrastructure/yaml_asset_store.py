@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -70,6 +71,7 @@ from invariant.domain.model.semantic_dataset import (
     TimeConfig,
     TimeGrain,
 )
+from invariant.domain.model.time_series import TimeSeriesColumn, TimeSeriesSpec
 
 
 class YamlLoadError(Exception):
@@ -163,6 +165,13 @@ class YamlSemanticAssetStore:
         except OSError as e:
             raise YamlLoadError(f"Cannot read file: {e}", path) from e
 
+    def _parse_date(self, value: str | date) -> date:
+        """Parse a date from string or date object."""
+        if isinstance(value, date):
+            return value
+        # Handle ISO format date string (YYYY-MM-DD)
+        return date.fromisoformat(value)
+
     def _load_yaml_files_from_dir(
         self, dir_path: Path, recursive: bool = False
     ) -> list[tuple[Path, dict[str, Any]]]:
@@ -255,6 +264,25 @@ class YamlSemanticAssetStore:
                     confidence_column=q.get("confidence_column"),
                 )
 
+            # Parse time_series
+            time_series: list[TimeSeriesSpec] = []
+            if "time_series" in data:
+                for ts_data in data["time_series"]:
+                    columns = [
+                        TimeSeriesColumn(
+                            column_name=col["column"],
+                            period=self._parse_date(col["period"]),
+                            grain=TimeGrain(col["grain"]),
+                        )
+                        for col in ts_data["columns"]
+                    ]
+                    time_series.append(
+                        TimeSeriesSpec(
+                            base_name=ts_data["base_name"],
+                            columns=columns,
+                        )
+                    )
+
             return SemanticDataset(
                 id=SemanticDatasetId.create(),
                 name=name,
@@ -265,6 +293,7 @@ class YamlSemanticAssetStore:
                 geography_config=geography_config,
                 dimensions=dimensions,
                 quality=quality,
+                time_series=tuple(time_series),
             )
         except KeyError as e:
             raise YamlLoadError(f"Missing required field: {e}", file_path) from e
@@ -412,6 +441,12 @@ class YamlSemanticAssetStore:
                     population_definition=c.get("population_definition"),
                 )
 
+            # Parse tags (optional list of strings, default empty tuple)
+            tags = tuple(data.get("tags", []))
+
+            # Parse description (optional string, default None)
+            description = data.get("description")
+
             return Metric(
                 id=MetricId.create(),
                 name=name,
@@ -422,6 +457,8 @@ class YamlSemanticAssetStore:
                 valid_time_grains=valid_time_grains,
                 unit=unit,
                 comparability=comparability,
+                tags=tags,
+                description=description,
             )
         except KeyError as e:
             raise YamlLoadError(f"Missing required field: {e}", file_path) from e

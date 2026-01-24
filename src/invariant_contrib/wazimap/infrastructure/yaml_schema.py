@@ -333,7 +333,120 @@ class SchemaValidator:
                     )
                 )
 
+        # Validate time_series (optional list of time series specs)
+        if "time_series" in data:
+            ts_list = data["time_series"]
+            if not isinstance(ts_list, list):
+                errors.append(
+                    SchemaError(
+                        file_path=file_path,
+                        field_path="time_series",
+                        message=f"expected list, got {type(ts_list).__name__}",
+                    )
+                )
+            else:
+                for i, ts in enumerate(ts_list):
+                    errors.extend(
+                        self._validate_time_series_spec(
+                            file_path, ts, f"time_series[{i}]"
+                        )
+                    )
+
         return errors
+
+    def _validate_time_series_spec(
+        self, file_path: Path, data: Any, prefix: str
+    ) -> list[SchemaError]:
+        """Validate a time series specification."""
+        errors: list[SchemaError] = []
+
+        if not isinstance(data, dict):
+            errors.append(
+                SchemaError(
+                    file_path=file_path,
+                    field_path=prefix,
+                    message=f"expected object, got {type(data).__name__}",
+                )
+            )
+            return errors
+
+        # Required fields
+        errors.extend(
+            self._check_required_field(file_path, data, "base_name", str, prefix)
+        )
+        errors.extend(
+            self._check_required_field(file_path, data, "columns", list, prefix)
+        )
+
+        # Validate columns
+        if "columns" in data and isinstance(data["columns"], list):
+            if not data["columns"]:
+                errors.append(
+                    SchemaError(
+                        file_path=file_path,
+                        field_path=f"{prefix}.columns",
+                        message="columns must not be empty",
+                    )
+                )
+
+            # Collect grains for consistency check
+            grains: set[str] = set()
+            for j, col in enumerate(data["columns"]):
+                col_errors, grain = self._validate_time_series_column(
+                    file_path, col, f"{prefix}.columns[{j}]"
+                )
+                errors.extend(col_errors)
+                if grain:
+                    grains.add(grain)
+
+            # Check grain consistency
+            if len(grains) > 1:
+                errors.append(
+                    SchemaError(
+                        file_path=file_path,
+                        field_path=f"{prefix}.columns",
+                        message=f"all columns must have the same grain, found: {sorted(grains)}",
+                    )
+                )
+
+        return errors
+
+    def _validate_time_series_column(
+        self, file_path: Path, data: Any, prefix: str
+    ) -> tuple[list[SchemaError], str | None]:
+        """Validate a time series column. Returns (errors, grain)."""
+        errors: list[SchemaError] = []
+        grain: str | None = None
+
+        if not isinstance(data, dict):
+            errors.append(
+                SchemaError(
+                    file_path=file_path,
+                    field_path=prefix,
+                    message=f"expected object, got {type(data).__name__}",
+                )
+            )
+            return errors, grain
+
+        # Required fields
+        errors.extend(
+            self._check_required_field(file_path, data, "column", str, prefix)
+        )
+        errors.extend(
+            self._check_required_field(file_path, data, "period", str, prefix)
+        )
+        errors.extend(self._check_required_field(file_path, data, "grain", str, prefix))
+
+        # Validate grain enum
+        if "grain" in data:
+            grain = data["grain"]
+            errors.extend(
+                self._check_enum_value(
+                    file_path, data, "grain", self.VALID_TIME_GRAINS, prefix
+                )
+            )
+
+        return errors, grain
 
     # --- Dimension validation ---
 
@@ -582,6 +695,40 @@ class SchemaValidator:
                     self.VALID_TIME_GRAINS,
                 )
             )
+
+        # Validate tags (optional list of strings)
+        if "tags" in data:
+            tags = data["tags"]
+            if not isinstance(tags, list):
+                errors.append(
+                    SchemaError(
+                        file_path=file_path,
+                        field_path="tags",
+                        message=f"expected list, got {type(tags).__name__}",
+                    )
+                )
+            else:
+                for i, tag in enumerate(tags):
+                    if not isinstance(tag, str):
+                        errors.append(
+                            SchemaError(
+                                file_path=file_path,
+                                field_path=f"tags[{i}]",
+                                message=f"expected str, got {type(tag).__name__}",
+                            )
+                        )
+
+        # Validate description (optional string)
+        if "description" in data:
+            desc = data["description"]
+            if desc is not None and not isinstance(desc, str):
+                errors.append(
+                    SchemaError(
+                        file_path=file_path,
+                        field_path="description",
+                        message=f"expected str, got {type(desc).__name__}",
+                    )
+                )
 
         return errors
 

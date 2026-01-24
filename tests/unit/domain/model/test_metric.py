@@ -512,7 +512,7 @@ class TestMetric:
     def test_kind_mismatch_raises(self) -> None:
         with pytest.raises(
             ValueError,
-            match=r"kind MetricKind\.RATIO does not match spec type SimpleAggSpec",
+            match=r"kind RATIO does not match spec type SimpleAggSpec",
         ):
             Metric(
                 id=MetricId.create(),
@@ -643,6 +643,88 @@ class TestMetricGetDependencies:
             ),
         )
         assert metric.get_dependencies() == ("population",)
+
+
+class TestMetricTagsAndDescription:
+    def test_create_with_tags(self) -> None:
+        metric = Metric.create_simple_agg(
+            name="population",
+            dataset_name="census",
+            expr="count",
+            agg=AggregationFunction.SUM,
+            additivity=Additivity(type=AdditivityType.ADDITIVE),
+            tags=["demographics", "census"],
+        )
+        assert metric.tags == ("demographics", "census")
+
+    def test_create_with_description(self) -> None:
+        metric = Metric.create_simple_agg(
+            name="population",
+            dataset_name="census",
+            expr="count",
+            agg=AggregationFunction.SUM,
+            additivity=Additivity(type=AdditivityType.ADDITIVE),
+            description="Total population count from census data",
+        )
+        assert metric.description == "Total population count from census data"
+
+    def test_tags_normalized_lowercase(self) -> None:
+        metric = Metric.create_simple_agg(
+            name="population",
+            dataset_name="census",
+            expr="count",
+            agg=AggregationFunction.SUM,
+            additivity=Additivity(type=AdditivityType.ADDITIVE),
+            tags=["Demographics", "CENSUS", "Population"],
+        )
+        assert metric.tags == ("demographics", "census", "population")
+
+    def test_tags_normalized_stripped(self) -> None:
+        metric = Metric.create_simple_agg(
+            name="population",
+            dataset_name="census",
+            expr="count",
+            agg=AggregationFunction.SUM,
+            additivity=Additivity(type=AdditivityType.ADDITIVE),
+            tags=["  demographics  ", " census ", "population"],
+        )
+        assert metric.tags == ("demographics", "census", "population")
+
+    def test_tags_default_empty_tuple(self) -> None:
+        metric = Metric.create_simple_agg(
+            name="population",
+            dataset_name="census",
+            expr="count",
+            agg=AggregationFunction.SUM,
+            additivity=Additivity(type=AdditivityType.ADDITIVE),
+        )
+        assert metric.tags == ()
+
+    def test_description_default_none(self) -> None:
+        metric = Metric.create_simple_agg(
+            name="population",
+            dataset_name="census",
+            expr="count",
+            agg=AggregationFunction.SUM,
+            additivity=Additivity(type=AdditivityType.ADDITIVE),
+        )
+        assert metric.description is None
+
+    def test_direct_construction_with_tags(self) -> None:
+        """Test backward compatibility with direct construction."""
+        metric = Metric(
+            id=MetricId.create(),
+            name="population",
+            kind=MetricKind.SIMPLE_AGG,
+            spec=SimpleAggSpec(
+                dataset_name="census",
+                expr="count",
+                agg=AggregationFunction.SUM,
+            ),
+            additivity=Additivity(type=AdditivityType.ADDITIVE),
+            tags=["DEMO", "  test  "],
+        )
+        assert metric.tags == ("demo", "test")
 
 
 class TestMetricProperties:
