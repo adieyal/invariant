@@ -79,7 +79,7 @@ class ResultFieldSchema:
 
 
 @dataclass(frozen=True)
-class ResultSchema:
+class ResultSchemaDTO:
     """Schema describing the structure of query results.
 
     Attributes:
@@ -95,7 +95,7 @@ class ResultSchema:
 
 
 @dataclass(frozen=True)
-class MetricProvenance:
+class MetricProvenanceDTO:
     """Provenance information for a single metric.
 
     Attributes:
@@ -122,7 +122,7 @@ class MetricProvenance:
 
 
 @dataclass(frozen=True)
-class Provenance:
+class ProvenanceDTO:
     """Provenance information for query results.
 
     Attributes:
@@ -131,13 +131,13 @@ class Provenance:
         materialization_used: Name of materialization used, if any
     """
 
-    metrics: dict[str, MetricProvenance]
+    metrics: dict[str, MetricProvenanceDTO]
     datasets: tuple[str, ...]
     materialization_used: str | None
 
     def __init__(
         self,
-        metrics: dict[str, MetricProvenance],
+        metrics: dict[str, MetricProvenanceDTO],
         datasets: Sequence[str],
         materialization_used: str | None = None,
     ) -> None:
@@ -147,7 +147,7 @@ class Provenance:
 
 
 @dataclass(frozen=True)
-class ExplainResult:
+class QueryExplainInfoDTO:
     """Detailed explanation of query execution.
 
     Attributes:
@@ -236,18 +236,18 @@ class SemanticQueryResultDTO:
     """
 
     data: tuple[dict[str, Any], ...]
-    schema: ResultSchema
-    provenance: Provenance
-    warnings: tuple[Any, ...]  # Issue type from domain
-    explain: ExplainResult | None
+    schema: ResultSchemaDTO
+    provenance: ProvenanceDTO
+    warnings: tuple[SemanticIssueDTO, ...]
+    explain: QueryExplainInfoDTO | None
 
     def __init__(
         self,
         data: Sequence[dict[str, Any]],
-        schema: ResultSchema,
-        provenance: Provenance,
-        warnings: Sequence[Any] | None = None,
-        explain: ExplainResult | None = None,
+        schema: ResultSchemaDTO,
+        provenance: ProvenanceDTO,
+        warnings: Sequence[SemanticIssueDTO] | None = None,
+        explain: QueryExplainInfoDTO | None = None,
     ) -> None:
         object.__setattr__(self, "data", tuple(data))
         object.__setattr__(self, "schema", schema)

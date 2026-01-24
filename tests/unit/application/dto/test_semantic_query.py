@@ -3,16 +3,16 @@
 import pytest
 
 from invariant.application.dto.semantic_query import (
-    ExplainResult,
     FilterOp,
     FilterSpec,
     GroupBySpec,
-    MetricProvenance,
+    MetricProvenanceDTO,
     OrderBySpec,
-    Provenance,
+    ProvenanceDTO,
+    QueryExplainInfoDTO,
     QueryOptions,
     ResultFieldSchema,
-    ResultSchema,
+    ResultSchemaDTO,
     SemanticQueryRequest,
     SemanticQueryResultDTO,
     SortDirection,
@@ -340,42 +340,42 @@ class TestResultFieldSchema:
             field.name = "other"  # type: ignore[misc]
 
 
-class TestResultSchema:
+class TestResultSchemaDTO:
     def test_create_basic(self) -> None:
         fields = [
             ResultFieldSchema(name="geo_code", type="STRING"),
             ResultFieldSchema(name="population", type="INTEGER"),
         ]
-        schema = ResultSchema(fields=fields)
+        schema = ResultSchemaDTO(fields=fields)
         assert len(schema.fields) == 2
         assert schema.fields[0].name == "geo_code"
         assert schema.fields[1].name == "population"
 
     def test_fields_converted_to_tuple(self) -> None:
         fields = [ResultFieldSchema(name="x", type="STRING")]
-        schema = ResultSchema(fields=fields)
+        schema = ResultSchemaDTO(fields=fields)
         assert isinstance(schema.fields, tuple)
 
     def test_empty_fields_raises(self) -> None:
         with pytest.raises(ValueError, match=r"fields must not be empty"):
-            ResultSchema(fields=[])
+            ResultSchemaDTO(fields=[])
 
     def test_is_frozen(self) -> None:
         fields = [ResultFieldSchema(name="x", type="STRING")]
-        schema = ResultSchema(fields=fields)
+        schema = ResultSchemaDTO(fields=fields)
         with pytest.raises(AttributeError):
             schema.fields = ()  # type: ignore[misc]
 
 
-class TestMetricProvenance:
+class TestMetricProvenanceDTO:
     def test_create_basic(self) -> None:
-        prov = MetricProvenance(definition_hash="abc123")
+        prov = MetricProvenanceDTO(definition_hash="abc123")
         assert prov.definition_hash == "abc123"
         assert prov.methodology_id is None
         assert prov.methodology_version is None
 
     def test_create_with_methodology(self) -> None:
-        prov = MetricProvenance(
+        prov = MetricProvenanceDTO(
             definition_hash="def456",
             methodology_id="census-2021",
             methodology_version="1.0",
@@ -386,27 +386,27 @@ class TestMetricProvenance:
 
     def test_empty_hash_raises(self) -> None:
         with pytest.raises(ValueError, match=r"definition_hash must not be empty"):
-            MetricProvenance(definition_hash="")
+            MetricProvenanceDTO(definition_hash="")
 
     def test_is_frozen(self) -> None:
-        prov = MetricProvenance(definition_hash="x")
+        prov = MetricProvenanceDTO(definition_hash="x")
         with pytest.raises(AttributeError):
             prov.definition_hash = "y"  # type: ignore[misc]
 
 
-class TestProvenance:
+class TestProvenanceDTO:
     def test_create_basic(self) -> None:
         metrics = {
-            "population": MetricProvenance(definition_hash="hash1"),
+            "population": MetricProvenanceDTO(definition_hash="hash1"),
         }
-        prov = Provenance(metrics=metrics, datasets=["census_data"])
+        prov = ProvenanceDTO(metrics=metrics, datasets=["census_data"])
         assert "population" in prov.metrics
         assert prov.metrics["population"].definition_hash == "hash1"
         assert prov.datasets == ("census_data",)
         assert prov.materialization_used is None
 
     def test_create_with_materialization(self) -> None:
-        prov = Provenance(
+        prov = ProvenanceDTO(
             metrics={},
             datasets=["ds1", "ds2"],
             materialization_used="pre_agg_province",
@@ -415,22 +415,22 @@ class TestProvenance:
         assert prov.materialization_used == "pre_agg_province"
 
     def test_datasets_converted_to_tuple(self) -> None:
-        prov = Provenance(metrics={}, datasets=["a", "b", "c"])
+        prov = ProvenanceDTO(metrics={}, datasets=["a", "b", "c"])
         assert isinstance(prov.datasets, tuple)
 
     def test_empty_datasets_allowed(self) -> None:
-        prov = Provenance(metrics={}, datasets=[])
+        prov = ProvenanceDTO(metrics={}, datasets=[])
         assert prov.datasets == ()
 
     def test_is_frozen(self) -> None:
-        prov = Provenance(metrics={}, datasets=[])
+        prov = ProvenanceDTO(metrics={}, datasets=[])
         with pytest.raises(AttributeError):
             prov.materialization_used = "other"  # type: ignore[misc]
 
 
-class TestExplainResult:
+class TestQueryExplainInfoDTO:
     def test_create_basic(self) -> None:
-        explain = ExplainResult(
+        explain = QueryExplainInfoDTO(
             validation_trace="Rule1: PASS, Rule2: PASS",
             logical_plan_summary="Scan -> Aggregate -> Project",
             compiled_sql="SELECT geo_code, SUM(value) FROM ...",
@@ -442,7 +442,7 @@ class TestExplainResult:
         assert explain.materialization_decision == "No matching materialization found"
 
     def test_empty_strings_allowed(self) -> None:
-        explain = ExplainResult(
+        explain = QueryExplainInfoDTO(
             validation_trace="",
             logical_plan_summary="",
             compiled_sql="",
@@ -451,7 +451,7 @@ class TestExplainResult:
         assert explain.validation_trace == ""
 
     def test_is_frozen(self) -> None:
-        explain = ExplainResult(
+        explain = QueryExplainInfoDTO(
             validation_trace="t",
             logical_plan_summary="p",
             compiled_sql="s",
@@ -463,14 +463,14 @@ class TestExplainResult:
 
 class TestSemanticQueryResultDTO:
     def test_create_basic(self) -> None:
-        schema = ResultSchema(
+        schema = ResultSchemaDTO(
             fields=[
                 ResultFieldSchema(name="geo_code", type="STRING"),
                 ResultFieldSchema(name="population", type="INTEGER"),
             ]
         )
-        provenance = Provenance(
-            metrics={"population": MetricProvenance(definition_hash="h1")},
+        provenance = ProvenanceDTO(
+            metrics={"population": MetricProvenanceDTO(definition_hash="h1")},
             datasets=["census"],
         )
         data = [
@@ -490,8 +490,8 @@ class TestSemanticQueryResultDTO:
         assert result.explain is None
 
     def test_create_with_warnings(self) -> None:
-        schema = ResultSchema(fields=[ResultFieldSchema(name="x", type="STRING")])
-        provenance = Provenance(metrics={}, datasets=[])
+        schema = ResultSchemaDTO(fields=[ResultFieldSchema(name="x", type="STRING")])
+        provenance = ProvenanceDTO(metrics={}, datasets=[])
         result = SemanticQueryResultDTO(
             data=[],
             schema=schema,
@@ -502,9 +502,9 @@ class TestSemanticQueryResultDTO:
         assert result.warnings[0] == "Warning 1"
 
     def test_create_with_explain(self) -> None:
-        schema = ResultSchema(fields=[ResultFieldSchema(name="x", type="STRING")])
-        provenance = Provenance(metrics={}, datasets=[])
-        explain = ExplainResult(
+        schema = ResultSchemaDTO(fields=[ResultFieldSchema(name="x", type="STRING")])
+        provenance = ProvenanceDTO(metrics={}, datasets=[])
+        explain = QueryExplainInfoDTO(
             validation_trace="trace",
             logical_plan_summary="plan",
             compiled_sql="sql",
@@ -520,8 +520,8 @@ class TestSemanticQueryResultDTO:
         assert result.explain.compiled_sql == "sql"
 
     def test_data_converted_to_tuple(self) -> None:
-        schema = ResultSchema(fields=[ResultFieldSchema(name="x", type="STRING")])
-        provenance = Provenance(metrics={}, datasets=[])
+        schema = ResultSchemaDTO(fields=[ResultFieldSchema(name="x", type="STRING")])
+        provenance = ProvenanceDTO(metrics={}, datasets=[])
         result = SemanticQueryResultDTO(
             data=[{"x": "1"}, {"x": "2"}],
             schema=schema,
@@ -530,21 +530,21 @@ class TestSemanticQueryResultDTO:
         assert isinstance(result.data, tuple)
 
     def test_empty_data_allowed(self) -> None:
-        schema = ResultSchema(fields=[ResultFieldSchema(name="x", type="STRING")])
-        provenance = Provenance(metrics={}, datasets=[])
+        schema = ResultSchemaDTO(fields=[ResultFieldSchema(name="x", type="STRING")])
+        provenance = ProvenanceDTO(metrics={}, datasets=[])
         result = SemanticQueryResultDTO(data=[], schema=schema, provenance=provenance)
         assert result.data == ()
 
     def test_is_frozen(self) -> None:
-        schema = ResultSchema(fields=[ResultFieldSchema(name="x", type="STRING")])
-        provenance = Provenance(metrics={}, datasets=[])
+        schema = ResultSchemaDTO(fields=[ResultFieldSchema(name="x", type="STRING")])
+        provenance = ProvenanceDTO(metrics={}, datasets=[])
         result = SemanticQueryResultDTO(data=[], schema=schema, provenance=provenance)
         with pytest.raises(AttributeError):
             result.data = ()  # type: ignore[misc]
 
     def test_full_result(self) -> None:
         """Test a complete result with all fields."""
-        schema = ResultSchema(
+        schema = ResultSchemaDTO(
             fields=[
                 ResultFieldSchema(name="geo_code", type="STRING"),
                 ResultFieldSchema(name="time_period", type="STRING"),
@@ -552,14 +552,14 @@ class TestSemanticQueryResultDTO:
                 ResultFieldSchema(name="growth_rate", type="DECIMAL", unit="percent"),
             ]
         )
-        provenance = Provenance(
+        provenance = ProvenanceDTO(
             metrics={
-                "population": MetricProvenance(
+                "population": MetricProvenanceDTO(
                     definition_hash="abc123",
                     methodology_id="census",
                     methodology_version="2021",
                 ),
-                "growth_rate": MetricProvenance(
+                "growth_rate": MetricProvenanceDTO(
                     definition_hash="def456",
                     methodology_id="stats_sa",
                     methodology_version="1.0",
@@ -568,7 +568,7 @@ class TestSemanticQueryResultDTO:
             datasets=["census_data", "growth_estimates"],
             materialization_used="province_yearly_agg",
         )
-        explain = ExplainResult(
+        explain = QueryExplainInfoDTO(
             validation_trace="All rules passed",
             logical_plan_summary="Scan(census) -> Join(growth) -> Aggregate -> Project",
             compiled_sql="WITH cte AS (...) SELECT ...",

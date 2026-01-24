@@ -7,11 +7,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from invariant.application.dto.semantic_query import (
-    ExplainResult,
-    MetricProvenance,
-    Provenance,
+    MetricProvenanceDTO,
+    ProvenanceDTO,
+    QueryExplainInfoDTO,
     ResultFieldSchema,
-    ResultSchema,
+    ResultSchemaDTO,
     SemanticIssueDTO,
     SemanticQueryResultDTO,
 )
@@ -176,7 +176,7 @@ class ExecuteSemanticQueryUseCase:
         self,
         metrics: list[Metric],
         catalog: SemanticCatalog,
-    ) -> Provenance:
+    ) -> ProvenanceDTO:
         """Build provenance information for the query result.
 
         Args:
@@ -184,9 +184,9 @@ class ExecuteSemanticQueryUseCase:
             catalog: The semantic catalog.
 
         Returns:
-            Provenance with metric definitions and dataset information.
+            ProvenanceDTO with metric definitions and dataset information.
         """
-        metric_provenances: dict[str, MetricProvenance] = {}
+        metric_provenances: dict[str, MetricProvenanceDTO] = {}
         datasets_used: set[str] = set()
 
         for metric in metrics:
@@ -200,7 +200,7 @@ class ExecuteSemanticQueryUseCase:
                 methodology_id = metric.comparability.methodology_id
                 methodology_version = metric.comparability.methodology_version
 
-            metric_provenances[metric.name] = MetricProvenance(
+            metric_provenances[metric.name] = MetricProvenanceDTO(
                 definition_hash=definition_hash,
                 methodology_id=methodology_id,
                 methodology_version=methodology_version,
@@ -210,7 +210,7 @@ class ExecuteSemanticQueryUseCase:
             if isinstance(metric.spec, SimpleAggSpec):
                 datasets_used.add(metric.spec.dataset_name)
 
-        return Provenance(
+        return ProvenanceDTO(
             metrics=metric_provenances,
             datasets=sorted(datasets_used),
             materialization_used=None,  # Phase 1: no materialization support
@@ -253,7 +253,7 @@ class ExecuteSemanticQueryUseCase:
         rows: tuple[dict[str, Any], ...],
         request: SemanticQueryRequest,
         metrics: list[Metric],
-    ) -> ResultSchema:
+    ) -> ResultSchemaDTO:
         """Build result schema from query result data.
 
         Args:
@@ -262,7 +262,7 @@ class ExecuteSemanticQueryUseCase:
             metrics: The resolved metrics.
 
         Returns:
-            ResultSchema describing the result structure.
+            ResultSchemaDTO describing the result structure.
         """
         fields: list[ResultFieldSchema] = []
 
@@ -295,7 +295,7 @@ class ExecuteSemanticQueryUseCase:
         if not fields:
             fields.append(ResultFieldSchema(name="_result", type="INTEGER"))
 
-        return ResultSchema(fields=fields)
+        return ResultSchemaDTO(fields=fields)
 
     def _build_explain(
         self,
@@ -303,7 +303,7 @@ class ExecuteSemanticQueryUseCase:
         plan: LogicalPlan,
         sql: str,
         catalog: SemanticCatalog,
-    ) -> ExplainResult:
+    ) -> QueryExplainInfoDTO:
         """Build explain information for debugging.
 
         Args:
@@ -313,7 +313,7 @@ class ExecuteSemanticQueryUseCase:
             catalog: The semantic catalog.
 
         Returns:
-            ExplainResult with detailed query information.
+            QueryExplainInfoDTO with detailed query information.
         """
         # Build validation trace
         validation_trace = self._build_validation_trace(validation_result)
@@ -329,7 +329,7 @@ class ExecuteSemanticQueryUseCase:
             "NOT_EVALUATED: Materialization matching not implemented in Phase 1"
         )
 
-        return ExplainResult(
+        return QueryExplainInfoDTO(
             validation_trace=validation_trace,
             logical_plan_summary=plan_summary,
             compiled_sql=compiled_sql,
