@@ -1,0 +1,1 @@
+--8<-- "_partials/templates/mental-model.md"

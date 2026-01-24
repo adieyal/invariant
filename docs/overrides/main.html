@@ -36,3 +36,10 @@
     Documentation in progress - contributions welcome
   </div> -->
 {% endblock %}
+
+{% block content %}
+  {% if page.meta and page.meta.page_type == "reference" %}
+    <div class="reference-badge">Reference</div>
+  {% endif %}
+  {{ super() }}
+{% endblock %}

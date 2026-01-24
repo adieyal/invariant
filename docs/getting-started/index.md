@@ -1,0 +1,1 @@
+--8<-- "_partials/templates/getting-started-section.md"

@@ -3,6 +3,15 @@
    A clean, technical documentation style with strong visual hierarchy
    ========================================================================== */
 
+/* DEBUG: Remove this once CSS is confirmed loading */
+/* If h1 is NOT 3rem, CSS is not loading */
+/*
+.md-typeset h1 {
+  font-size: 3rem !important;
+  letter-spacing: -0.03em !important;
+}
+*/
+
 /* --------------------------------------------------------------------------
    CSS Custom Properties (Design Tokens)
    -------------------------------------------------------------------------- */
@@ -400,13 +409,27 @@
    Cards (for grid layouts)
    -------------------------------------------------------------------------- */
 
+/* Grid layout on parent list */
+.md-typeset .grid.cards > ul,
+.md-typeset .grid.cards > ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.8rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+/* Card items */
 .md-typeset .grid.cards > ul > li,
 .md-typeset .grid.cards > ol > li {
+  list-style: none;
+  margin: 0;
+  padding: var(--inv-space-lg);
   border: 1px solid var(--inv-gray-200);
   border-radius: var(--inv-radius-lg);
+  background: var(--md-default-bg-color);
   box-shadow: var(--inv-shadow-sm);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
-  padding: var(--inv-space-lg);
 }
 
 .md-typeset .grid.cards > ul > li:hover,
@@ -419,6 +442,13 @@
 [data-md-color-scheme="slate"] .md-typeset .grid.cards > ol > li {
   border-color: var(--inv-gray-600);
   background: var(--inv-surface-raised);
+}
+
+/* Card first paragraph */
+.md-typeset .grid.cards > ul > li > p:first-child,
+.md-typeset .grid.cards > ol > li > p:first-child {
+  margin-top: 0;
+  font-weight: 600;
 }
 
 /* Card titles */
@@ -620,4 +650,172 @@
 .badge--allow {
   background: var(--inv-success);
   color: white;
+}
+
+/* --------------------------------------------------------------------------
+   Manual Template - Additional Styles
+   -------------------------------------------------------------------------- */
+
+/* Utility classes */
+.md-typeset .small {
+  font-size: 0.9em;
+  opacity: 0.85;
+}
+
+.md-typeset .muted {
+  opacity: 0.75;
+}
+
+/* Casefile block */
+.md-typeset .casefile {
+  border: 1px solid var(--inv-gray-200);
+  border-radius: var(--inv-radius-lg);
+  padding: 1rem;
+  background: var(--md-default-bg-color);
+  margin: var(--inv-space-lg) 0;
+}
+.md-typeset .casefile > :first-child {
+  margin-top: 0;
+}
+.md-typeset .casefile .label {
+  font-size: 0.8em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .casefile {
+  border-color: var(--inv-gray-600);
+  background: var(--inv-surface-raised);
+}
+
+/* --------------------------------------------------------------------------
+   Invariant Gate Severity Admonitions
+   Usage:
+   !!! invariant-allow "Allowed"
+   !!! invariant-warn "Warn"
+   !!! invariant-ack "Acknowledge required"
+   !!! invariant-block "Blocked"
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* Icons (Material uses SVG via mask) */
+  --md-admonition-icon--invariant-allow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M9 16.17 4.83 12 3.41 13.41 9 19 21 7 19.59 5.59z"/></svg>');
+  --md-admonition-icon--invariant-warn: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
+  --md-admonition-icon--invariant-ack: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>');
+  --md-admonition-icon--invariant-block: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M12 2a10 10 0 100 20 10 10 0 000-20zm5 10a5 5 0 01-8.66 3.54L15.54 8.34A4.98 4.98 0 0117 12zm-10 0a5 5 0 018.66-3.54L8.46 15.66A4.98 4.98 0 017 12z"/></svg>');
+}
+
+/* Base styling for custom types */
+.md-typeset .admonition.invariant-allow,
+.md-typeset details.invariant-allow,
+.md-typeset .admonition.invariant-warn,
+.md-typeset details.invariant-warn,
+.md-typeset .admonition.invariant-ack,
+.md-typeset details.invariant-ack,
+.md-typeset .admonition.invariant-block,
+.md-typeset details.invariant-block {
+  border-radius: var(--inv-radius-lg);
+}
+
+/* Icons */
+.md-typeset .admonition.invariant-allow > .admonition-title::before,
+.md-typeset details.invariant-allow > summary::before {
+  -webkit-mask-image: var(--md-admonition-icon--invariant-allow);
+          mask-image: var(--md-admonition-icon--invariant-allow);
+}
+.md-typeset .admonition.invariant-warn > .admonition-title::before,
+.md-typeset details.invariant-warn > summary::before {
+  -webkit-mask-image: var(--md-admonition-icon--invariant-warn);
+          mask-image: var(--md-admonition-icon--invariant-warn);
+}
+.md-typeset .admonition.invariant-ack > .admonition-title::before,
+.md-typeset details.invariant-ack > summary::before {
+  -webkit-mask-image: var(--md-admonition-icon--invariant-ack);
+          mask-image: var(--md-admonition-icon--invariant-ack);
+}
+.md-typeset .admonition.invariant-block > .admonition-title::before,
+.md-typeset details.invariant-block > summary::before {
+  -webkit-mask-image: var(--md-admonition-icon--invariant-block);
+          mask-image: var(--md-admonition-icon--invariant-block);
+}
+
+/* Visual identity - colors aligned with gate severity */
+.md-typeset .admonition.invariant-allow,
+.md-typeset details.invariant-allow {
+  border-color: var(--inv-success);
+  background: rgba(56, 161, 105, 0.08);
+}
+.md-typeset .admonition.invariant-allow > .admonition-title,
+.md-typeset details.invariant-allow > summary {
+  background: rgba(56, 161, 105, 0.12);
+}
+.md-typeset .admonition.invariant-allow > .admonition-title::before,
+.md-typeset details.invariant-allow > summary::before {
+  background-color: var(--inv-success);
+}
+
+.md-typeset .admonition.invariant-warn,
+.md-typeset details.invariant-warn {
+  border-color: var(--inv-warning);
+  background: rgba(221, 107, 32, 0.08);
+}
+.md-typeset .admonition.invariant-warn > .admonition-title,
+.md-typeset details.invariant-warn > summary {
+  background: rgba(221, 107, 32, 0.12);
+}
+.md-typeset .admonition.invariant-warn > .admonition-title::before,
+.md-typeset details.invariant-warn > summary::before {
+  background-color: var(--inv-warning);
+}
+
+.md-typeset .admonition.invariant-ack,
+.md-typeset details.invariant-ack {
+  border-color: var(--inv-info);
+  background: rgba(49, 130, 206, 0.08);
+}
+.md-typeset .admonition.invariant-ack > .admonition-title,
+.md-typeset details.invariant-ack > summary {
+  background: rgba(49, 130, 206, 0.12);
+}
+.md-typeset .admonition.invariant-ack > .admonition-title::before,
+.md-typeset details.invariant-ack > summary::before {
+  background-color: var(--inv-info);
+}
+
+.md-typeset .admonition.invariant-block,
+.md-typeset details.invariant-block {
+  border-color: var(--inv-error);
+  background: rgba(197, 48, 48, 0.08);
+}
+.md-typeset .admonition.invariant-block > .admonition-title,
+.md-typeset details.invariant-block > summary {
+  background: rgba(197, 48, 48, 0.12);
+}
+.md-typeset .admonition.invariant-block > .admonition-title::before,
+.md-typeset details.invariant-block > summary::before {
+  background-color: var(--inv-error);
+}
+
+/* --------------------------------------------------------------------------
+   Reference Badge
+   Add page meta: template: reference (see overrides/main.html)
+   -------------------------------------------------------------------------- */
+
+.reference-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--inv-gray-300);
+  border-radius: 999px;
+  opacity: 0.8;
+  margin-bottom: var(--inv-space-md);
+}
+
+[data-md-color-scheme="slate"] .reference-badge {
+  border-color: var(--inv-gray-600);
 }
