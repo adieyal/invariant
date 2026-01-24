@@ -56,6 +56,7 @@ from invariant.domain.model.metric import (
     MetricUnit,
     RatioFormat,
     RatioSpec,
+    RollupPolicy,
     SimpleAggSpec,
     WeightedAvgSpec,
 )
@@ -408,11 +409,17 @@ class YamlSemanticAssetStore:
 
             # Parse additivity
             add_data = data.get("additivity", {})
+            rollup_policy_str = add_data.get("rollup_policy", "ALLOW")
+            rollup_policy = (
+                RollupPolicy(rollup_policy_str)
+                if isinstance(rollup_policy_str, str)
+                else rollup_policy_str
+            )
             additivity = Additivity(
                 type=AdditivityType(add_data.get("type", "ADDITIVE")),
                 across_time=add_data.get("across_time", True),
                 across_geo=add_data.get("across_geo", True),
-                rollup_policy=add_data.get("rollup_policy", "ALLOW"),
+                rollup_policy=rollup_policy,
             )
 
             # Parse spec based on kind
