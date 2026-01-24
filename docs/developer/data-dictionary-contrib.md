@@ -1,133 +1,219 @@
 # Data Dictionary Contrib
 
-The `invariant_contrib.datadictionary` module generates Markdown documentation from catalog content. It transforms kernel entities into navigable documentation with cross-cutting views.
+The `invariant_contrib.datadictionary` module generates a static HTML documentation site from semantic catalog content. It exports catalog data as JSON and renders it as a single-page application with client-side routing and search.
 
-## Installation
+## Quick Start
 
-The module is included in the `invariant_contrib` package:
-
-```python
-from invariant_contrib.datadictionary import GenerateDataDictionary
-```
-
-## Usage
-
-### Programmatic
-
-```python
-from pathlib import Path
-from invariant_contrib.datadictionary import GenerateDataDictionary
-
-# Your CatalogStore implementation
-catalog_store = YourCatalogStore(...)
-
-# Generate documentation
-use_case = GenerateDataDictionary(catalog_store)
-use_case.execute(Path("./data-dictionary"))
-```
-
-### CLI
+Using the Makefile:
 
 ```bash
-python -m invariant_contrib.datadictionary generate --output-dir ./data-dictionary
+# Generate data dictionary
+make data-dictionary
+
+# Generate and serve locally
+make data-dictionary-serve
 ```
 
-## Generated Output
+Or using the CLI directly:
 
-The renderer produces the following structure:
+```bash
+# Export catalog and generate HTML site
+python -m invariant_contrib.datadictionary export \
+    --assets path/to/assets \
+    --output ./data-dictionary \
+    --with-renderer
+
+# Serve locally
+python -m http.server 8000 -d ./data-dictionary
+```
+
+## Features
+
+### Static Site Generation
+
+The generator produces a self-contained HTML site:
 
 ```
 data-dictionary/
-├── index.md                    # Main index with links to all sections
-├── studies/
-│   └── <study-id>.md          # One file per study
-├── datasets/
-│   └── <dataset-id>.md        # One file per dataset with variable tables
-├── universes.md               # All universe definitions
-├── concepts.md                # All semantic concepts
-├── indicators.md              # Cross-cutting indicator view by aggregation policy
-├── variable-lineage.md        # Concept-to-variable mappings
-├── comparability.md           # Dataset comparability matrix
-└── reference-systems.md       # Reference system versions
+├── index.html      # Single-page application
+└── catalog.json    # Exported catalog data
 ```
+
+### Client-Side Routing
+
+Pages are bookmarkable using hash-based routing:
+
+- `#/` - Home (overview with counts)
+- `#/datasets` - All datasets
+- `#/datasets/{name}` - Dataset detail with columns
+- `#/indicators` - All indicators/metrics
+- `#/indicators/{name}` - Indicator detail
+- `#/search/{query}` - Search results
+
+### Site-Wide Search
+
+Search across all content types:
+
+- **Datasets** - by name
+- **Columns** - by name and description
+- **Indicators** - by name, description, and tags
+
+### Column Metadata
+
+Dataset detail pages show column definitions with statistics:
+
+| Column | Type | Description | Stats |
+|--------|------|-------------|-------|
+| geo_code | STRING | Geographic area code | 1534 rows, 767 distinct |
+| sex | STRING | - | 1534 rows, 2 distinct |
+| count | INTEGER | Population count | 1534 rows, 296 distinct |
 
 ## Architecture
 
-The module follows Clean Architecture:
+The module follows Clean Architecture with a clear separation:
 
 ```
-datadictionary/
-├── domain/
-│   └── models.py              # Documentation-focused domain models
+invariant/                           # Core kernel
 ├── application/
-│   ├── catalog_reader.py      # CatalogStore → Doc models bridge
-│   └── ports/
-│       └── renderer.py        # Renderer Protocol
-└── infrastructure/
-    └── markdown_renderer.py   # Markdown implementation
+│   ├── dto/
+│   │   └── catalog_export.py       # Export DTOs (JSON-serializable)
+│   └── use_cases/
+│       └── export_catalog.py       # ExportCatalogUseCase
+
+invariant_contrib/
+└── datadictionary/
+    ├── __main__.py                 # CLI entry point
+    └── renderer/
+        └── index.html              # Single-file HTML renderer
 ```
 
-### Domain Models
+### Export DTOs
 
-Documentation-optimized models separate from kernel entities:
+The core provides JSON-serializable DTOs for catalog export:
 
-| Model | Purpose |
-|-------|---------|
-| `CatalogDoc` | Full catalog with cross-cutting properties |
-| `StudyDoc` | Study with datasets |
-| `DatasetDoc` | Dataset with variables, dimensions, measures, indicators |
-| `VariableDoc` | Variable with role detection |
-| `IndicatorDoc` | Indicator-specific metadata |
-| `UniverseDoc` | Universe definitions |
-| `ConceptDoc` | Semantic concepts |
-| `ReferenceSystemDoc` | Reference system versions |
+| DTO | Purpose |
+|-----|---------|
+| `CatalogExportDTO` | Complete catalog with all assets |
+| `DatasetExportDTO` | Dataset with columns and metadata |
+| `ColumnExportDTO` | Column definition with type and stats |
+| `ColumnStatsExportDTO` | Column statistics (row_count, null_count, distinct_count, sample_values) |
+| `MetricExportDTO` | Metric/indicator definition |
+| `DimensionExportDTO` | Dimension with attributes |
+| `GeoHierarchyExportDTO` | Geographic hierarchy levels |
 
-### Ports
-
-The `Renderer` protocol enables alternative output formats:
+### Use Case
 
 ```python
-class Renderer(Protocol):
-    def render_catalog(self, catalog: CatalogDoc, output_dir: Path) -> None: ...
-    def render_study(self, study: StudyDoc) -> str: ...
-    def render_dataset(self, dataset: DatasetDoc) -> str: ...
-    def render_index(self, catalog: CatalogDoc) -> str: ...
+from invariant.application.use_cases.export_catalog import ExportCatalogUseCase
+
+use_case = ExportCatalogUseCase(asset_store)
+result = use_case.execute()
+
+# Write to JSON
+with open("catalog.json", "w") as f:
+    json.dump(result.to_dict(), f)
 ```
 
-Implement this protocol to create renderers for HTML, PDF, or other formats.
+## CLI Reference
 
-## Cross-Cutting Views
+### Export Command
 
-The generated documentation includes analytical views:
+```bash
+python -m invariant_contrib.datadictionary export [OPTIONS]
+```
 
-### Indicators Page
+| Option | Description |
+|--------|-------------|
+| `--assets PATH` | Path to assets directory (contains `assets/` subdirectory) |
+| `--output PATH` | Output directory for generated site |
+| `--with-renderer` | Include HTML renderer (default: JSON only) |
+| `--environment ENV` | Environment overlay to apply |
 
-Groups all indicators by aggregation policy with summary counts and a master table linking each indicator to its source dataset.
+### Examples
 
-### Comparability Matrix
+```bash
+# Export JSON only
+python -m invariant_contrib.datadictionary export \
+    --assets ./my-assets \
+    --output ./output
 
-Groups datasets by:
-- **Universe** - Datasets with the same universe can be compared directly
-- **Reference System** - Datasets with the same reference system version can be joined
+# Export with HTML renderer
+python -m invariant_contrib.datadictionary export \
+    --assets ./my-assets \
+    --output ./output \
+    --with-renderer
 
-### Variable Lineage
+# Use staging environment overlay
+python -m invariant_contrib.datadictionary export \
+    --assets ./my-assets \
+    --output ./output \
+    --with-renderer \
+    --environment staging
+```
 
-Maps semantic concepts to variables across datasets, enabling cross-dataset alignment analysis.
+## Importing Datasets
+
+The `scripts/import_datasets.py` script profiles CSV files and generates YAML dataset definitions with column statistics:
+
+```bash
+python scripts/import_datasets.py
+```
+
+This reads CSV files from `data/` and metadata from `data/dataset_metadata.json`, then generates YAML files with:
+
+- Column definitions (name, data_type, nullable)
+- Column statistics (row_count, null_count, distinct_count, sample_values)
+- Descriptions and tags from metadata
 
 ## Extending
 
-To add a new output format:
+### Custom Renderers
 
-1. Implement the `Renderer` protocol
-2. Inject your renderer in place of `MarkdownRenderer`
+To create alternative output formats, generate the JSON export and render it as needed:
 
 ```python
-from invariant_contrib.datadictionary.application.catalog_reader import CatalogReader
+from invariant.application.use_cases.export_catalog import ExportCatalogUseCase
 
-reader = CatalogReader(catalog_store)
-catalog = reader.read_full_catalog()
+use_case = ExportCatalogUseCase(asset_store)
+catalog = use_case.execute()
 
-# Use your custom renderer
-my_renderer = HtmlRenderer()
-my_renderer.render_catalog(catalog, output_dir)
+# Your custom renderer
+render_pdf(catalog.to_dict(), output_path)
 ```
+
+### Adding Column Metadata
+
+Column definitions are added to datasets via YAML:
+
+```yaml
+name: my_dataset
+physical_ref:
+  schema: public
+  table: my_table
+kind: FACT
+grain_keys:
+  geo:
+    - geo_code
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code
+    nullable: false
+    stats:
+      row_count: 1000
+      null_count: 0
+      distinct_count: 100
+      sample_values: ["A001", "A002", "A003"]
+
+  - name: value
+    data_type: INTEGER
+    description: Measured value
+    nullable: true
+    stats:
+      row_count: 1000
+      null_count: 50
+      distinct_count: 200
+```
+
+Supported data types: `STRING`, `INTEGER`, `FLOAT`, `DECIMAL`, `BOOLEAN`, `DATE`, `TIMESTAMP`, `JSON`
