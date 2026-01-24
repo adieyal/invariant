@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
     from invariant.domain.model.study import Study
     from invariant.domain.model.variable import Variable
-    from invariant.domain.services.validator import CatalogSnapshot
+    from invariant.validation.domain.services.validator import CatalogSnapshot
 
 
 class CatalogStore(Protocol):

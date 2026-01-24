@@ -89,10 +89,9 @@ class AdditivityRule:
                             },
                         )
                     )
-                elif additivity.rollup_policy == RollupPolicy.RECOMPUTE:
-                    # RECOMPUTE is allowed - metric will be recomputed at new grain
-                    pass
-                # ALLOW policy - allowed but might be mathematically incorrect
+                # RECOMPUTE and ALLOW policies: no issue raised
+                # - RECOMPUTE: metric will be recomputed at new grain
+                # - ALLOW: permitted but may be mathematically incorrect
 
             elif additivity_type == AdditivityType.SEMI_ADDITIVE:
                 # Semi-additive metrics are additive across some dimensions but not others

@@ -22,7 +22,7 @@ from invariant.domain.model.query_plan import (
 
 if TYPE_CHECKING:
     from invariant.application.dto.query_request import QueryRequest
-    from invariant.domain.services.validator import CatalogSnapshot
+    from invariant.validation.domain.services.validator import CatalogSnapshot
 
 
 def parse_data_product_id(id_str: str) -> DataProductId:

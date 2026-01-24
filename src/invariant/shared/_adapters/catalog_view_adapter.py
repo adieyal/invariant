@@ -16,7 +16,7 @@ from invariant.shared.contracts import (
 )
 
 if TYPE_CHECKING:
-    from invariant.domain.services.validator import CatalogSnapshot
+    from invariant.validation.domain.services.validator import CatalogSnapshot
 
 
 def to_catalog_view(snapshot: CatalogSnapshot) -> CatalogView:

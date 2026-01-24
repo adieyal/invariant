@@ -4,6 +4,7 @@ These tests verify the use case for assessing compatibility between
 two variables by looking up their column domains and comparing them.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
@@ -47,6 +48,16 @@ class FakeColumnDomainStore:
     def list_domains_by_status(self, status: DomainStatus) -> list[ColumnDomain]:
         """List all domains with the given status."""
         return [d for d in self._domains.values() if d.status == status]
+
+    def get_domains_for_variables(
+        self, variable_ids: Sequence[str]
+    ) -> dict[str, ColumnDomain]:
+        """Get domains for multiple variables."""
+        return {
+            var_id: domain
+            for var_id in variable_ids
+            if (domain := self._by_variable.get(var_id)) is not None
+        }
 
 
 # ============================================================================

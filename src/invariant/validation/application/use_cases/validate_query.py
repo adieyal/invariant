@@ -16,7 +16,10 @@ from invariant.application.services.query_plan_builder import (
     build_query_plan,
     parse_data_product_id,
 )
-from invariant.domain.services.validator import IndicatorAggregationRule, Validator
+from invariant.validation.domain.services.validator import (
+    IndicatorAggregationRule,
+    Validator,
+)
 
 if TYPE_CHECKING:
     from invariant.application.dto.query_request import QueryRequest

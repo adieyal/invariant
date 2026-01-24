@@ -29,8 +29,8 @@ from invariant.shared.contracts.query_analysis import (
 )
 
 if TYPE_CHECKING:
-    from invariant.domain.services.validator import CatalogSnapshot
     from invariant.query.application.planning.query_plan import QueryPlan
+    from invariant.validation.domain.services.validator import CatalogSnapshot
 
 
 def _map_query_intent(plan_intent: PlanQueryIntent) -> QueryIntent:

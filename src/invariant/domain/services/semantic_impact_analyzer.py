@@ -11,7 +11,7 @@ from invariant.domain.model.ids import DatasetId, VariableId
 from invariant.domain.model.impact import AffectedEntity, Impact, ImpactSeverity
 
 if TYPE_CHECKING:
-    from invariant.domain.services.validator import CatalogSnapshot
+    from invariant.validation.domain.services.validator import CatalogSnapshot
 
 
 @dataclass

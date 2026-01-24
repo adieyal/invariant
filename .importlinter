@@ -82,7 +82,6 @@ containers =
 # Allow legacy re-exports (domain.model -> query.application is a re-export chain)
 ignore_imports =
     invariant.query.domain.services.* -> invariant.domain.model.*
-    invariant.query.application.services.* -> invariant.domain.services.*
 
 [importlinter:contract:validation-layers]
 name = Validation Clean Architecture layers

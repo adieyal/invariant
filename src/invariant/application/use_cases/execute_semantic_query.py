@@ -17,7 +17,7 @@ from invariant.application.services.schema_builder import SchemaBuilder
 from invariant.domain.model.validation import Severity
 from invariant.domain.services.postgres_compiler import PostgresCompiler
 from invariant.domain.services.query_planner import QueryPlanner
-from invariant.domain.services.semantic_validator import (
+from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
     GeographyGrainRule,

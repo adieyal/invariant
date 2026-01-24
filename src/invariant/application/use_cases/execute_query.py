@@ -30,7 +30,7 @@ from invariant.application.services.query_plan_builder import (
     parse_data_product_id,
 )
 from invariant.domain.model.validation import ValidationStatus
-from invariant.domain.services.validator import (
+from invariant.validation.domain.services.validator import (
     CatalogSnapshot,
     IndicatorAggregationRule,
     Validator,

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from invariant.application.dto.semantic_query import SemanticValidationResultDTO
 from invariant.application.services.dto_translators import issue_to_dto
 from invariant.domain.model.validation import Severity
-from invariant.domain.services.semantic_validator import (
+from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
     GeographyGrainRule,

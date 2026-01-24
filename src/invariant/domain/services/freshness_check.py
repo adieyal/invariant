@@ -11,7 +11,7 @@ from invariant.domain.model.validation import Disclosure, Severity
 
 if TYPE_CHECKING:
     from invariant.domain.model.query_plan import QueryPlan
-    from invariant.domain.services.validator import CatalogSnapshot
+    from invariant.validation.domain.services.validator import CatalogSnapshot
 
 
 @dataclass(frozen=True)

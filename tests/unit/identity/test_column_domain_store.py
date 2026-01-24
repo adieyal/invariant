@@ -4,6 +4,7 @@ These tests verify the port protocols and fake implementations
 for column domain and proposal persistence.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Protocol
@@ -51,6 +52,16 @@ class FakeColumnDomainStore:
     def list_domains_by_status(self, status: DomainStatus) -> list[ColumnDomain]:
         """List all domains with the given status."""
         return [d for d in self._domains.values() if d.status == status]
+
+    def get_domains_for_variables(
+        self, variable_ids: Sequence[str]
+    ) -> dict[str, ColumnDomain]:
+        """Get domains for multiple variables."""
+        return {
+            var_id: domain
+            for var_id in variable_ids
+            if (domain := self._by_variable.get(var_id)) is not None
+        }
 
 
 @dataclass
@@ -205,6 +216,7 @@ class TestColumnDomainStoreProtocol:
         assert hasattr(store, "get_domain_for_variable")
         assert hasattr(store, "save_domain")
         assert hasattr(store, "list_domains_by_status")
+        assert hasattr(store, "get_domains_for_variables")
 
 
 class TestColumnDomainStoreOperations:

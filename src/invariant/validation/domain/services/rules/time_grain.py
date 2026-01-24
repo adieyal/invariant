@@ -10,7 +10,7 @@ from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
     from invariant.domain.model.metric import Metric
-    from invariant.domain.model.query_spec import QuerySpec
+    from invariant.domain.model.query_spec import GroupBySpec, QuerySpec
     from invariant.domain.model.semantic_catalog import SemanticCatalog
     from invariant.domain.model.semantic_dataset import SemanticDataset
 
@@ -174,7 +174,9 @@ class TimeGrainRule:
 
         return issues
 
-    def _has_time_filter(self, query: QuerySpec, time_group_bys: list) -> bool:
+    def _has_time_filter(
+        self, query: QuerySpec, time_group_bys: list[GroupBySpec]
+    ) -> bool:
         """Check if the query has a time filter.
 
         Args:

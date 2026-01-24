@@ -19,7 +19,7 @@ from invariant.domain.services.query_planner import (
     QueryPlanner,
     QueryPlannerError,
 )
-from invariant.domain.services.semantic_validator import (
+from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
     GeographyGrainRule,
