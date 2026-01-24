@@ -1,54 +1,14 @@
-"""Query engine port for executing validated query plans."""
+"""Query engine port for executing validated query plans.
 
-from __future__ import annotations
+DEPRECATED: This module has moved to invariant.query.application.ports.query_engine.
+Import from there or from invariant.query directly.
+This module re-exports for backward compatibility.
+"""
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol
+from invariant.query.application.ports.query_engine import (
+    CostEstimate,
+    QueryEngine,
+    RawQueryResult,
+)
 
-if TYPE_CHECKING:
-    from invariant.domain.model.query_plan import QueryPlan
-
-
-@dataclass(frozen=True)
-class CostEstimate:
-    """Estimated cost of executing a query plan."""
-
-    estimated_rows: int
-    estimated_bytes: int
-    estimated_ms: int
-
-
-@dataclass
-class RawQueryResult:
-    """Raw result from query execution.
-
-    This is the provider-specific result that will be
-    normalized by the ResultNormalizer service.
-    """
-
-    columns: list[str]
-    rows: list[tuple[object, ...]]
-    row_count: int
-    execution_time_ms: int
-
-
-class QueryEngine(Protocol):
-    """Port for executing validated query plans.
-
-    Implementations translate QueryPlan into provider-specific
-    queries (SQL, cube queries, dataframe operations, etc.).
-    """
-
-    def execute(self, plan: QueryPlan) -> RawQueryResult:
-        """Execute a validated query plan.
-
-        The plan should already be validated before execution.
-        """
-        ...
-
-    def estimate_cost(self, plan: QueryPlan) -> CostEstimate:
-        """Estimate the cost of executing a query plan.
-
-        Used for query optimization and resource management.
-        """
-        ...
+__all__ = ["CostEstimate", "QueryEngine", "RawQueryResult"]

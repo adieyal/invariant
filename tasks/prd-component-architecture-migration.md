@@ -381,7 +381,7 @@ Restructure the Invariant Analytics Kernel from a flat domain/application archit
 
 ### Phase 3: Identity Component Extraction
 
-**Phase Outcome:** After Phase 3, the Identity component owns "meaning" — concepts, universes, comparability assertions. Semantic can reference concepts but doesn't define them. Comparability decisions are auditable with justifications.
+**Phase Outcome:** After Phase 3, the Identity component owns "meaning" — concepts, universes, comparability assertions, and column domains. Semantic can reference concepts but doesn't define them. Comparability decisions are auditable with justifications.
 
 | After this phase, you can... |
 |------------------------------|
@@ -391,6 +391,8 @@ Restructure the Invariant Analytics Kernel from a flat domain/application archit
 | Find all variables measuring the same concept across datasets |
 | Track concept definition changes over time (versioning) |
 | Get `IdentityContext` for semantic resolution |
+
+**Note:** Phase 3b (Column Domain and Compatibility Extension) adds column domain management and cross-dataset compatibility assessment.
 
 #### US-P3-001: Create Identity component directory structure
 **Description:** As a developer, I need the Identity component directory structure.
@@ -472,6 +474,201 @@ Restructure the Invariant Analytics Kernel from a flat domain/application archit
 - [ ] Test: define concept, link variable, retrieve context
 - [ ] Test: concept versioning preserves history
 - [ ] Test: comparability assertion retrieval
+- [ ] All tests pass
+
+---
+
+### Phase 3b: Column Domain and Compatibility Extension
+
+**Phase Outcome:** After Phase 3b, Identity can store authoritative column domain information and assess cross-dataset compatibility. ETL can propose domains; Identity adjudicates. Validation enforces policy on compatibility outcomes.
+
+| After this phase, you can... |
+|------------------------------|
+| Store a confirmed semantic domain for any variable |
+| Submit domain proposals from ETL with evidence and confidence |
+| Accept/reject domain proposals with audit trail |
+| Assess compatibility between two variables (EQUIVALENT, COMPATIBLE_WITH_TRANSFORM, COMPATIBLE_WITH_CAVEAT, INCOMPATIBLE, UNKNOWN) |
+| Block queries with incompatible domains |
+| Require acknowledgment for comparisons with caveats |
+| Track domain changes over time (versioning) |
+
+#### US-P3B-001: Create ColumnDomain value objects
+**Description:** As the Identity component, I need to store an authoritative semantic domain for a variable so that compatibility checks are deterministic and auditable.
+
+**Acceptance Criteria:**
+- [ ] Create `identity/domain/value_objects/column_domain.py`
+- [ ] Define `ColumnDomainId` typed identity
+- [ ] Define `ValueSpace` enum (CATEGORICAL, CONTINUOUS, TEMPORAL)
+- [ ] Define `MeasurementKind` enum (COUNT, AMOUNT, RATE, RATIO, INDEX, OTHER)
+- [ ] Define `DomainStatus` enum (PROPOSED, CONFIRMED, DEPRECATED)
+- [ ] Define `ReferenceBinding` (system_id, version_id)
+- [ ] Define `Grain` (keys tuple)
+- [ ] Define `ColumnDomain` frozen dataclass with all fields
+- [ ] Unit tests for value object construction and invariants
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-002: Create ColumnDomainProposal entity
+**Description:** As ETL, I need to submit proposed column domains with confidence and evidence so that domain curation is explicit and auditable.
+
+**Acceptance Criteria:**
+- [ ] Create `identity/domain/entities/column_domain_proposal.py`
+- [ ] Define `ProposalId` typed identity
+- [ ] Define `ColumnDomainProposal` with:
+  - Partial domain candidates (concept_id, universe_id, value_space, measurement_kind, reference_binding, grain - all optional)
+  - confidence: float | None (0-1)
+  - evidence: Mapping[str, Any]
+  - proposed_by: str
+  - proposed_at: datetime
+- [ ] Unit tests
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-003: Create ColumnDomain store port
+**Description:** As the Identity component, I need a port for persisting column domains so that domain state can be stored and retrieved.
+
+**Acceptance Criteria:**
+- [ ] Create `identity/application/ports/column_domain_store.py`
+- [ ] Define `ColumnDomainStore` protocol with:
+  - `save_domain(domain: ColumnDomain) -> None`
+  - `get_domain(variable_id: VariableId, at: date | None = None) -> ColumnDomain | None`
+  - `get_domain_by_id(domain_id: ColumnDomainId) -> ColumnDomain | None`
+  - `save_proposal(proposal: ColumnDomainProposal) -> None`
+  - `get_proposal(proposal_id: ProposalId) -> ColumnDomainProposal | None`
+- [ ] Create `FakeColumnDomainStore` in test fakes
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-004: Implement domain adjudication use cases
+**Description:** As a curator/service, I need to accept or reject domain proposals so that ETL suggestions become authoritative only when explicitly confirmed.
+
+**Acceptance Criteria:**
+- [ ] Create `identity/application/use_cases/submit_domain_proposal.py`
+  - `SubmitColumnDomainProposalUseCase.execute(request) -> ProposalId`
+- [ ] Create `identity/application/use_cases/accept_domain_proposal.py`
+  - `AcceptColumnDomainProposalUseCase.execute(proposal_id, rationale, actor) -> ColumnDomainId`
+  - Creates confirmed ColumnDomain from proposal
+- [ ] Create `identity/application/use_cases/reject_domain_proposal.py`
+  - `RejectColumnDomainProposalUseCase.execute(proposal_id, reason, actor) -> None`
+  - Records rejection with reason
+- [ ] Unit tests for each use case
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-005: Implement direct domain management use case
+**Description:** As an admin/curator, I need to set a column domain directly (bypassing proposal) for curated datasets.
+
+**Acceptance Criteria:**
+- [ ] Create `identity/application/use_cases/set_column_domain.py`
+  - `SetColumnDomainUseCase.execute(variable_id, domain, actor, rationale) -> ColumnDomainId`
+- [ ] Domain status must be CONFIRMED
+- [ ] Records created_by, created_at, rationale
+- [ ] If domain exists, creates new version (domains are immutable)
+- [ ] Unit tests
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-006: Create CompatibilityResult value object
+**Description:** As the Identity component, I need structured compatibility outcomes so that compatibility decisions are explicit and actionable.
+
+**Acceptance Criteria:**
+- [ ] Create `identity/domain/value_objects/compatibility_result.py`
+- [ ] Define `CompatibilityKind` enum:
+  - EQUIVALENT
+  - COMPATIBLE_WITH_TRANSFORM
+  - COMPATIBLE_WITH_CAVEAT
+  - INCOMPATIBLE
+  - UNKNOWN
+- [ ] Define `CompatibilityResult` frozen dataclass:
+  - kind: CompatibilityKind
+  - reasons: tuple[str, ...]
+  - required_transforms: tuple[str, ...]
+  - caveats: tuple[str, ...]
+  - evidence: Mapping[str, Any]
+- [ ] Unit tests
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-007: Implement compatibility checking service
+**Description:** As Invariant, I need to assess compatibility between two variables (via their domains) so that queries and comparisons can be validated safely.
+
+**Acceptance Criteria:**
+- [ ] Create `identity/domain/services/compatibility_checker.py`
+- [ ] `CompatibilityChecker.assess(domain_a: ColumnDomain, domain_b: ColumnDomain) -> CompatibilityResult`
+- [ ] Rules:
+  - If concept_id differs: INCOMPATIBLE
+  - If universe_id differs: COMPATIBLE_WITH_CAVEAT
+  - If value_space differs: INCOMPATIBLE
+  - If measurement_kind differs (and both present): INCOMPATIBLE
+  - If reference_binding differs and crosswalk exists: COMPATIBLE_WITH_TRANSFORM
+  - If reference_binding differs and no crosswalk: INCOMPATIBLE
+- [ ] If either domain is None: UNKNOWN
+- [ ] Include reasons for each check
+- [ ] Unit tests for all compatibility scenarios
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-008: Create compatibility assessment use case
+**Description:** As a developer, I need a use case to assess variable compatibility by looking up their domains.
+
+**Acceptance Criteria:**
+- [ ] Create `identity/application/use_cases/assess_compatibility.py`
+- [ ] `AssessCompatibilityUseCase.execute(var_a: VariableId, var_b: VariableId) -> CompatibilityResult`
+- [ ] Looks up ColumnDomain for each variable
+- [ ] Delegates to CompatibilityChecker
+- [ ] Returns UNKNOWN if either domain not found
+- [ ] Unit tests with fakes
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-009: Add compatibility to IdentityContext
+**Description:** As the Semantic component, I need compatibility information included in IdentityContext.
+
+**Acceptance Criteria:**
+- [ ] Update `IdentityContext` contract to include:
+  - `column_domains: Mapping[VariableId, ColumnDomainView]`
+  - `assess_compatibility(var_a: VariableId, var_b: VariableId) -> CompatibilityResult`
+- [ ] Update `IdentityContextProvider` to populate column_domains
+- [ ] Unit tests
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-010: Create DomainCompatibilityRule in Validation
+**Description:** As Validation, I need to convert compatibility results into policy decisions so that incompatible queries are blocked and risky comparisons require acknowledgment.
+
+**Acceptance Criteria:**
+- [ ] Create `validation/domain/services/domain_compatibility_rule.py`
+- [ ] `DomainCompatibilityRule` implements `Rule` protocol
+- [ ] Maps CompatibilityKind to Issue severity:
+  - INCOMPATIBLE → Severity.BLOCK (code: INCOMPATIBLE_DOMAINS)
+  - COMPATIBLE_WITH_CAVEAT → Severity.REQUIRE_ACK (code: COMPATIBILITY_CAVEAT)
+  - UNKNOWN → Severity.BLOCK (code: UNKNOWN_COMPATIBILITY) by default
+- [ ] Issue details include variables, domains, and reasons
+- [ ] Unit tests with fake IdentityContext
+- [ ] Typecheck passes
+
+---
+
+#### US-P3B-011: Column domain integration tests
+**Description:** As a developer, I need integration tests for the column domain and compatibility system.
+
+**Acceptance Criteria:**
+- [ ] Create `tests/identity/test_column_domain_integration.py`
+- [ ] Test: submit proposal → accept → domain confirmed
+- [ ] Test: submit proposal → reject → no domain
+- [ ] Test: set domain directly → domain confirmed
+- [ ] Test: assess compatibility between two confirmed domains
+- [ ] Test: assess compatibility with missing domain → UNKNOWN
+- [ ] Test: validation blocks incompatible query
 - [ ] All tests pass
 
 ---
@@ -769,12 +966,12 @@ Restructure the Invariant Analytics Kernel from a flat domain/application archit
 - FR-1: `CatalogView` contract must include data products, variables, datasets as frozen dataclasses
 - FR-2: `SemanticResolution` contract must include resolution status, resolved metrics, evaluation order
 - FR-3: `QueryAnalysis` contract must include aggregation requests with indicator types
-- FR-4: `IdentityContext` contract must include concepts, variable semantics, comparability assertions
+- FR-4: `IdentityContext` contract must include concepts, variable semantics, comparability assertions, and column domains
 - FR-5: All contracts must be serializable (to_dict/from_dict)
 
 ### Component Ownership
 - FR-6: Catalog owns Study, Dataset, DataProduct, Variable (no other component writes these)
-- FR-7: Identity owns Concept, Universe, VariableSemantics, ComparabilityAssertion
+- FR-7: Identity owns Concept, Universe, VariableSemantics, ComparabilityAssertion, ColumnDomain, ColumnDomainProposal
 - FR-8: Semantic owns Metric, Dimension, CalculationSpec, MetricGraph
 - FR-9: Query owns QuerySpec, LogicalPlan (internal), PhysicalPlan (internal)
 - FR-10: Validation owns ValidationResult, Issue, Rule, AggregationPolicy, AuditRecord
@@ -796,6 +993,16 @@ Restructure the Invariant Analytics Kernel from a flat domain/application archit
 - FR-20: Metrics must be versioned with effective_from dates
 - FR-21: Concepts must be versioned with effective_from dates
 - FR-22: Validation rulesets must be versioned for audit
+- FR-23: ColumnDomains must be versioned (immutable once confirmed, changes create new versions)
+
+### Column Domain and Compatibility
+- FR-24: ColumnDomain must include concept binding, universe binding, value space, measurement kind, reference binding, grain
+- FR-25: ColumnDomain status must be one of: PROPOSED, CONFIRMED, DEPRECATED
+- FR-26: ETL may only propose domains; Identity adjudicates (accept/reject)
+- FR-27: CompatibilityResult must be one of: EQUIVALENT, COMPATIBLE_WITH_TRANSFORM, COMPATIBLE_WITH_CAVEAT, INCOMPATIBLE, UNKNOWN
+- FR-28: Missing confirmed domain on either variable must result in UNKNOWN compatibility
+- FR-29: Identity produces compatibility facts; Validation maps them to policy severities
+- FR-30: Domain adjudication (accept/reject) must be auditable with actor, timestamp, and rationale
 
 ---
 

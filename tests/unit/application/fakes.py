@@ -11,7 +11,6 @@ from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from invariant.application.ports.audit_log import AuditLog
 from invariant.application.ports.catalog_store import CatalogStore
 from invariant.application.ports.clock import Clock
 from invariant.application.ports.id_gen import IdGenerator
@@ -22,7 +21,6 @@ from invariant.application.ports.query_engine import (
 )
 from invariant.application.ports.semantic_asset_store import SemanticAssetStore
 from invariant.application.ports.sql_executor import ExecutionResult, SqlExecutor
-from invariant.application.ports.suppression_engine import SuppressionEngine
 from invariant.domain.model.comparability_rules import (
     ComparabilityRules,
 )
@@ -57,6 +55,7 @@ from invariant.domain.model.semantic_dataset import (
 )
 from invariant.domain.model.validation import Disclosure, ValidationResult
 from invariant.domain.services.validator import CatalogSnapshot
+from invariant.validation.application.ports import AuditLog, SuppressionEngine
 
 if TYPE_CHECKING:
     from invariant.domain.model.data_product import DataProduct

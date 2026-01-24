@@ -229,3 +229,18 @@ class ComparabilityRuleId:
 
     def __str__(self) -> str:
         return str(self.value)
+
+
+@dataclass(frozen=True)
+class MetricVersionId:
+    """Unique identifier for a MetricVersion."""
+
+    value: UUID
+
+    @classmethod
+    def create(cls) -> MetricVersionId:
+        """Generate a new MetricVersionId."""
+        return cls(uuid4())
+
+    def __str__(self) -> str:
+        return str(self.value)

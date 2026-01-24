@@ -11,7 +11,7 @@ from invariant.application.dto.validation_dto import (
 )
 
 if TYPE_CHECKING:
-    from invariant.application.ports.audit_log import AuditLog
+    from invariant.validation.application.ports import AuditLog
 
 
 @dataclass

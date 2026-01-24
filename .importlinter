@@ -1,0 +1,167 @@
+[importlinter]
+root_package = invariant
+include_external_packages = True
+
+# =============================================================================
+# LAYER CONTRACTS
+# =============================================================================
+# Enforce Clean Architecture layer boundaries within legacy modules
+
+[importlinter:contract:layers]
+name = Clean Architecture layer boundaries
+type = layers
+layers =
+    application
+    domain
+containers =
+    invariant
+
+# =============================================================================
+# SHARED CONTRACTS
+# =============================================================================
+# Shared contracts must have no dependencies on domain or application
+
+[importlinter:contract:shared-no-components]
+name = Shared contracts have no component dependencies
+type = forbidden
+source_modules = invariant.shared.contracts
+forbidden_modules =
+    invariant.domain
+    invariant.application
+    invariant.catalog
+    invariant.identity
+    invariant.semantic
+    invariant.query
+    invariant.validation
+    invariant.reference
+    invariant.kernel
+
+# Note: invariant.shared._adapters intentionally depends on domain to bridge
+# contracts to domain implementations. Only the contracts themselves must be pure.
+
+# =============================================================================
+# COMPONENT LAYER CONTRACTS
+# =============================================================================
+# Each component follows Clean Architecture: application depends on domain only
+
+[importlinter:contract:catalog-layers]
+name = Catalog Clean Architecture layers
+type = layers
+layers =
+    application
+    domain
+containers =
+    invariant.catalog
+
+[importlinter:contract:identity-layers]
+name = Identity Clean Architecture layers
+type = layers
+layers =
+    application
+    domain
+containers =
+    invariant.identity
+
+[importlinter:contract:semantic-layers]
+name = Semantic Clean Architecture layers
+type = layers
+layers =
+    application
+    domain
+containers =
+    invariant.semantic
+
+[importlinter:contract:query-layers]
+name = Query Clean Architecture layers
+type = layers
+layers =
+    application
+    domain
+containers =
+    invariant.query
+# Allow legacy re-exports (domain.model -> query.application is a re-export chain)
+ignore_imports =
+    invariant.query.domain.services.* -> invariant.domain.model.*
+    invariant.query.application.services.* -> invariant.domain.services.*
+
+[importlinter:contract:validation-layers]
+name = Validation Clean Architecture layers
+type = layers
+layers =
+    application
+    domain
+containers =
+    invariant.validation
+
+[importlinter:contract:reference-layers]
+name = Reference Clean Architecture layers
+type = layers
+layers =
+    application
+    domain
+containers =
+    invariant.reference
+
+# =============================================================================
+# COMPONENT BOUNDARY CONTRACTS
+# =============================================================================
+# NOTE: Full component isolation is not currently enforced due to the
+# legacy layer (invariant.domain.model, invariant.domain.services) which
+# re-exports from all components. This creates unavoidable transitive chains
+# that the import linter detects as violations.
+#
+# CURRENT STATE:
+# - Components import types from invariant.domain.model.* (legacy re-exports)
+# - Legacy modules re-export from new component locations (e.g., catalog, semantic)
+# - This creates transitive chains that violate strict component isolation
+#
+# FUTURE STATE (when legacy layer is deprecated):
+# - Components will import via shared contracts only
+# - Direct cross-component imports will be forbidden
+#
+# ENFORCED BOUNDARIES:
+# 1. Kernel must use shared contracts (not component internals directly)
+# 2. Each component maintains Clean Architecture layers internally
+# 3. Shared contracts must be pure (no component dependencies)
+# 4. Legacy domain/application can re-export from anywhere
+#
+# ALLOWED:
+# - Components importing via invariant.domain.model.* (legacy re-exports)
+# - Components importing via invariant.domain.services.* (legacy re-exports)
+# - Query re-exporting MetricGraph from Semantic (backward compat)
+
+# =============================================================================
+# KERNEL CONTRACTS
+# =============================================================================
+# Kernel can depend on shared contracts but not component internals
+# (except for re-exports which are allowed via public __init__.py)
+
+[importlinter:contract:kernel-uses-contracts]
+name = Kernel uses shared contracts
+type = forbidden
+source_modules = invariant.kernel
+forbidden_modules =
+    invariant.catalog.domain
+    invariant.catalog.application
+    invariant.identity.domain
+    invariant.identity.application
+    invariant.semantic.domain
+    invariant.semantic.application
+    invariant.query.domain
+    invariant.query.application
+    invariant.validation.domain
+    invariant.validation.application
+    invariant.reference.domain
+    invariant.reference.application
+
+# =============================================================================
+# DOMAIN PURITY
+# =============================================================================
+# Domain layer must not depend on application layer
+
+[importlinter:contract:domain-purity]
+name = Domain has no application dependencies
+type = forbidden
+source_modules = invariant.domain
+forbidden_modules =
+    invariant.application

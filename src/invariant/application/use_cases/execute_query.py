@@ -1,9 +1,17 @@
-"""Execute query use case."""
+"""Execute query use case.
+
+US-P7-004: This use case supports delegation to InvariantKernel.
+
+When instantiated with a kernel, all orchestration is delegated to the kernel.
+When instantiated with legacy dependencies, the old orchestration is used
+(deprecated, will be removed in a future version).
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+import warnings
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Protocol, cast
 
 from invariant.application.dto.results_dto import (
     ColumnDTO,
@@ -30,28 +38,111 @@ from invariant.domain.services.validator import (
 
 if TYPE_CHECKING:
     from invariant.application.dto.query_request import QueryRequest
-    from invariant.application.ports.audit_log import AuditLog
     from invariant.application.ports.catalog_store import CatalogStore
     from invariant.application.ports.id_gen import IdGenerator
     from invariant.application.ports.query_engine import QueryEngine, RawQueryResult
-    from invariant.application.ports.suppression_engine import SuppressionEngine
     from invariant.domain.model.query_plan import QueryPlan
     from invariant.domain.model.validation import Disclosure, ValidationResult
+    from invariant.validation.application.ports import AuditLog, SuppressionEngine
+
+
+class KernelProtocol(Protocol):
+    """Protocol for kernel facade to allow duck typing."""
+
+    def run_query(self, request: QueryRequest) -> QueryResultDTO:
+        """Execute a query through the kernel."""
+        ...
 
 
 @dataclass
 class ExecuteQueryUseCase:
     """Use case for executing a validated query.
 
-    Validates the query, executes it against the query engine,
-    applies suppression if needed, and returns results.
+    Supports two modes of operation:
+
+    1. **Kernel delegation (recommended)**: Pass a `kernel` parameter and let
+       the kernel handle all orchestration. This removes cross-component
+       coordination from this use case.
+
+    2. **Legacy mode (deprecated)**: Pass the individual dependencies
+       (catalog_store, query_engine, etc.) for backward compatibility.
+       This mode will be removed in a future version.
+
+    Example (kernel mode):
+        kernel = InvariantKernel(...)
+        use_case = ExecuteQueryUseCase(kernel=kernel)
+        result = use_case.execute(request)
+
+    Example (legacy mode - deprecated):
+        use_case = ExecuteQueryUseCase(
+            catalog_store=catalog_store,
+            query_engine=query_engine,
+            ...
+        )
+        result = use_case.execute(request)
     """
 
-    catalog_store: CatalogStore
-    query_engine: QueryEngine
-    suppression_engine: SuppressionEngine
-    audit_log: AuditLog
-    id_generator: IdGenerator
+    # Kernel for delegated orchestration (recommended)
+    kernel: KernelProtocol | None = None
+
+    # Legacy dependencies (deprecated - use kernel instead)
+    catalog_store: CatalogStore | None = field(default=None)
+    query_engine: QueryEngine | None = field(default=None)
+    suppression_engine: SuppressionEngine | None = field(default=None)
+    audit_log: AuditLog | None = field(default=None)
+    id_generator: IdGenerator | None = field(default=None)
+
+    def __post_init__(self) -> None:
+        """Validate that either kernel or legacy dependencies are provided."""
+        has_kernel = self.kernel is not None
+        has_legacy = any(
+            [
+                self.catalog_store is not None,
+                self.query_engine is not None,
+                self.suppression_engine is not None,
+                self.audit_log is not None,
+                self.id_generator is not None,
+            ]
+        )
+
+        if has_kernel and has_legacy:
+            warnings.warn(
+                "Both kernel and legacy dependencies provided. "
+                "Kernel will be used; legacy dependencies are ignored.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        elif not has_kernel and not has_legacy:
+            raise ValueError(
+                "Either kernel or legacy dependencies must be provided. "
+                "Use kernel=InvariantKernel(...) for new code."
+            )
+        elif has_legacy:
+            # Validate all legacy dependencies are provided
+            missing = []
+            if self.catalog_store is None:
+                missing.append("catalog_store")
+            if self.query_engine is None:
+                missing.append("query_engine")
+            if self.suppression_engine is None:
+                missing.append("suppression_engine")
+            if self.audit_log is None:
+                missing.append("audit_log")
+            if self.id_generator is None:
+                missing.append("id_generator")
+
+            if missing:
+                raise ValueError(
+                    f"Legacy mode requires all dependencies: {', '.join(missing)} missing. "
+                    "Consider using kernel=InvariantKernel(...) instead."
+                )
+
+            warnings.warn(
+                "Using ExecuteQueryUseCase in legacy mode is deprecated. "
+                "Use kernel=InvariantKernel(...) instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
     def execute(
         self, request: QueryRequest, query_id: str | None = None
@@ -61,6 +152,8 @@ class ExecuteQueryUseCase:
         Args:
             request: The query request to execute
             query_id: Optional pre-assigned query ID (e.g., from prior validation)
+                Note: When using kernel delegation, query_id is generated by the
+                kernel and this parameter is ignored.
 
         Returns:
             QueryResultDTO with columns, rows, and metadata
@@ -70,6 +163,18 @@ class ExecuteQueryUseCase:
             VariableNotFoundError: If a variable is not found in its data product
             QueryNotExecutableError: If the query cannot be executed (BLOCK status)
         """
+        # Delegate to kernel if available (US-P7-004)
+        if self.kernel is not None:
+            return self.kernel.run_query(request)
+
+        # Legacy orchestration (deprecated)
+        # These assertions are safe because __post_init__ validates all are set
+        assert self.id_generator is not None
+        assert self.catalog_store is not None
+        assert self.query_engine is not None
+        assert self.suppression_engine is not None
+        assert self.audit_log is not None
+
         # Generate or use provided query ID
         qid = query_id or self.id_generator.generate_query_id()
 

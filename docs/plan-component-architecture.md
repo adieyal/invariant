@@ -1248,7 +1248,232 @@ docs/adr/
 
 ---
 
-## Appendix A: Boundary Contract Definitions
+## Appendix A: Comparability System Design
+
+This appendix describes the extended comparability system that enables Invariant to make explicit, auditable decisions about whether variables/columns from different datasets are semantically compatible.
+
+### A.1 Design Principles
+
+1. **ETL produces proposals, not truth** — ETL may propose column domain bindings; Invariant (Identity) adjudicates and persists accepted domains as authoritative.
+2. **Compatibility is explicit** — No implicit name matching or heuristics inside the kernel.
+3. **Decisions are auditable** — Every domain acceptance, rejection, and compatibility assessment is versioned and traceable.
+4. **Identity owns meaning, Validation owns policy** — Identity produces compatibility facts; Validation maps them to severities (ALLOW/WARN/REQUIRE_ACK/BLOCK).
+
+### A.2 ColumnDomain (Identity-owned)
+
+A `ColumnDomain` is the semantic contract for a variable/column. It is versioned, auditable, and the canonical basis for compatibility reasoning.
+
+```python
+class ValueSpace(Enum):
+    CATEGORICAL = "categorical"
+    CONTINUOUS = "continuous"
+    TEMPORAL = "temporal"
+
+class MeasurementKind(Enum):
+    COUNT = "count"
+    AMOUNT = "amount"
+    RATE = "rate"
+    RATIO = "ratio"
+    INDEX = "index"
+    OTHER = "other"
+
+class DomainStatus(Enum):
+    PROPOSED = "proposed"
+    CONFIRMED = "confirmed"
+    DEPRECATED = "deprecated"
+
+@dataclass(frozen=True)
+class ReferenceBinding:
+    system_id: ReferenceSystemId
+    version_id: ReferenceSystemVersionId
+
+@dataclass(frozen=True)
+class Grain:
+    """Unit-of-analysis / dimensional grain (e.g., per-geo per-month)."""
+    keys: tuple[str, ...]  # e.g. ("geo_id", "month")
+
+@dataclass(frozen=True)
+class ColumnDomain:
+    domain_id: ColumnDomainId
+    variable_id: VariableId
+
+    # Semantic identity
+    concept_id: ConceptId
+    universe_id: UniverseId | None
+
+    # Value semantics
+    value_space: ValueSpace
+    measurement_kind: MeasurementKind | None  # None for pure identifiers/dim keys
+
+    # Reference system semantics (optional)
+    reference_binding: ReferenceBinding | None
+
+    # Grain semantics (optional but important)
+    grain: Grain | None
+
+    # Governance
+    status: DomainStatus
+    effective_from: date | None
+    created_at: datetime
+    created_by: str
+    rationale: str | None  # Why this binding is correct (auditable)
+```
+
+**Key Rules:**
+- `ColumnDomain` is authoritative only when `status == CONFIRMED`
+- Domains are immutable once confirmed; changes create new versions
+- A variable may have no confirmed domain (explicit "unknown meaning" state)
+
+### A.3 ColumnDomainProposal (ETL to Identity)
+
+ETL submits proposals as structured suggestions with evidence and confidence:
+
+```python
+@dataclass(frozen=True)
+class ColumnDomainProposal:
+    proposal_id: ProposalId
+    variable_id: VariableId
+
+    # Candidates (may be partial)
+    concept_id: ConceptId | None
+    universe_id: UniverseId | None
+    value_space: ValueSpace | None
+    measurement_kind: MeasurementKind | None
+    reference_binding: ReferenceBinding | None
+    grain: Grain | None
+
+    # Evidence
+    confidence: float | None  # 0-1
+    evidence: Mapping[str, Any]  # Observed patterns, heuristics, notes
+    proposed_by: str
+    proposed_at: datetime
+```
+
+### A.4 Adjudication Lifecycle
+
+1. **ETL proposes**: `SubmitColumnDomainProposal(...)`
+2. **Identity adjudicates**:
+   - `AcceptProposal` → creates `ColumnDomain(status=CONFIRMED)`
+   - `RejectProposal` → records reason
+   - `RequestRefinement` → records missing fields / ambiguity
+3. **Overrides** are explicit and auditable: `OverrideDomain(variable_id, new_domain, rationale)`
+
+This prevents "silent semantics" and keeps provenance intact.
+
+### A.5 CompatibilityResult (Identity-owned)
+
+Compatibility assessment produces structured outcomes, not booleans:
+
+```python
+class CompatibilityKind(Enum):
+    EQUIVALENT = "equivalent"
+    COMPATIBLE_WITH_TRANSFORM = "compatible_with_transform"  # e.g., crosswalk
+    COMPATIBLE_WITH_CAVEAT = "compatible_with_caveat"        # e.g., universe mismatch
+    INCOMPATIBLE = "incompatible"
+    UNKNOWN = "unknown"  # Insufficient confirmed domain information
+
+@dataclass(frozen=True)
+class CompatibilityResult:
+    kind: CompatibilityKind
+    reasons: tuple[str, ...]              # Machine/traceable reasons
+    required_transforms: tuple[str, ...]  # e.g., "crosswalk:v2020->v2010"
+    caveats: tuple[str, ...]              # e.g., "universe differs"
+    evidence: Mapping[str, Any]           # Structured comparison evidence
+```
+
+### A.6 Compatibility Assessment Logic
+
+The compatibility checker evaluates domains on multiple dimensions:
+
+| Dimension | Match Required? | Mismatch Outcome |
+|-----------|-----------------|------------------|
+| Concept | Yes | INCOMPATIBLE |
+| Universe | No | COMPATIBLE_WITH_CAVEAT |
+| Value Space | Yes | INCOMPATIBLE |
+| Measurement Kind | Yes (if present) | INCOMPATIBLE |
+| Reference Binding | No | COMPATIBLE_WITH_TRANSFORM (if crosswalk exists) |
+| Grain | Contextual | COMPATIBLE_WITH_CAVEAT or INCOMPATIBLE |
+
+If either variable lacks a confirmed domain, result is `UNKNOWN`.
+
+### A.7 Identity Public API Extensions
+
+```python
+# Proposals
+SubmitColumnDomainProposal(proposal: ColumnDomainProposal) -> ProposalId
+AcceptColumnDomainProposal(proposal_id: ProposalId, rationale: str, actor: str) -> ColumnDomainId
+RejectColumnDomainProposal(proposal_id: ProposalId, reason: str, actor: str) -> None
+
+# Direct domain management (admin / curated path)
+SetColumnDomain(variable_id: VariableId, domain: ColumnDomain, actor: str, rationale: str) -> ColumnDomainId
+GetColumnDomain(variable_id: VariableId, at: date | None = None) -> ColumnDomain | None
+
+# Compatibility
+AssessCompatibility(domain_a: ColumnDomainId, domain_b: ColumnDomainId) -> CompatibilityResult
+AssessVariableCompatibility(var_a: VariableId, var_b: VariableId) -> CompatibilityResult
+```
+
+### A.8 Identity Events
+
+```python
+ColumnDomainProposed(proposal_id, variable_id, proposed_by)
+ColumnDomainAccepted(domain_id, variable_id, actor)
+ColumnDomainRejected(proposal_id, variable_id, actor)
+ColumnDomainOverridden(variable_id, old_domain_id, new_domain_id, actor)
+CompatibilityAssessed(domain_a, domain_b, kind)
+```
+
+### A.9 Validation Integration
+
+Validation rules consume compatibility results and map them to policy severities:
+
+```python
+class DomainCompatibilityRule(Rule):
+    def evaluate(self, analysis: QueryAnalysis, identity: IdentityContext) -> list[Issue]:
+        issues = []
+        for (var_a, var_b) in analysis.comparisons:
+            result = identity.assess_variable_compatibility(var_a, var_b)
+
+            if result.kind == CompatibilityKind.INCOMPATIBLE:
+                issues.append(Issue(
+                    code="INCOMPATIBLE_DOMAINS",
+                    severity=Severity.BLOCK,
+                    message="Selected variables are not semantically compatible.",
+                    details={"var_a": str(var_a), "var_b": str(var_b), "reasons": result.reasons},
+                ))
+            elif result.kind == CompatibilityKind.COMPATIBLE_WITH_CAVEAT:
+                issues.append(Issue(
+                    code="COMPATIBILITY_CAVEAT",
+                    severity=Severity.REQUIRE_ACK,
+                    message="Variables are comparable with caveats.",
+                    details={"caveats": result.caveats},
+                ))
+            elif result.kind == CompatibilityKind.UNKNOWN:
+                issues.append(Issue(
+                    code="UNKNOWN_COMPATIBILITY",
+                    severity=Severity.BLOCK,  # Default: safety-first
+                    message="Compatibility cannot be determined (domain not confirmed).",
+                ))
+        return issues
+```
+
+### A.10 Non-Goals for Comparability System
+
+- Invariant does **not** infer column meaning from raw data
+- Invariant does **not** run profiling heuristics as part of kernel logic
+- Invariant does **not** implement ETL orchestration, scheduling, or transformations
+- Invariant accepts `ColumnDomainProposal` inputs from ETL and records adjudicated semantic truth
+
+### A.11 Migration Notes
+
+- Existing datasets/variables may initially have **no confirmed ColumnDomain**
+- Compatibility checks will return `UNKNOWN` until domains are curated
+- Default policy treats `UNKNOWN` as `BLOCK` (safety-first)
+- Option to relax to `REQUIRE_ACK` in low-stakes contexts
+
+---
+
+## Appendix B: Boundary Contract Definitions
 
 ### A.1 CatalogView
 
@@ -1424,7 +1649,7 @@ class VariableSemanticsView:
 
 ---
 
-## Appendix B: Current vs Proposed File Locations (Updated)
+## Appendix C: Current vs Proposed File Locations (Updated)
 
 | Current Location | Proposed Location |
 |------------------|-------------------|
@@ -1455,7 +1680,7 @@ class VariableSemanticsView:
 
 ---
 
-## Appendix C: IndicatorDefinition Split
+## Appendix D: IndicatorDefinition Split
 
 Current `IndicatorDefinition` mixes three concerns. Here's the split:
 
@@ -1516,7 +1741,7 @@ This enables:
 
 ---
 
-## Appendix D: User Stories by Component
+## Appendix E: User Stories by Component
 
 User stories illustrate each component's responsibilities through concrete scenarios. These help clarify boundaries—if a story requires multiple components, it belongs to the **Kernel Facade**.
 
