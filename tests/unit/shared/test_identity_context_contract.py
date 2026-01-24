@@ -271,3 +271,263 @@ class TestComparabilityStatus:
         assert ComparabilityStatus.NOT_COMPARABLE.value == "NOT_COMPARABLE"
         assert ComparabilityStatus.NEEDS_TRANSFORM.value == "NEEDS_TRANSFORM"
         assert ComparabilityStatus.UNKNOWN.value == "UNKNOWN"
+
+
+class TestColumnDomainView:
+    """Tests for ColumnDomainView dataclass."""
+
+    def test_column_domain_view_is_frozen(self) -> None:
+        """ColumnDomainView cannot be modified after creation."""
+        from invariant.shared.contracts.identity_context import ColumnDomainView
+
+        view = ColumnDomainView(
+            variable_id=str(uuid4()),
+            concept_id=None,
+            universe_id=None,
+            value_space="CONTINUOUS",
+            measurement_kind="COUNT",
+            reference_system_id=None,
+            reference_version_id=None,
+            grain_keys=None,
+            status="PROPOSED",
+        )
+
+        with pytest.raises(FrozenInstanceError):
+            view.variable_id = str(uuid4())  # type: ignore[misc]
+
+    def test_column_domain_view_with_all_fields(self) -> None:
+        """ColumnDomainView can include all optional fields."""
+        from invariant.shared.contracts.identity_context import ColumnDomainView
+
+        variable_id = str(uuid4())
+        concept_id = str(uuid4())
+        universe_id = str(uuid4())
+        ref_system_id = "ISO-3166"
+        ref_version_id = "2020"
+        grain_keys = ("country_code", "year")
+
+        view = ColumnDomainView(
+            variable_id=variable_id,
+            concept_id=concept_id,
+            universe_id=universe_id,
+            value_space="CATEGORICAL",
+            measurement_kind="OTHER",
+            reference_system_id=ref_system_id,
+            reference_version_id=ref_version_id,
+            grain_keys=grain_keys,
+            status="CONFIRMED",
+        )
+
+        assert view.variable_id == variable_id
+        assert view.concept_id == concept_id
+        assert view.universe_id == universe_id
+        assert view.value_space == "CATEGORICAL"
+        assert view.measurement_kind == "OTHER"
+        assert view.reference_system_id == ref_system_id
+        assert view.reference_version_id == ref_version_id
+        assert view.grain_keys == grain_keys
+        assert view.status == "CONFIRMED"
+
+    def test_column_domain_view_to_dict(self) -> None:
+        """ColumnDomainView.to_dict() returns serializable dict."""
+        from invariant.shared.contracts.identity_context import ColumnDomainView
+
+        variable_id = str(uuid4())
+        concept_id = str(uuid4())
+        view = ColumnDomainView(
+            variable_id=variable_id,
+            concept_id=concept_id,
+            universe_id=None,
+            value_space="CONTINUOUS",
+            measurement_kind="COUNT",
+            reference_system_id=None,
+            reference_version_id=None,
+            grain_keys=("id",),
+            status="PROPOSED",
+        )
+
+        data = view.to_dict()
+
+        assert data == {
+            "variable_id": variable_id,
+            "concept_id": concept_id,
+            "universe_id": None,
+            "value_space": "CONTINUOUS",
+            "measurement_kind": "COUNT",
+            "reference_system_id": None,
+            "reference_version_id": None,
+            "grain_keys": ["id"],  # tuple -> list for JSON
+            "status": "PROPOSED",
+        }
+
+    def test_column_domain_view_from_dict(self) -> None:
+        """ColumnDomainView.from_dict() restores from dict."""
+        from invariant.shared.contracts.identity_context import ColumnDomainView
+
+        variable_id = str(uuid4())
+        data = {
+            "variable_id": variable_id,
+            "concept_id": None,
+            "universe_id": None,
+            "value_space": "TEMPORAL",
+            "measurement_kind": "OTHER",
+            "reference_system_id": None,
+            "reference_version_id": None,
+            "grain_keys": None,
+            "status": "DEPRECATED",
+        }
+
+        view = ColumnDomainView.from_dict(data)
+
+        assert view.variable_id == variable_id
+        assert view.concept_id is None
+        assert view.universe_id is None
+        assert view.value_space == "TEMPORAL"
+        assert view.measurement_kind == "OTHER"
+        assert view.reference_system_id is None
+        assert view.reference_version_id is None
+        assert view.grain_keys is None
+        assert view.status == "DEPRECATED"
+
+    def test_column_domain_view_from_dict_with_grain_keys(self) -> None:
+        """ColumnDomainView.from_dict() converts grain_keys list to tuple."""
+        from invariant.shared.contracts.identity_context import ColumnDomainView
+
+        variable_id = str(uuid4())
+        data = {
+            "variable_id": variable_id,
+            "concept_id": None,
+            "universe_id": None,
+            "value_space": "CATEGORICAL",
+            "measurement_kind": "INDEX",
+            "reference_system_id": "ISO-3166",
+            "reference_version_id": "2020",
+            "grain_keys": ["country_code", "year"],  # list from JSON
+            "status": "CONFIRMED",
+        }
+
+        view = ColumnDomainView.from_dict(data)
+
+        assert view.grain_keys == ("country_code", "year")  # converted to tuple
+
+
+class TestIdentityContextWithColumnDomains:
+    """Tests for IdentityContext with column_domains support."""
+
+    def test_identity_context_stores_column_domains(self) -> None:
+        """IdentityContext stores column domain views by variable ID."""
+        from invariant.shared.contracts.identity_context import ColumnDomainView
+
+        variable_id = str(uuid4())
+        domain_view = ColumnDomainView(
+            variable_id=variable_id,
+            concept_id=None,
+            universe_id=None,
+            value_space="CONTINUOUS",
+            measurement_kind="COUNT",
+            reference_system_id=None,
+            reference_version_id=None,
+            grain_keys=None,
+            status="PROPOSED",
+        )
+
+        context = IdentityContext(
+            concepts={},
+            variable_semantics={},
+            comparability_assertions={},
+            column_domains={variable_id: domain_view},
+        )
+
+        assert context.column_domains[variable_id] == domain_view
+
+    def test_identity_context_get_domain_for_variable(self) -> None:
+        """IdentityContext.get_domain_for_variable() returns domain view."""
+        from invariant.shared.contracts.identity_context import ColumnDomainView
+
+        variable_id = str(uuid4())
+        domain_view = ColumnDomainView(
+            variable_id=variable_id,
+            concept_id=str(uuid4()),
+            universe_id=None,
+            value_space="CATEGORICAL",
+            measurement_kind="OTHER",
+            reference_system_id=None,
+            reference_version_id=None,
+            grain_keys=None,
+            status="CONFIRMED",
+        )
+
+        context = IdentityContext(
+            concepts={},
+            variable_semantics={},
+            comparability_assertions={},
+            column_domains={variable_id: domain_view},
+        )
+
+        result = context.get_domain_for_variable(variable_id)
+        assert result == domain_view
+
+    def test_identity_context_get_domain_for_variable_returns_none(self) -> None:
+        """IdentityContext.get_domain_for_variable() returns None for unknown."""
+        context = IdentityContext(
+            concepts={},
+            variable_semantics={},
+            comparability_assertions={},
+            column_domains={},
+        )
+
+        result = context.get_domain_for_variable("unknown_var")
+        assert result is None
+
+    def test_identity_context_round_trip_with_column_domains(self) -> None:
+        """to_dict() and from_dict() preserve column_domains."""
+        from invariant.shared.contracts.identity_context import ColumnDomainView
+
+        variable_id = str(uuid4())
+        concept_id = str(uuid4())
+        domain_view = ColumnDomainView(
+            variable_id=variable_id,
+            concept_id=concept_id,
+            universe_id=None,
+            value_space="CONTINUOUS",
+            measurement_kind="AMOUNT",
+            reference_system_id="ISO-4217",
+            reference_version_id="2023",
+            grain_keys=("country", "year"),
+            status="CONFIRMED",
+        )
+
+        context = IdentityContext(
+            concepts={},
+            variable_semantics={},
+            comparability_assertions={},
+            column_domains={variable_id: domain_view},
+        )
+
+        # Round-trip serialization
+        data = context.to_dict()
+        restored = IdentityContext.from_dict(data)
+
+        # Verify column_domains preserved
+        assert variable_id in restored.column_domains
+        restored_domain = restored.column_domains[variable_id]
+        assert restored_domain.variable_id == variable_id
+        assert restored_domain.concept_id == concept_id
+        assert restored_domain.value_space == "CONTINUOUS"
+        assert restored_domain.measurement_kind == "AMOUNT"
+        assert restored_domain.reference_system_id == "ISO-4217"
+        assert restored_domain.reference_version_id == "2023"
+        assert restored_domain.grain_keys == ("country", "year")
+        assert restored_domain.status == "CONFIRMED"
+
+    def test_identity_context_backward_compatible(self) -> None:
+        """IdentityContext can be created without column_domains for backward compatibility."""
+        # Old-style creation should still work
+        context = IdentityContext(
+            concepts={},
+            variable_semantics={},
+            comparability_assertions={},
+        )
+
+        assert context.column_domains == {}
+        assert context.get_domain_for_variable("any") is None

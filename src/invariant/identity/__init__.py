@@ -7,6 +7,9 @@ within the domain.
 Public API:
     domain: Domain layer (entities, value objects, services)
     application: Application layer (ports, services)
+    CompatibilityChecker: Domain service for checking domain compatibility
+    CompatibilityKind: Classification of compatibility between domains
+    CompatibilityResult: Result of comparing two domains for compatibility
     Concept: Semantic identity for cross-dataset alignment
     ConceptVersion: Versioned snapshot of a Concept with effective dates
     IndicatorIdentity: Identity aspects of an indicator (what it means)
@@ -16,9 +19,18 @@ Public API:
 
 from invariant.identity import application, domain
 from invariant.identity.domain.entities import Concept, Universe, VariableSemantics
-from invariant.identity.domain.value_objects import ConceptVersion, IndicatorIdentity
+from invariant.identity.domain.services import CompatibilityChecker
+from invariant.identity.domain.value_objects import (
+    CompatibilityKind,
+    CompatibilityResult,
+    ConceptVersion,
+    IndicatorIdentity,
+)
 
 __all__ = [
+    "CompatibilityChecker",
+    "CompatibilityKind",
+    "CompatibilityResult",
     "Concept",
     "ConceptVersion",
     "IndicatorIdentity",

@@ -108,6 +108,23 @@ class FakeComparabilityStore:
         ]
 
 
+@dataclass
+class FakeColumnDomainStore:
+    """Fake column domain store for integration testing."""
+
+    _by_variable: dict[str, object] = field(default_factory=dict)
+
+    def get_domains_for_variables(
+        self, variable_ids: Sequence[str]
+    ) -> dict[str, object]:
+        """Get domains for multiple variables."""
+        return {
+            var_id: self._by_variable[var_id]
+            for var_id in variable_ids
+            if var_id in self._by_variable
+        }
+
+
 class TestIdentityIntegration:
     """Integration tests for Identity component end-to-end flows."""
 
@@ -124,16 +141,22 @@ class TestIdentityIntegration:
         return FakeComparabilityStore()
 
     @pytest.fixture
+    def domain_store(self) -> FakeColumnDomainStore:
+        return FakeColumnDomainStore()
+
+    @pytest.fixture
     def context_provider(
         self,
         concept_store: FakeConceptStore,
         semantics_store: FakeVariableSemanticsStore,
         comparability_store: FakeComparabilityStore,
+        domain_store: FakeColumnDomainStore,
     ) -> IdentityContextProvider:
         return IdentityContextProvider(
             concept_store=concept_store,
             semantics_store=semantics_store,
             comparability_store=comparability_store,
+            domain_store=domain_store,
         )
 
     def test_define_concept_link_variable_retrieve_context(

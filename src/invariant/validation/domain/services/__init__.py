@@ -4,6 +4,10 @@ Domain services implement business logic that doesn't naturally
 belong to a single entity or value object.
 """
 
+from invariant.validation.domain.services.domain_compatibility_rule import (
+    CompatibilityProvider,
+    DomainCompatibilityRule,
+)
 from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
@@ -28,6 +32,8 @@ __all__ = [
     "AdditivityRule",
     "CatalogSnapshot",
     "ComparabilityValidationRule",
+    "CompatibilityProvider",
+    "DomainCompatibilityRule",
     "GeographyGrainRule",
     "IndicatorAggregationRule",
     "JoinSafetyRule",

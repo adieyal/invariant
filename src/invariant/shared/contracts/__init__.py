@@ -15,6 +15,7 @@ from invariant.shared.contracts.catalog_view import (
     VariableView,
 )
 from invariant.shared.contracts.identity_context import (
+    ColumnDomainView,
     ComparabilityStatus,
     ConceptView,
     IdentityContext,
@@ -46,6 +47,7 @@ __all__: list[str] = [
     "AggregationRequest",
     "AmbiguousRef",
     "CatalogView",
+    "ColumnDomainView",
     "ComparabilityStatus",
     "ConceptView",
     "DataProductView",

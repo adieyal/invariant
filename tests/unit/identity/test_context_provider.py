@@ -21,13 +21,23 @@ from invariant.identity.domain.entities import (
     Concept,
     VariableSemantics,
 )
-from invariant.shared.contracts.identity_context import (
-    ComparabilityStatus as ContractComparabilityStatus,
+from invariant.identity.domain.value_objects import (
+    ColumnDomain,
+    ColumnDomainId,
+    DomainStatus,
+    Grain,
+    MeasurementKind,
+    ReferenceBinding,
+    ValueSpace,
 )
 from invariant.shared.contracts.identity_context import (
+    ColumnDomainView,
     ConceptView,
     IdentityContext,
     VariableSemanticsView,
+)
+from invariant.shared.contracts.identity_context import (
+    ComparabilityStatus as ContractComparabilityStatus,
 )
 
 if TYPE_CHECKING:
@@ -93,6 +103,41 @@ class FakeComparabilityStore:
         ]
 
 
+@dataclass
+class FakeColumnDomainStore:
+    """Fake column domain store for testing."""
+
+    _domains: dict[ColumnDomainId, ColumnDomain] = field(default_factory=dict)
+    _by_variable: dict[str, ColumnDomain] = field(default_factory=dict)
+
+    def get_domain(self, domain_id: ColumnDomainId) -> ColumnDomain | None:
+        """Get a domain by ID."""
+        return self._domains.get(domain_id)
+
+    def get_domain_for_variable(self, variable_id: str) -> ColumnDomain | None:
+        """Get the domain for a variable."""
+        return self._by_variable.get(variable_id)
+
+    def save_domain(self, domain: ColumnDomain) -> None:
+        """Save a domain."""
+        self._domains[domain.id] = domain
+        self._by_variable[domain.variable_id] = domain
+
+    def list_domains_by_status(self, status: DomainStatus) -> list[ColumnDomain]:
+        """List all domains with the given status."""
+        return [d for d in self._domains.values() if d.status == status]
+
+    def get_domains_for_variables(
+        self, variable_ids: Sequence[str]
+    ) -> dict[str, ColumnDomain]:
+        """Get domains for multiple variables."""
+        return {
+            var_id: self._by_variable[var_id]
+            for var_id in variable_ids
+            if var_id in self._by_variable
+        }
+
+
 # Test fixtures
 
 
@@ -112,15 +157,22 @@ def comparability_store() -> FakeComparabilityStore:
 
 
 @pytest.fixture
+def domain_store() -> FakeColumnDomainStore:
+    return FakeColumnDomainStore()
+
+
+@pytest.fixture
 def provider(
     concept_store: FakeConceptStore,
     semantics_store: FakeVariableSemanticsStore,
     comparability_store: FakeComparabilityStore,
+    domain_store: FakeColumnDomainStore,
 ) -> IdentityContextProvider:
     return IdentityContextProvider(
         concept_store=concept_store,
         semantics_store=semantics_store,
         comparability_store=comparability_store,
+        domain_store=domain_store,
     )
 
 
@@ -314,3 +366,164 @@ def test_provider_includes_universe_id_from_semantics(
     sem_view = result.variable_semantics[str(variable_id)]
     assert sem_view.variable_id == str(variable_id)
     assert sem_view.concept_id == str(concept_id)
+
+
+def test_provider_returns_empty_column_domains_when_none_exist(
+    provider: IdentityContextProvider,
+) -> None:
+    """Provider returns empty column_domains when no domains exist."""
+    result = provider.get_identity_context([])
+
+    assert result.column_domains == {}
+
+
+def test_provider_includes_column_domains(
+    domain_store: FakeColumnDomainStore,
+    provider: IdentityContextProvider,
+) -> None:
+    """Context includes column domains for variables that have them."""
+    variable_id = str(VariableId.create())
+    concept_id = ConceptId.create()
+
+    domain = ColumnDomain(
+        id=ColumnDomainId.create(),
+        variable_id=variable_id,
+        concept_id=concept_id,
+        universe_id="universe_1",
+        value_space=ValueSpace.CONTINUOUS,
+        measurement_kind=MeasurementKind.COUNT,
+        reference_binding=None,
+        grain=None,
+        status=DomainStatus.CONFIRMED,
+        confirmed_at=None,
+        confirmed_by=None,
+    )
+    domain_store.save_domain(domain)
+
+    result = provider.get_identity_context([variable_id])
+
+    assert variable_id in result.column_domains
+    domain_view = result.column_domains[variable_id]
+    assert isinstance(domain_view, ColumnDomainView)
+    assert domain_view.variable_id == variable_id
+    assert domain_view.concept_id == str(concept_id)
+    assert domain_view.universe_id == "universe_1"
+    assert domain_view.value_space == "CONTINUOUS"
+    assert domain_view.measurement_kind == "COUNT"
+    assert domain_view.status == "CONFIRMED"
+
+
+def test_provider_includes_column_domain_with_reference_binding(
+    domain_store: FakeColumnDomainStore,
+    provider: IdentityContextProvider,
+) -> None:
+    """Context includes reference binding info in domain view."""
+    variable_id = str(VariableId.create())
+
+    domain = ColumnDomain(
+        id=ColumnDomainId.create(),
+        variable_id=variable_id,
+        concept_id=None,
+        universe_id=None,
+        value_space=ValueSpace.CATEGORICAL,
+        measurement_kind=MeasurementKind.OTHER,
+        reference_binding=ReferenceBinding(system_id="ISO-3166", version_id="2020"),
+        grain=None,
+        status=DomainStatus.PROPOSED,
+        confirmed_at=None,
+        confirmed_by=None,
+    )
+    domain_store.save_domain(domain)
+
+    result = provider.get_identity_context([variable_id])
+
+    domain_view = result.column_domains[variable_id]
+    assert domain_view.reference_system_id == "ISO-3166"
+    assert domain_view.reference_version_id == "2020"
+
+
+def test_provider_includes_column_domain_with_grain(
+    domain_store: FakeColumnDomainStore,
+    provider: IdentityContextProvider,
+) -> None:
+    """Context includes grain keys in domain view."""
+    variable_id = str(VariableId.create())
+
+    domain = ColumnDomain(
+        id=ColumnDomainId.create(),
+        variable_id=variable_id,
+        concept_id=None,
+        universe_id=None,
+        value_space=ValueSpace.CONTINUOUS,
+        measurement_kind=MeasurementKind.AMOUNT,
+        reference_binding=None,
+        grain=Grain(keys=("country_code", "year")),
+        status=DomainStatus.CONFIRMED,
+        confirmed_at=None,
+        confirmed_by=None,
+    )
+    domain_store.save_domain(domain)
+
+    result = provider.get_identity_context([variable_id])
+
+    domain_view = result.column_domains[variable_id]
+    assert domain_view.grain_keys == ("country_code", "year")
+
+
+def test_provider_handles_variables_without_domains(
+    domain_store: FakeColumnDomainStore,
+    provider: IdentityContextProvider,
+) -> None:
+    """Provider handles variables without column domains gracefully."""
+    variable_id = str(VariableId.create())
+
+    # Variable has no domain in the store
+    result = provider.get_identity_context([variable_id])
+
+    # column_domains should not include the variable
+    assert variable_id not in result.column_domains
+
+
+def test_provider_includes_multiple_column_domains(
+    domain_store: FakeColumnDomainStore,
+    provider: IdentityContextProvider,
+) -> None:
+    """Provider includes domains for multiple variables."""
+    var_id_1 = str(VariableId.create())
+    var_id_2 = str(VariableId.create())
+
+    domain_1 = ColumnDomain(
+        id=ColumnDomainId.create(),
+        variable_id=var_id_1,
+        concept_id=None,
+        universe_id=None,
+        value_space=ValueSpace.CONTINUOUS,
+        measurement_kind=MeasurementKind.COUNT,
+        reference_binding=None,
+        grain=None,
+        status=DomainStatus.CONFIRMED,
+        confirmed_at=None,
+        confirmed_by=None,
+    )
+    domain_2 = ColumnDomain(
+        id=ColumnDomainId.create(),
+        variable_id=var_id_2,
+        concept_id=None,
+        universe_id=None,
+        value_space=ValueSpace.CATEGORICAL,
+        measurement_kind=MeasurementKind.OTHER,
+        reference_binding=None,
+        grain=None,
+        status=DomainStatus.PROPOSED,
+        confirmed_at=None,
+        confirmed_by=None,
+    )
+    domain_store.save_domain(domain_1)
+    domain_store.save_domain(domain_2)
+
+    result = provider.get_identity_context([var_id_1, var_id_2])
+
+    assert var_id_1 in result.column_domains
+    assert var_id_2 in result.column_domains
+    assert result.column_domains[var_id_1].value_space == "CONTINUOUS"
+    assert result.column_domains[var_id_2].value_space == "CATEGORICAL"

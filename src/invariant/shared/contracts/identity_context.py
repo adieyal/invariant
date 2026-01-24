@@ -92,6 +92,57 @@ class VariableSemanticsView:
 
 
 @dataclass(frozen=True)
+class ColumnDomainView:
+    """Read-only view of column domain metadata for boundary crossing.
+
+    Captures the semantic identity and characteristics of a column
+    including value space, measurement kind, and reference bindings.
+    Uses string representations for enum values to avoid domain dependencies.
+    """
+
+    variable_id: str
+    concept_id: str | None
+    universe_id: str | None
+    value_space: str  # enum value as string (e.g., "CONTINUOUS", "CATEGORICAL")
+    measurement_kind: str  # enum value as string (e.g., "COUNT", "AMOUNT")
+    reference_system_id: str | None
+    reference_version_id: str | None
+    grain_keys: tuple[str, ...] | None
+    status: str  # enum value as string (e.g., "PROPOSED", "CONFIRMED")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to JSON-serializable dict."""
+        return {
+            "variable_id": self.variable_id,
+            "concept_id": self.concept_id,
+            "universe_id": self.universe_id,
+            "value_space": self.value_space,
+            "measurement_kind": self.measurement_kind,
+            "reference_system_id": self.reference_system_id,
+            "reference_version_id": self.reference_version_id,
+            "grain_keys": list(self.grain_keys) if self.grain_keys else None,
+            "status": self.status,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> ColumnDomainView:
+        """Restore from dict."""
+        grain_keys_raw = data.get("grain_keys")
+        grain_keys = tuple(grain_keys_raw) if grain_keys_raw else None
+        return cls(
+            variable_id=data["variable_id"],
+            concept_id=data.get("concept_id"),
+            universe_id=data.get("universe_id"),
+            value_space=data["value_space"],
+            measurement_kind=data["measurement_kind"],
+            reference_system_id=data.get("reference_system_id"),
+            reference_version_id=data.get("reference_version_id"),
+            grain_keys=grain_keys,
+            status=data["status"],
+        )
+
+
+@dataclass(frozen=True)
 class IdentityContext:
     """Boundary contract for identity and concept information.
 
@@ -103,11 +154,29 @@ class IdentityContext:
         variable_semantics: Mapping of variable IDs to VariableSemanticsView objects.
         comparability_assertions: Mapping of entity pairs to their comparability status.
             Keys are tuples of (entity_id_1, entity_id_2).
+        column_domains: Mapping of variable IDs to ColumnDomainView objects.
     """
 
     concepts: Mapping[str, ConceptView]
     variable_semantics: Mapping[str, VariableSemanticsView]
     comparability_assertions: Mapping[tuple[str, str], ComparabilityStatus]
+    column_domains: Mapping[str, ColumnDomainView] = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        """Initialize default values for optional fields."""
+        if self.column_domains is None:
+            object.__setattr__(self, "column_domains", {})
+
+    def get_domain_for_variable(self, variable_id: str) -> ColumnDomainView | None:
+        """Get the column domain view for a variable.
+
+        Args:
+            variable_id: The variable identifier.
+
+        Returns:
+            The ColumnDomainView if found, None otherwise.
+        """
+        return self.column_domains.get(variable_id)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to JSON-serializable dict."""
@@ -122,6 +191,10 @@ class IdentityContext:
             "comparability_assertions": {
                 f"{k[0]}|{k[1]}": v.value
                 for k, v in self.comparability_assertions.items()
+            },
+            "column_domains": {
+                variable_id: view.to_dict()
+                for variable_id, view in self.column_domains.items()
             },
         }
 
@@ -143,9 +216,14 @@ class IdentityContext:
                 comparability_assertions[(parts[0], parts[1])] = ComparabilityStatus(
                     value
                 )
+        column_domains = {
+            variable_id: ColumnDomainView.from_dict(view_data)
+            for variable_id, view_data in data.get("column_domains", {}).items()
+        }
 
         return cls(
             concepts=concepts,
             variable_semantics=variable_semantics,
             comparability_assertions=comparability_assertions,
+            column_domains=column_domains,
         )
