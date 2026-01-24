@@ -24,8 +24,8 @@ def test_metric_backward_compatible() -> None:
 def test_metric_version_has_effective_from() -> None:
     """MetricVersion should have effective_from date attribute."""
     # MetricVersion should be a frozen dataclass with effective_from
-    from invariant.domain.model.ids import ConceptId, MetricId, MetricVersionId
     from invariant.semantic import MetricVersion
+    from invariant.shared.contracts.ids import ConceptId, MetricId, MetricVersionId
 
     metric_version = MetricVersion(
         id=MetricVersionId.create(),
@@ -43,8 +43,8 @@ def test_metric_version_is_frozen() -> None:
     """MetricVersion should be immutable (frozen)."""
     import pytest
 
-    from invariant.domain.model.ids import ConceptId, MetricId, MetricVersionId
     from invariant.semantic import MetricVersion
+    from invariant.shared.contracts.ids import ConceptId, MetricId, MetricVersionId
 
     metric_version = MetricVersion(
         id=MetricVersionId.create(),
@@ -60,7 +60,6 @@ def test_metric_version_is_frozen() -> None:
 
 def test_metric_references_concept_id() -> None:
     """Metric should have concept_id field linking to Identity component."""
-    from invariant.domain.model.ids import ConceptId, MetricId
     from invariant.domain.model.metric import (
         Additivity,
         AdditivityType,
@@ -69,6 +68,7 @@ def test_metric_references_concept_id() -> None:
         SimpleAggSpec,
     )
     from invariant.semantic import Metric
+    from invariant.shared.contracts.ids import ConceptId, MetricId
 
     concept_id = ConceptId.create()
     metric = Metric(
@@ -89,7 +89,6 @@ def test_metric_references_concept_id() -> None:
 
 def test_metric_concept_id_optional() -> None:
     """Metric concept_id should be optional for backward compatibility."""
-    from invariant.domain.model.ids import MetricId
     from invariant.domain.model.metric import (
         Additivity,
         AdditivityType,
@@ -98,6 +97,7 @@ def test_metric_concept_id_optional() -> None:
         SimpleAggSpec,
     )
     from invariant.semantic import Metric
+    from invariant.shared.contracts.ids import MetricId
 
     # Should work without concept_id
     metric = Metric(

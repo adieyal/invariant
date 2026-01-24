@@ -5,7 +5,6 @@ import pytest
 from invariant.application.use_cases.get_indicator_details import (
     GetIndicatorDetailsUseCase,
 )
-from invariant.domain.model.ids import MetricId
 from invariant.domain.model.metric import (
     Additivity,
     AdditivityType,
@@ -21,6 +20,7 @@ from invariant.domain.model.metric import (
     SimpleAggSpec,
 )
 from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.shared.contracts.ids import MetricId
 from tests.unit.application.fakes import FakeSemanticAssetStore
 
 

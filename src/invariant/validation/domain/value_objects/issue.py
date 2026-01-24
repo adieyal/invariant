@@ -8,10 +8,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.attribution import Attribution
-    from invariant.domain.model.impact import Impact
-    from invariant.domain.model.remediation_action import RemediationAction
+    from invariant.validation.domain.value_objects.attribution import Attribution
+    from invariant.validation.domain.value_objects.impact import Impact
     from invariant.validation.domain.value_objects.remediation import Remediation
+    from invariant.validation.domain.value_objects.remediation_action import (
+        RemediationAction,
+    )
     from invariant.validation.domain.value_objects.severity import Severity
 
 # Type alias for issue details - supports common JSON-serializable types

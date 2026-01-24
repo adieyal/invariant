@@ -11,9 +11,9 @@ import pytest
 
 def test_indicator_identity_is_frozen():
     """IndicatorIdentity is immutable."""
-    from invariant.domain.model.enums import IndicatorType
-    from invariant.domain.model.ids import ConceptId, UniverseId, VariableId
     from invariant.identity.domain.value_objects import IndicatorIdentity
+    from invariant.shared.contracts.enums import IndicatorType
+    from invariant.shared.contracts.ids import ConceptId, UniverseId, VariableId
 
     identity = IndicatorIdentity(
         variable_id=VariableId(uuid4()),
@@ -28,9 +28,9 @@ def test_indicator_identity_is_frozen():
 
 def test_indicator_identity_has_required_fields():
     """IndicatorIdentity has variable_id, indicator_type, concept_id, universe_id."""
-    from invariant.domain.model.enums import IndicatorType
-    from invariant.domain.model.ids import ConceptId, UniverseId, VariableId
     from invariant.identity.domain.value_objects import IndicatorIdentity
+    from invariant.shared.contracts.enums import IndicatorType
+    from invariant.shared.contracts.ids import ConceptId, UniverseId, VariableId
 
     variable_id = VariableId(uuid4())
     indicator_type = IndicatorType.RATE
@@ -66,9 +66,9 @@ def test_indicator_identity_importable_from_value_objects():
 
 def test_indicator_identity_equality():
     """IndicatorIdentity with same values are equal."""
-    from invariant.domain.model.enums import IndicatorType
-    from invariant.domain.model.ids import ConceptId, UniverseId, VariableId
     from invariant.identity.domain.value_objects import IndicatorIdentity
+    from invariant.shared.contracts.enums import IndicatorType
+    from invariant.shared.contracts.ids import ConceptId, UniverseId, VariableId
 
     variable_id = VariableId(uuid4())
     indicator_type = IndicatorType.MEAN
@@ -93,9 +93,9 @@ def test_indicator_identity_equality():
 
 def test_indicator_identity_all_indicator_types():
     """IndicatorIdentity works with all IndicatorType values."""
-    from invariant.domain.model.enums import IndicatorType
-    from invariant.domain.model.ids import ConceptId, UniverseId, VariableId
     from invariant.identity.domain.value_objects import IndicatorIdentity
+    from invariant.shared.contracts.enums import IndicatorType
+    from invariant.shared.contracts.ids import ConceptId, UniverseId, VariableId
 
     for indicator_type in IndicatorType:
         identity = IndicatorIdentity(

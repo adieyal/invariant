@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from invariant.domain.model.semantic_dataset import TimeGrain
 
-from invariant.domain.model.ids import ConceptId, MetricId
+from invariant.shared.contracts.ids import ConceptId, MetricId
 
 
 class MetricKind(str, Enum):

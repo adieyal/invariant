@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from invariant.domain.model.enums import IndicatorType
-    from invariant.domain.model.ids import ConceptId, UniverseId, VariableId
+    from invariant.shared.contracts.enums import IndicatorType
+    from invariant.shared.contracts.ids import ConceptId, UniverseId, VariableId
 
 
 @dataclass(frozen=True)

@@ -6,14 +6,18 @@ from tempfile import TemporaryDirectory
 
 from invariant.domain.model.data_product import DataProduct
 from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.enums import (
+from invariant.domain.model.reference_system import ReferenceSystemVersion
+from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
+from invariant.domain.model.study import Study
+from invariant.domain.model.variable import Variable
+from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,
     DataType,
     IndicatorType,
     VariableRole,
 )
-from invariant.domain.model.ids import (
+from invariant.shared.contracts.ids import (
     ConceptId,
     DataProductId,
     DatasetId,
@@ -23,11 +27,7 @@ from invariant.domain.model.ids import (
     UniverseId,
     VariableId,
 )
-from invariant.domain.model.reference_system import ReferenceSystemVersion
-from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
-from invariant.domain.model.study import Study
-from invariant.domain.model.value_objects import GrainSpec
-from invariant.domain.model.variable import Variable
+from invariant.shared.contracts.value_objects import GrainSpec
 from invariant_contrib.datadictionary import GenerateDataDictionary
 from tests.unit.application.fakes import FakeCatalogStore
 

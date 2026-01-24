@@ -2,16 +2,24 @@
 
 import pytest
 
-from invariant.domain.model.attribution import (
+from invariant.shared.contracts.ids import VariableId
+from invariant.validation.domain.value_objects.attribution import (
     Attribution,
     AttributionDimension,
     AttributionSlice,
 )
-from invariant.domain.model.check_result import CheckResult
-from invariant.domain.model.ids import VariableId
-from invariant.domain.model.impact import AffectedEntity, Impact, ImpactSeverity
-from invariant.domain.model.remediation_action import ActionType, RemediationAction
-from invariant.domain.model.validation import Disclosure, Severity
+from invariant.validation.domain.value_objects.check_result import CheckResult
+from invariant.validation.domain.value_objects.disclosure import Disclosure
+from invariant.validation.domain.value_objects.impact import (
+    AffectedEntity,
+    Impact,
+    ImpactSeverity,
+)
+from invariant.validation.domain.value_objects.remediation_action import (
+    ActionType,
+    RemediationAction,
+)
+from invariant.validation.domain.value_objects.severity import Severity
 
 
 class TestCheckResult:

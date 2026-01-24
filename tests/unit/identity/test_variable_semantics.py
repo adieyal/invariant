@@ -34,8 +34,8 @@ def test_variable_semantics_same_class_both_locations():
 
 def test_variable_semantics_creation():
     """VariableSemantics can be instantiated with required fields."""
-    from invariant.domain.model.ids import ConceptId, VariableId
     from invariant.identity import VariableSemantics
+    from invariant.shared.contracts.ids import ConceptId, VariableId
 
     variable_id = VariableId(uuid4())
     concept_id = ConceptId(uuid4())
@@ -54,8 +54,8 @@ def test_variable_semantics_creation():
 
 def test_variable_semantics_with_optional_fields():
     """VariableSemantics can be instantiated with optional fields."""
-    from invariant.domain.model.ids import ConceptId, VariableId
     from invariant.identity import VariableSemantics
+    from invariant.shared.contracts.ids import ConceptId, VariableId
 
     variable_id = VariableId(uuid4())
     concept_id = ConceptId(uuid4())

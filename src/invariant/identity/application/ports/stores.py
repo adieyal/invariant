@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.ids import ConceptId, VariableId
     from invariant.identity.domain.entities import (
         ComparabilityAssertion,
         Concept,
         VariableSemantics,
     )
+    from invariant.shared.contracts.ids import ConceptId, VariableId
 
 
 class ConceptStore(Protocol):

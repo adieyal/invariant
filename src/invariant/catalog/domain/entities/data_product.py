@@ -5,12 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from invariant.domain.model.enums import DataProductKind, VariableRole
+from invariant.shared.contracts.enums import DataProductKind, VariableRole
 
 if TYPE_CHECKING:
     from invariant.catalog.domain.entities.variable import Variable
-    from invariant.domain.model.ids import DataProductId, DatasetId, VariableId
-    from invariant.domain.model.value_objects import GrainSpec
+    from invariant.shared.contracts.ids import DataProductId, DatasetId, VariableId
+    from invariant.shared.contracts.value_objects import GrainSpec
 
 
 @dataclass

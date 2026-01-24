@@ -17,8 +17,8 @@ from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.domain.model.ids import VariableId
     from invariant.domain.model.query_plan import QueryPlan
+    from invariant.shared.contracts.ids import VariableId
     from invariant.validation.domain.services.validator import CatalogSnapshot
 
 

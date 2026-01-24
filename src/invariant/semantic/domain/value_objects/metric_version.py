@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from datetime import date
 
-    from invariant.domain.model.ids import ConceptId, MetricId, MetricVersionId
+    from invariant.shared.contracts.ids import ConceptId, MetricId, MetricVersionId
 
 
 @dataclass(frozen=True)

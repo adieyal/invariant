@@ -1,12 +1,12 @@
 """Tests for ComparabilityResolver domain service."""
 
-from invariant.domain.model.enums import ComparabilityLevel, IncompatibilityReason
-from invariant.domain.model.ids import ReferenceSystemVersionId, UniverseId
 from invariant.domain.services.comparability import (
     ComparabilityCheck,
     ComparabilityReport,
     ComparabilityResolver,
 )
+from invariant.shared.contracts.enums import ComparabilityLevel, IncompatibilityReason
+from invariant.shared.contracts.ids import ReferenceSystemVersionId, UniverseId
 from tests.unit.domain.conftest import make_dataset
 
 

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from invariant.semantic.domain.entities.metric import Metric
 
-from invariant.domain.model.ids import MetricId  # noqa: TC001
+from invariant.shared.contracts.ids import MetricId  # noqa: TC001
 
 
 class CyclicDependencyError(Exception):

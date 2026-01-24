@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from invariant.domain.model.enums import AggregationPolicy, IndicatorType, VariableRole
 from invariant.domain.model.query_plan import QueryIntent as DomainQueryIntent
 from invariant.shared.contracts import (
     AggregationRequest,
@@ -19,6 +18,11 @@ from invariant.shared.contracts import (
     QueryAnalysis,
     QueryId,
     QueryIntent,
+)
+from invariant.shared.contracts.enums import (
+    AggregationPolicy,
+    IndicatorType,
+    VariableRole,
 )
 
 if TYPE_CHECKING:

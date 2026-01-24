@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from invariant.domain.model.plan_ir import (
+from invariant.query.domain.ir.plan_ir import (
     AggMeasure,
     AggregateNode,
     FilterNode,

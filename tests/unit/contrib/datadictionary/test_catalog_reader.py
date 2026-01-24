@@ -6,7 +6,14 @@ import pytest
 
 from invariant.domain.model.data_product import DataProduct
 from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.enums import (
+from invariant.domain.model.reference_system import (
+    ReferenceSystem,
+    ReferenceSystemVersion,
+)
+from invariant.domain.model.semantic import IndicatorDefinition, Universe
+from invariant.domain.model.study import Study
+from invariant.domain.model.variable import Variable
+from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,
     DataType,
@@ -14,7 +21,7 @@ from invariant.domain.model.enums import (
     ReferenceSystemKind,
     VariableRole,
 )
-from invariant.domain.model.ids import (
+from invariant.shared.contracts.ids import (
     DataProductId,
     DatasetId,
     ReferenceSystemId,
@@ -23,14 +30,7 @@ from invariant.domain.model.ids import (
     UniverseId,
     VariableId,
 )
-from invariant.domain.model.reference_system import (
-    ReferenceSystem,
-    ReferenceSystemVersion,
-)
-from invariant.domain.model.semantic import IndicatorDefinition, Universe
-from invariant.domain.model.study import Study
-from invariant.domain.model.value_objects import GrainSpec
-from invariant.domain.model.variable import Variable
+from invariant.shared.contracts.value_objects import GrainSpec
 from invariant_contrib.datadictionary.application.catalog_reader import CatalogReader
 from invariant_contrib.datadictionary.domain.models import (
     VariableRole as DocVariableRole,

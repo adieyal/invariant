@@ -9,8 +9,11 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from invariant.domain.model.attribution import Attribution, AttributionDimension
-    from invariant.domain.model.ids import DatasetId
+    from invariant.shared.contracts.ids import DatasetId
+    from invariant.validation.domain.value_objects.attribution import (
+        Attribution,
+        AttributionDimension,
+    )
 
 
 @dataclass(frozen=True)
@@ -80,6 +83,6 @@ class NullAttributionProvider(AttributionProvider):
 
     def compute_attribution(self, request: AttributionRequest) -> Attribution:
         """Return an unavailable attribution."""
-        from invariant.domain.model.attribution import Attribution
+        from invariant.validation.domain.value_objects.attribution import Attribution
 
         return Attribution.unavailable()

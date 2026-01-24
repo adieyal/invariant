@@ -7,14 +7,14 @@ from datetime import date, datetime
 
 import pytest
 
-from invariant.domain.model.enums import ReferenceSystemKind
-from invariant.domain.model.ids import ReferenceSystemId, ReferenceSystemVersionId
 from invariant.reference import ReferenceSystem, ReferenceSystemVersion
 from invariant.reference.application.services.context_provider import (
     ReferenceContext,
     ReferenceContextProvider,
     ReferenceSystemView,
 )
+from invariant.shared.contracts.enums import ReferenceSystemKind
+from invariant.shared.contracts.ids import ReferenceSystemId, ReferenceSystemVersionId
 
 # --- Fake implementations for testing ---
 

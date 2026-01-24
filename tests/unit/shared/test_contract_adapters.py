@@ -10,21 +10,6 @@ from uuid import uuid4
 
 from invariant.domain.model.data_product import DataProduct
 from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.enums import (
-    AggregationPolicy,
-    AggregationType,
-    DataProductKind,
-    DataType,
-    IndicatorType,
-    PresentationFormat,
-    VariableRole,
-)
-from invariant.domain.model.ids import (
-    DataProductId,
-    DatasetId,
-    StudyId,
-    VariableId,
-)
 from invariant.domain.model.query_plan import (
     Metric,
     PresentationSpec,
@@ -33,7 +18,6 @@ from invariant.domain.model.query_plan import (
     SelectOp,
 )
 from invariant.domain.model.semantic import IndicatorDefinition
-from invariant.domain.model.value_objects import GrainSpec
 from invariant.domain.model.variable import Variable
 from invariant.domain.services.validator import CatalogSnapshot
 from invariant.shared._adapters import (
@@ -46,6 +30,22 @@ from invariant.shared.contracts import (
     DatasetView,
     QueryAnalysis,
 )
+from invariant.shared.contracts.enums import (
+    AggregationPolicy,
+    AggregationType,
+    DataProductKind,
+    DataType,
+    IndicatorType,
+    PresentationFormat,
+    VariableRole,
+)
+from invariant.shared.contracts.ids import (
+    DataProductId,
+    DatasetId,
+    StudyId,
+    VariableId,
+)
+from invariant.shared.contracts.value_objects import GrainSpec
 
 # =============================================================================
 # Test Fixtures

@@ -237,53 +237,44 @@ The `tests/unit/application/fakes.py` file provides fake implementations for all
 
 ```
 src/invariant/
-├── __init__.py
-├── domain/
-│   ├── __init__.py
-│   ├── model/
-│   │   ├── __init__.py
-│   │   ├── study.py
-│   │   ├── dataset.py
-│   │   ├── data_product.py
-│   │   ├── variable.py
-│   │   ├── query_plan.py
-│   │   ├── validation.py
-│   │   ├── semantic.py
-│   │   ├── reference_system.py
-│   │   ├── ids.py
-│   │   ├── value_objects.py
-│   │   └── enums.py
-│   └── services/
-│       ├── __init__.py
-│       ├── validator.py
-│       └── comparability.py
-└── application/
-    ├── __init__.py
+├── catalog/                      # Catalog component
+│   ├── domain/entities/          # Study, Dataset, DataProduct, Variable
+│   └── application/
+├── identity/                     # Identity component
+│   ├── domain/entities/          # Concept, Universe, VariableSemantics
+│   ├── domain/services/          # ComparabilityResolver
+│   └── application/
+├── semantic/                     # Semantic component
+│   ├── domain/entities/          # Metric, Dimension, GeoHierarchy, SemanticCatalog
+│   ├── domain/services/          # MetricGraph
+│   └── application/
+├── query/                        # Query component
+│   ├── domain/ir/                # PlanNode, ScanNode, FilterNode, etc.
+│   ├── domain/services/          # QueryPlanner, PostgresCompiler
+│   ├── domain/value_objects/     # QuerySpec
+│   └── application/
+├── validation/                   # Validation component
+│   ├── domain/entities/          # RulesetPack
+│   ├── domain/services/          # Validator, SemanticValidator
+│   ├── domain/value_objects/     # Issue, Disclosure, Severity, Attribution
+│   └── application/
+├── reference/                    # Reference component
+│   ├── domain/entities/          # ReferenceSystem, Crosswalk
+│   ├── domain/value_objects/     # Geography
+│   └── application/
+├── shared/                       # Shared contracts
+│   ├── contracts/                # Ids, Enums, ValueObjects (boundary types)
+│   └── _adapters/                # Internal adapters
+├── kernel/                       # Facade entry point
+│   └── invariant_kernel.py
+├── domain/                       # Legacy re-exports (backward compatibility)
+│   ├── model/                    # Re-exports to new locations
+│   └── services/                 # Re-exports to new locations
+└── application/                  # Shared application layer
     ├── dto/
-    │   ├── __init__.py
-    │   ├── query_request.py
-    │   ├── catalog_write.py
-    │   ├── validation_dto.py
-    │   └── results_dto.py
     ├── ports/
-    │   ├── __init__.py
-    │   ├── catalog_store.py
-    │   ├── query_engine.py
-    │   ├── suppression_engine.py
-    │   ├── crosswalk_service.py
-    │   ├── indicator_engine.py
-    │   ├── audit_log.py
-    │   ├── id_gen.py
-    │   └── clock.py
     ├── use_cases/
-    │   ├── __init__.py
-    │   ├── validate_query.py
-    │   ├── execute_query.py
-    │   ├── create_study.py
-    │   └── acknowledge_issues.py
-    ├── services/
-    │   └── query_plan_builder.py
-    └── exceptions.py
+    └── services/
 ```
 
 ## Key Design Decisions

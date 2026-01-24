@@ -291,7 +291,7 @@ class TestMetricGraphGetDependencies:
         assert deps1 is not deps2
 
     def test_get_dependencies_for_unknown_metric(self) -> None:
-        from invariant.domain.model.ids import MetricId
+        from invariant.shared.contracts.ids import MetricId
 
         graph = MetricGraph.build([])
         unknown_id = MetricId.create()

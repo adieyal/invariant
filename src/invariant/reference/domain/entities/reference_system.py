@@ -7,8 +7,8 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from invariant.domain.model.enums import CrosswalkMethod, ReferenceSystemKind
-    from invariant.domain.model.ids import (
+    from invariant.shared.contracts.enums import CrosswalkMethod, ReferenceSystemKind
+    from invariant.shared.contracts.ids import (
         CrosswalkId,
         ReferenceSystemId,
         ReferenceSystemVersionId,

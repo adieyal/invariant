@@ -88,7 +88,7 @@ class CatalogViewProvider:
             CatalogView containing the requested products, their variables,
             and parent datasets. Unknown product IDs are silently ignored.
         """
-        from invariant.domain.model.ids import DataProductId
+        from invariant.shared.contracts.ids import DataProductId
 
         variables: dict[str, VariableView] = {}
         data_products: dict[str, DataProductView] = {}

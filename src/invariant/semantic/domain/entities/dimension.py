@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-from invariant.domain.model.ids import DimensionId
+from invariant.shared.contracts.ids import DimensionId
 
 
 class DataType(str, Enum):

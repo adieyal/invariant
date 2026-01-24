@@ -44,27 +44,35 @@ bd sync               # Sync with git
 
 ```
 src/
-├── invariant/                    # Core kernel (no I/O, no infra)
-│   ├── domain/                   # Domain layer (pure business logic)
-│   │   ├── model/               # Entities, value objects, aggregates
-│   │   └── services/            # Domain services & invariant logic
-│   ├── application/              # Application layer
-│   │   ├── dto/                 # Request/response DTOs
-│   │   ├── ports/               # Port interfaces (Protocols)
-│   │   ├── use_cases/           # Orchestrating use cases
-│   │   ├── services/            # Application services
-│   │   └── exceptions.py        # Application-level errors
-│   └── __init__.py
-└── invariant_contrib/            # Optional extensions (non-kernel)
-    └── datadictionary/           # Example contribution
-
-tests/
-├── unit/
-│   ├── domain/
-│   ├── application/
-│   │   └── fakes.py             # Fake port implementations
-│   └── contrib/
-└── integration/
+├── invariant/                    # Core kernel
+│   ├── catalog/                  # Catalog component (studies, datasets, data products)
+│   │   ├── domain/entities/
+│   │   └── application/
+│   ├── identity/                 # Identity component (concepts, universes, comparability)
+│   │   ├── domain/entities/
+│   │   └── application/
+│   ├── semantic/                 # Semantic component (metrics, dimensions, hierarchies)
+│   │   ├── domain/entities/
+│   │   └── application/
+│   ├── query/                    # Query component (planning, compilation, IR)
+│   │   ├── domain/services/
+│   │   ├── domain/ir/
+│   │   └── application/
+│   ├── validation/               # Validation component (rules, issues, disclosures)
+│   │   ├── domain/services/
+│   │   ├── domain/value_objects/
+│   │   └── application/
+│   ├── reference/                # Reference component (reference systems, crosswalks)
+│   │   ├── domain/entities/
+│   │   └── application/
+│   ├── shared/                   # Shared contracts and adapters
+│   │   ├── contracts/            # Boundary contracts (ids, enums, value objects)
+│   │   └── _adapters/
+│   ├── kernel/                   # Facade entry point
+│   ├── domain/                   # Legacy (re-exports for backward compatibility)
+│   └── application/              # Shared application layer
+└── invariant_contrib/            # Optional extensions
+    └── datadictionary/
 ```
 
 **Rule of thumb:** If a file cannot be executed entirely in memory with fake ports, it does not belong in `invariant/`.

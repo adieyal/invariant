@@ -18,16 +18,6 @@ from invariant.domain.model.metric import (
     AggregationFunction,
     Metric,
 )
-from invariant.domain.model.plan_ir import (
-    AggregateNode,
-    FilterNode,
-    JoinCardinality,
-    JoinNode,
-    LimitNode,
-    ProjectNode,
-    ScanNode,
-    SortNode,
-)
 from invariant.domain.model.semantic_catalog import SemanticCatalog
 from invariant.domain.model.semantic_dataset import (
     DatasetKind,
@@ -39,6 +29,16 @@ from invariant.domain.services.query_planner import (
     LogicalPlan,
     QueryPlanner,
     QueryPlannerError,
+)
+from invariant.query.domain.ir.plan_ir import (
+    AggregateNode,
+    FilterNode,
+    JoinCardinality,
+    JoinNode,
+    LimitNode,
+    ProjectNode,
+    ScanNode,
+    SortNode,
 )
 
 # --- Fixtures ---
@@ -139,7 +139,7 @@ class TestLogicalPlan:
 
     def test_with_metrics_order(self) -> None:
         """Test LogicalPlan with metrics evaluation order."""
-        from invariant.domain.model.ids import MetricId
+        from invariant.shared.contracts.ids import MetricId
 
         metric_id = MetricId.create()
         root = ScanNode(dataset_name="test", alias="t")

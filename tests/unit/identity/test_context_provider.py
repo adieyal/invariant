@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from invariant.domain.model.ids import ConceptId, VariableId
 from invariant.identity.application.services.context_provider import (
     IdentityContextProvider,
 )
@@ -39,6 +38,7 @@ from invariant.shared.contracts.identity_context import (
 from invariant.shared.contracts.identity_context import (
     ComparabilityStatus as ContractComparabilityStatus,
 )
+from invariant.shared.contracts.ids import ConceptId, VariableId
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

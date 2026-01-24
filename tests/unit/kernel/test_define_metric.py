@@ -16,8 +16,8 @@ from uuid import UUID
 
 import pytest
 
-from invariant.domain.model.ids import ConceptId, MetricId
 from invariant.kernel.facade import InvariantKernel, MetricDefinitionRequest
+from invariant.shared.contracts.ids import ConceptId, MetricId
 
 # --- Fake Implementations ---
 

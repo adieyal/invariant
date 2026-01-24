@@ -18,7 +18,7 @@ from invariant.application.dto.query_request import (
     QueryRequest,
 )
 from invariant.application.use_cases.validate_query import ValidateQueryUseCase
-from invariant.domain.model.ids import (
+from invariant.shared.contracts.ids import (
     ConceptId,
     CrosswalkId,
     DataProductId,

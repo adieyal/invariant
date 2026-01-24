@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-from invariant.domain.model.ids import MaterializationId
 from invariant.semantic.domain.entities.semantic_dataset import TimeGrain  # noqa: TC001
+from invariant.shared.contracts.ids import MaterializationId
 
 
 class RefreshStrategy(str, Enum):

@@ -273,7 +273,7 @@ from invariant.catalog.domain.entities.study import Study
 ```python
 from invariant.catalog.domain.entities.data_product import DataProduct
 from invariant.catalog.domain.entities.variable import Variable
-from invariant.domain.model.enums import VariableRole, DataType
+from invariant.shared.contracts.enums import VariableRole, DataType
 
 # Define a variable
 var = Variable(
@@ -324,7 +324,7 @@ from invariant.identity.domain.entities.comparability_assertion import (
 
 ```python
 from invariant.identity.domain.entities.concept import Concept
-from invariant.domain.model.ids import ConceptId
+from invariant.shared.contracts.ids import ConceptId
 
 # Define a semantic concept
 population_concept = Concept(

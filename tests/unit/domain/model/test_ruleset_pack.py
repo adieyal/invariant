@@ -2,8 +2,8 @@
 
 import pytest
 
-from invariant.domain.model.ruleset_pack import RulesetPack
-from invariant.domain.model.validation import Severity
+from invariant.validation.domain.entities.ruleset_pack import RulesetPack
+from invariant.validation.domain.value_objects.severity import Severity
 
 
 class TestRulesetPack:
@@ -134,19 +134,19 @@ class TestRulesetPack:
 
 class TestBuiltInPacks:
     def test_core_pack_exists(self) -> None:
-        from invariant.domain.model.ruleset_pack import CORE_PACK
+        from invariant.validation.domain.entities.ruleset_pack import CORE_PACK
 
         assert CORE_PACK.id == "core"
         assert CORE_PACK.is_enabled("INDICATOR_AGGREGATION")
 
     def test_standard_pack_exists(self) -> None:
-        from invariant.domain.model.ruleset_pack import STANDARD_PACK
+        from invariant.validation.domain.entities.ruleset_pack import STANDARD_PACK
 
         assert STANDARD_PACK.id == "standard"
         assert STANDARD_PACK.is_enabled("COMPARABILITY")
 
     def test_regulated_pack_exists(self) -> None:
-        from invariant.domain.model.ruleset_pack import REGULATED_PACK
+        from invariant.validation.domain.entities.ruleset_pack import REGULATED_PACK
 
         assert REGULATED_PACK.id == "regulated"
         assert REGULATED_PACK.is_enabled("FRESHNESS")

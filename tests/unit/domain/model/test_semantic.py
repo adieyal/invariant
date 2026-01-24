@@ -2,19 +2,24 @@
 
 import pytest
 
-from invariant.domain.model.enums import (
-    AggregationPolicy,
-    IndicatorType,
-    WeightingMethod,
-)
-from invariant.domain.model.ids import ConceptId, DataProductId, UniverseId, VariableId
 from invariant.domain.model.semantic import (
     Concept,
     IndicatorDefinition,
     Universe,
     VariableSemantics,
 )
-from invariant.domain.model.value_objects import VariableRef
+from invariant.shared.contracts.enums import (
+    AggregationPolicy,
+    IndicatorType,
+    WeightingMethod,
+)
+from invariant.shared.contracts.ids import (
+    ConceptId,
+    DataProductId,
+    UniverseId,
+    VariableId,
+)
+from invariant.shared.contracts.value_objects import VariableRef
 
 
 class TestUniverse:

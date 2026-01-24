@@ -3,9 +3,9 @@
 import pytest
 
 from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.enums import DataProductKind
-from invariant.domain.model.ids import DataProductId, DatasetId, VariableId
-from invariant.domain.model.value_objects import GrainSpec
+from invariant.shared.contracts.enums import DataProductKind
+from invariant.shared.contracts.ids import DataProductId, DatasetId, VariableId
+from invariant.shared.contracts.value_objects import GrainSpec
 from tests.unit.domain.conftest import make_dimension, make_indicator, make_measure
 
 

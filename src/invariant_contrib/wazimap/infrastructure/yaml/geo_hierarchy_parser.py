@@ -10,7 +10,7 @@ from invariant.domain.model.geo_hierarchy import (
     RollupOverride,
     RollupRules,
 )
-from invariant.domain.model.ids import GeoHierarchyId
+from invariant.shared.contracts.ids import GeoHierarchyId
 
 from .base import YamlLoadError, load_yaml_files_from_dir
 

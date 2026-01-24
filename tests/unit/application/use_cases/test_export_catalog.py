@@ -6,7 +6,6 @@ import json
 from datetime import datetime
 
 from invariant.application.use_cases.export_catalog import ExportCatalogUseCase
-from invariant.domain.model.ids import MetricId, SemanticDatasetId
 from invariant.domain.model.metric import (
     Additivity,
     AdditivityType,
@@ -24,6 +23,7 @@ from invariant.domain.model.semantic_dataset import (
     PhysicalRef,
     SemanticDataset,
 )
+from invariant.shared.contracts.ids import MetricId, SemanticDatasetId
 from tests.unit.application.fakes import FakeSemanticAssetStore
 
 

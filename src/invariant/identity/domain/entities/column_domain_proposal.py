@@ -15,13 +15,13 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from datetime import datetime
 
-    from invariant.domain.model.ids import ConceptId
     from invariant.identity.domain.value_objects.column_domain import (
         Grain,
         MeasurementKind,
         ReferenceBinding,
         ValueSpace,
     )
+    from invariant.shared.contracts.ids import ConceptId
 
 
 class ProposalStatus(Enum):

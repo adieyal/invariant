@@ -10,7 +10,15 @@ from uuid import UUID
 
 from invariant.domain.model.data_product import DataProduct
 from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.enums import (
+from invariant.domain.model.reference_system import (
+    ReferenceSystem,
+    ReferenceSystemVersion,
+)
+from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
+from invariant.domain.model.study import Study
+from invariant.domain.model.variable import Variable
+from invariant.domain.services.validator import CatalogSnapshot
+from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,
     DataType,
@@ -19,7 +27,7 @@ from invariant.domain.model.enums import (
     VariableRole,
     WeightingMethod,
 )
-from invariant.domain.model.ids import (
+from invariant.shared.contracts.ids import (
     ConceptId,
     CrosswalkId,
     DataProductId,
@@ -30,15 +38,7 @@ from invariant.domain.model.ids import (
     UniverseId,
     VariableId,
 )
-from invariant.domain.model.reference_system import (
-    ReferenceSystem,
-    ReferenceSystemVersion,
-)
-from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
-from invariant.domain.model.study import Study
-from invariant.domain.model.value_objects import GrainSpec, VariableRef
-from invariant.domain.model.variable import Variable
-from invariant.domain.services.validator import CatalogSnapshot
+from invariant.shared.contracts.value_objects import GrainSpec, VariableRef
 
 if TYPE_CHECKING:
     from pathlib import Path

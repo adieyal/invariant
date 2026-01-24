@@ -17,7 +17,6 @@ from uuid import uuid4
 
 import pytest
 
-from invariant.domain.model.ids import ConceptId
 from invariant.identity.application.services.context_provider import (
     IdentityContextProvider,
 )
@@ -52,13 +51,14 @@ from invariant.identity.domain.value_objects import (
     ReferenceBinding,
     ValueSpace,
 )
+from invariant.shared.contracts.ids import ConceptId
 from tests.unit.application.fakes import FakeClock
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.ids import VariableId
     from invariant.identity.domain.entities import ComparabilityAssertion
+    from invariant.shared.contracts.ids import VariableId
 
 
 # Fake implementations for integration testing

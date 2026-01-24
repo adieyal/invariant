@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from invariant.domain.model.enums import (
+from invariant.shared.contracts.enums import (
     AggregationPolicy,
     AggregationType,
     IndicatorType,
@@ -19,8 +19,8 @@ from invariant.domain.model.enums import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.ids import VariableId
-    from invariant.domain.model.value_objects import VariableRef
+    from invariant.shared.contracts.ids import VariableId
+    from invariant.shared.contracts.value_objects import VariableRef
 
 
 @dataclass(frozen=True)

@@ -2,8 +2,6 @@
 
 import pytest
 
-from invariant.domain.model.enums import AggregationType, PresentationFormat
-from invariant.domain.model.ids import DataProductId, VariableId
 from invariant.domain.model.query_plan import (
     CombineMode,
     CombineOp,
@@ -15,6 +13,8 @@ from invariant.domain.model.query_plan import (
     QueryPlan,
     SelectOp,
 )
+from invariant.shared.contracts.enums import AggregationType, PresentationFormat
+from invariant.shared.contracts.ids import DataProductId, VariableId
 
 
 class TestFilter:

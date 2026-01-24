@@ -2,8 +2,8 @@
 
 from datetime import datetime, timezone
 
-from invariant.domain.model.ids import StudyId
 from invariant.domain.model.study import Study
+from invariant.shared.contracts.ids import StudyId
 
 
 class TestStudy:

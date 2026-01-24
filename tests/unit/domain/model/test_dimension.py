@@ -8,7 +8,7 @@ from invariant.domain.model.dimension import (
     DimensionAttribute,
     SemanticType,
 )
-from invariant.domain.model.ids import DimensionId
+from invariant.shared.contracts.ids import DimensionId
 
 
 class TestDataType:

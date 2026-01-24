@@ -1,7 +1,5 @@
 """Tests for DomainCompatibilityRule."""
 
-from invariant.domain.model.enums import AggregationType, PresentationFormat
-from invariant.domain.model.ids import DataProductId, VariableId
 from invariant.domain.model.query_plan import (
     CombineMode,
     CombineOp,
@@ -15,6 +13,8 @@ from invariant.identity.domain.value_objects import (
     CompatibilityKind,
     CompatibilityResult,
 )
+from invariant.shared.contracts.enums import AggregationType, PresentationFormat
+from invariant.shared.contracts.ids import DataProductId, VariableId
 from invariant.validation.domain.services import CatalogSnapshot
 from invariant.validation.domain.services.domain_compatibility_rule import (
     DomainCompatibilityRule,

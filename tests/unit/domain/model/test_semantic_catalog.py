@@ -11,7 +11,6 @@ from invariant.domain.model.dimension import (
     SemanticType,
 )
 from invariant.domain.model.geo_hierarchy import GeoHierarchy
-from invariant.domain.model.ids import ComparabilityRuleId
 from invariant.domain.model.materialization import (
     Materialization,
     MaterializationGrain,
@@ -34,6 +33,7 @@ from invariant.domain.model.semantic_dataset import (
     PhysicalRef,
     SemanticDataset,
 )
+from invariant.shared.contracts.ids import ComparabilityRuleId
 
 # Fixtures for test data
 

@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-from invariant.domain.model.ids import MetricId  # noqa: TC001
 from invariant.domain.model.metric import (
     DerivedSpec,
     Metric,
@@ -17,7 +16,9 @@ from invariant.domain.model.metric import (
     SimpleAggSpec,
     WeightedAvgSpec,
 )
-from invariant.domain.model.plan_ir import (
+from invariant.domain.model.semantic_catalog import SemanticCatalog  # noqa: TC001
+from invariant.domain.model.semantic_dataset import SemanticDataset  # noqa: TC001
+from invariant.query.domain.ir.plan_ir import (
     AggMeasure,
     AggregateNode,
     FilterNode,
@@ -32,14 +33,13 @@ from invariant.domain.model.plan_ir import (
     SortKey,
     SortNode,
 )
-from invariant.domain.model.semantic_catalog import SemanticCatalog  # noqa: TC001
-from invariant.domain.model.semantic_dataset import SemanticDataset  # noqa: TC001
 from invariant.query.domain.value_objects.query_spec import (
     FilterOperator,
     GroupBySpec,
     QuerySpec,
     SortOrder,
 )
+from invariant.shared.contracts.ids import MetricId  # noqa: TC001
 
 
 @dataclass(frozen=True)

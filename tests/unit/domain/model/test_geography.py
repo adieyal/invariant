@@ -1,8 +1,11 @@
 """Tests for geography entities."""
 
-from invariant.domain.model.enums import GeoType, SuppressionEncoding
-from invariant.domain.model.geography import GeographySystem, SuppressionPolicy
-from invariant.domain.model.ids import DatasetId, ReferenceSystemId
+from invariant.reference.domain.value_objects.geography import (
+    GeographySystem,
+    SuppressionPolicy,
+)
+from invariant.shared.contracts.enums import GeoType, SuppressionEncoding
+from invariant.shared.contracts.ids import DatasetId, ReferenceSystemId
 
 
 class TestGeographySystem:

@@ -6,7 +6,6 @@ from invariant.domain.model.comparability_rules import (
     ComparabilityPolicy,
     ComparabilityRules,
 )
-from invariant.domain.model.ids import ComparabilityRuleId
 from invariant.domain.model.metric import (
     Additivity,
     AdditivityType,
@@ -15,6 +14,7 @@ from invariant.domain.model.metric import (
     Metric,
 )
 from invariant.domain.model.validation import Severity
+from invariant.shared.contracts.ids import ComparabilityRuleId
 
 
 class TestComparabilityPolicy:

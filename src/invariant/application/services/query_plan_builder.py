@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from invariant.application.exceptions import VariableNotFoundError
-from invariant.domain.model.enums import AggregationType, PresentationFormat
-from invariant.domain.model.ids import DataProductId
 from invariant.domain.model.query_plan import (
     CombineMode,
     CombineOp,
@@ -19,6 +17,8 @@ from invariant.domain.model.query_plan import (
     QueryPlan,
     SelectOp,
 )
+from invariant.shared.contracts.enums import AggregationType, PresentationFormat
+from invariant.shared.contracts.ids import DataProductId
 
 if TYPE_CHECKING:
     from invariant.application.dto.query_request import QueryRequest

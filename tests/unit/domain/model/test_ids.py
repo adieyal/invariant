@@ -4,7 +4,7 @@ from uuid import UUID
 
 import pytest
 
-from invariant.domain.model.ids import (
+from invariant.shared.contracts.ids import (
     ComparabilityRuleId,
     ConceptId,
     CrosswalkId,

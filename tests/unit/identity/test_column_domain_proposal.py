@@ -129,7 +129,6 @@ class TestColumnDomainProposal:
 
     def test_column_domain_proposal_has_all_required_fields(self):
         """ColumnDomainProposal has all required fields."""
-        from invariant.domain.model.ids import ConceptId
         from invariant.identity.domain.entities.column_domain_proposal import (
             ColumnDomainProposal,
             ProposalId,
@@ -141,6 +140,7 @@ class TestColumnDomainProposal:
             ReferenceBinding,
             ValueSpace,
         )
+        from invariant.shared.contracts.ids import ConceptId
 
         proposal_id = ProposalId.create()
         concept_id = ConceptId.create()

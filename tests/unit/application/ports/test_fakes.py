@@ -17,15 +17,7 @@ from invariant.domain.model.dimension import (
     DimensionAttribute,
     SemanticType,
 )
-from invariant.domain.model.enums import DataProductKind, VariableRole
 from invariant.domain.model.geo_hierarchy import GeoHierarchy
-from invariant.domain.model.ids import (
-    DataProductId,
-    DatasetId,
-    ReferenceSystemId,
-    StudyId,
-    VariableId,
-)
 from invariant.domain.model.materialization import (
     Materialization,
     MaterializationGrain,
@@ -48,9 +40,17 @@ from invariant.domain.model.semantic_dataset import (
     SemanticDataset,
 )
 from invariant.domain.model.study import Study
-from invariant.domain.model.value_objects import GrainSpec
 from invariant.domain.model.variable import Variable
 from invariant.domain.services.postgres_compiler import CompiledQuery
+from invariant.shared.contracts.enums import DataProductKind, VariableRole
+from invariant.shared.contracts.ids import (
+    DataProductId,
+    DatasetId,
+    ReferenceSystemId,
+    StudyId,
+    VariableId,
+)
+from invariant.shared.contracts.value_objects import GrainSpec
 from tests.unit.application.fakes import (
     FakeAuditLog,
     FakeCatalogStore,

@@ -6,7 +6,6 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from invariant.domain.model.ids import MetricId, SemanticDatasetId
 from invariant.domain.model.metric import (
     Additivity,
     AdditivityType,
@@ -18,20 +17,6 @@ from invariant.domain.model.metric import (
     RatioSpec,
     RollupPolicy,
     SimpleAggSpec,
-)
-from invariant.domain.model.plan_ir import (
-    AggMeasure,
-    AggregateNode,
-    FilterNode,
-    JoinCardinality,
-    JoinNode,
-    LimitNode,
-    ProjectField,
-    ProjectNode,
-    ScanNode,
-    SortDirection,
-    SortKey,
-    SortNode,
 )
 from invariant.domain.model.semantic_catalog import SemanticCatalog
 from invariant.domain.model.semantic_dataset import (
@@ -48,6 +33,21 @@ from invariant.domain.services.postgres_compiler import (
     compile_time_grain,
 )
 from invariant.domain.services.query_planner import LogicalPlan
+from invariant.query.domain.ir.plan_ir import (
+    AggMeasure,
+    AggregateNode,
+    FilterNode,
+    JoinCardinality,
+    JoinNode,
+    LimitNode,
+    ProjectField,
+    ProjectNode,
+    ScanNode,
+    SortDirection,
+    SortKey,
+    SortNode,
+)
+from invariant.shared.contracts.ids import MetricId, SemanticDatasetId
 
 # ============================================================================
 # CompiledQuery tests

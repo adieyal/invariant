@@ -21,10 +21,10 @@ if TYPE_CHECKING:
     from invariant.application.ports.catalog_store import CatalogStore
     from invariant.domain.model.data_product import DataProduct
     from invariant.domain.model.dataset import Dataset
-    from invariant.domain.model.ids import ReferenceSystemId, StudyId
     from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
     from invariant.domain.model.study import Study
     from invariant.domain.model.variable import Variable
+    from invariant.shared.contracts.ids import ReferenceSystemId, StudyId
 
 
 class CatalogReader:

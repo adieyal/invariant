@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from invariant.domain.model.ids import ConceptId, VariableId
 from invariant.identity.domain.entities import ComparabilityStatus
 from invariant.shared.contracts.identity_context import (
     ColumnDomainView,
@@ -22,6 +21,7 @@ from invariant.shared.contracts.identity_context import (
 from invariant.shared.contracts.identity_context import (
     ComparabilityStatus as ContractComparabilityStatus,
 )
+from invariant.shared.contracts.ids import ConceptId, VariableId
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

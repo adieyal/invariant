@@ -9,18 +9,7 @@ Following TDD: tests written first, then implementation.
 import pytest
 
 from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.enums import (
-    AggregationPolicy,
-    AggregationType,
-    DataProductKind,
-    DataType,
-    IndicatorType,
-    PresentationFormat,
-    VariableRole,
-)
-from invariant.domain.model.ids import DataProductId, DatasetId, VariableId
 from invariant.domain.model.semantic import IndicatorDefinition
-from invariant.domain.model.value_objects import GrainSpec, VariableRef
 from invariant.domain.model.variable import Variable
 from invariant.domain.services.validator import CatalogSnapshot
 from invariant.query.application.planning.query_plan import (
@@ -33,12 +22,23 @@ from invariant.query.application.planning.query_plan import (
     SelectOp,
 )
 from invariant.query.application.services.analyzer import QueryAnalyzer
+from invariant.shared.contracts.enums import (
+    AggregationPolicy,
+    AggregationType,
+    DataProductKind,
+    DataType,
+    IndicatorType,
+    PresentationFormat,
+    VariableRole,
+)
+from invariant.shared.contracts.ids import DataProductId, DatasetId, VariableId
 from invariant.shared.contracts.query_analysis import (
     QueryAnalysis,
 )
 from invariant.shared.contracts.query_analysis import (
     QueryIntent as AnalysisQueryIntent,
 )
+from invariant.shared.contracts.value_objects import GrainSpec, VariableRef
 
 
 @pytest.fixture

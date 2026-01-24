@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from invariant.domain.model.ids import DimensionId, SemanticDatasetId
 from invariant.domain.model.semantic_dataset import (
     ColumnDataType,
     ColumnDefinition,
@@ -20,6 +19,7 @@ from invariant.domain.model.semantic_dataset import (
     TimeGrain,
 )
 from invariant.domain.model.time_series import TimeSeriesColumn, TimeSeriesSpec
+from invariant.shared.contracts.ids import DimensionId, SemanticDatasetId
 
 from .base import YamlLoadError, load_yaml_files_from_dir, parse_date
 

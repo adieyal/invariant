@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.enums import IndicatorType
+    from invariant.shared.contracts.enums import IndicatorType
 
 
 @dataclass(frozen=True)

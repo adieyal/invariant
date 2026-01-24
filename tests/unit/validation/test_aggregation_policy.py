@@ -1,6 +1,6 @@
 """Tests for the AggregationPolicy value object."""
 
-from invariant.domain.model.enums import IndicatorType
+from invariant.shared.contracts.enums import IndicatorType
 
 
 class TestAggregationPolicyAllows:

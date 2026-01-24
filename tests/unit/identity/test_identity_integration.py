@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from invariant.domain.model.ids import ConceptId, VariableId
 from invariant.identity import (
     Concept,
     ConceptVersion,
@@ -32,6 +31,7 @@ from invariant.identity.domain.entities import (
 from invariant.shared.contracts.identity_context import (
     ComparabilityStatus as ContractComparabilityStatus,
 )
+from invariant.shared.contracts.ids import ConceptId, VariableId
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

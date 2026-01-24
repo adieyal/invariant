@@ -11,7 +11,6 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from invariant.domain.model.ids import ConceptId
 from invariant.identity.domain.value_objects import (
     ColumnDomain,
     ColumnDomainId,
@@ -21,6 +20,7 @@ from invariant.identity.domain.value_objects import (
     ReferenceBinding,
     ValueSpace,
 )
+from invariant.shared.contracts.ids import ConceptId
 
 if TYPE_CHECKING:
     from invariant.application.ports.clock import Clock

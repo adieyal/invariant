@@ -275,7 +275,6 @@ class TestColumnDomain:
 
     def test_column_domain_has_all_required_fields(self):
         """ColumnDomain has all required fields."""
-        from invariant.domain.model.ids import ConceptId
         from invariant.identity.domain.value_objects.column_domain import (
             ColumnDomain,
             ColumnDomainId,
@@ -285,6 +284,7 @@ class TestColumnDomain:
             ReferenceBinding,
             ValueSpace,
         )
+        from invariant.shared.contracts.ids import ConceptId
 
         domain_id = ColumnDomainId.create()
         concept_id = ConceptId.create()

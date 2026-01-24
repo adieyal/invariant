@@ -48,8 +48,8 @@ def test_concept_version_has_effective_from():
 
 def test_concept_creation():
     """Concept can be instantiated with required fields."""
-    from invariant.domain.model.ids import ConceptId
     from invariant.identity import Concept
+    from invariant.shared.contracts.ids import ConceptId
 
     concept_id = ConceptId.create()
     concept = Concept(
@@ -66,8 +66,8 @@ def test_concept_creation():
 
 def test_concept_with_canonical_unit():
     """Concept can be created with canonical_unit."""
-    from invariant.domain.model.ids import ConceptId
     from invariant.identity import Concept
+    from invariant.shared.contracts.ids import ConceptId
 
     concept_id = ConceptId.create()
     concept = Concept(
@@ -82,8 +82,8 @@ def test_concept_with_canonical_unit():
 
 def test_universe_creation():
     """Universe can be instantiated with required fields."""
-    from invariant.domain.model.ids import UniverseId
     from invariant.identity import Universe
+    from invariant.shared.contracts.ids import UniverseId
 
     universe_id = UniverseId.create()
     universe = Universe(
@@ -101,8 +101,8 @@ def test_universe_creation():
 
 def test_universe_with_inclusions_and_exclusions():
     """Universe can be created with inclusions and exclusions."""
-    from invariant.domain.model.ids import UniverseId
     from invariant.identity import Universe
+    from invariant.shared.contracts.ids import UniverseId
 
     universe_id = UniverseId.create()
     universe = Universe(
@@ -119,8 +119,8 @@ def test_universe_with_inclusions_and_exclusions():
 
 def test_concept_version_creation():
     """ConceptVersion can be instantiated with effective_from."""
-    from invariant.domain.model.ids import ConceptId
     from invariant.identity import ConceptVersion
+    from invariant.shared.contracts.ids import ConceptId
 
     concept_id = ConceptId.create()
     version = ConceptVersion(
@@ -141,8 +141,8 @@ def test_concept_version_is_frozen():
     """ConceptVersion is immutable."""
     from datetime import date
 
-    from invariant.domain.model.ids import ConceptId
     from invariant.identity import ConceptVersion
+    from invariant.shared.contracts.ids import ConceptId
 
     concept_id = ConceptId.create()
     version = ConceptVersion(

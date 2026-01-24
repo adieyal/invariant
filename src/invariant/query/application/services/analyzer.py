@@ -9,13 +9,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from invariant.domain.model.enums import (
+from invariant.query.application.planning.query_plan import (
+    QueryIntent as PlanQueryIntent,
+)
+from invariant.shared.contracts.enums import (
     AggregationPolicy,
     IndicatorType,
     VariableRole,
-)
-from invariant.query.application.planning.query_plan import (
-    QueryIntent as PlanQueryIntent,
 )
 from invariant.shared.contracts.query_analysis import (
     AggregationRequest,

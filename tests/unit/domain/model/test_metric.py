@@ -4,7 +4,6 @@ from decimal import Decimal
 
 import pytest
 
-from invariant.domain.model.ids import MetricId
 from invariant.domain.model.metric import (
     Additivity,
     AdditivityType,
@@ -22,6 +21,7 @@ from invariant.domain.model.metric import (
     WeightedAvgSpec,
 )
 from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.shared.contracts.ids import MetricId
 
 
 class TestMetricKind:

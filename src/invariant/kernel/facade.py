@@ -26,9 +26,9 @@ from invariant.shared.contracts.semantic_resolution import (
 
 if TYPE_CHECKING:
     from invariant.application.dto.query_request import QueryRequest
-    from invariant.domain.model.ids import ConceptId, MetricId
     from invariant.shared.contracts.catalog_view import CatalogView
     from invariant.shared.contracts.identity_context import IdentityContext
+    from invariant.shared.contracts.ids import ConceptId, MetricId
 
 
 @dataclass(frozen=True)

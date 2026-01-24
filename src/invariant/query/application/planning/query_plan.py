@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.enums import AggregationType, PresentationFormat
-    from invariant.domain.model.ids import DataProductId, VariableId
+    from invariant.shared.contracts.enums import AggregationType, PresentationFormat
+    from invariant.shared.contracts.ids import DataProductId, VariableId
 
 
 class FilterOp(str, Enum):

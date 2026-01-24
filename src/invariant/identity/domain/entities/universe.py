@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.ids import UniverseId
+    from invariant.shared.contracts.ids import UniverseId
 
 
 @dataclass

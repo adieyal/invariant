@@ -2,7 +2,7 @@
 
 import pytest
 
-from invariant.domain.model.remediation_action import (
+from invariant.validation.domain.value_objects.remediation_action import (
     ActionType,
     RemediationAction,
 )

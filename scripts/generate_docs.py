@@ -39,23 +39,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from invariant.domain.model.data_product import DataProduct
 from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.enums import (
-    AggregationPolicy,
-    AggregationType,
-    ComparabilityLevel,
-    CrosswalkMethod,
-    DataProductKind,
-    DataType,
-    GeoType,
-    IncompatibilityReason,
-    IndicatorType,
-    PresentationFormat,
-    ReferenceSystemKind,
-    SuppressionEncoding,
-    VariableRole,
-    WeightingMethod,
-)
-from invariant.domain.model.geography import GeographySystem
 from invariant.domain.model.query_plan import (
     CombineMode,
     CombineOp,
@@ -87,17 +70,34 @@ from invariant.domain.model.validation import (
     ValidationResult,
     ValidationStatus,
 )
-from invariant.domain.model.value_objects import (
+from invariant.domain.model.variable import Variable
+from invariant.domain.services.validator import (
+    CatalogSnapshot,
+    IndicatorAggregationRule,
+)
+from invariant.reference.domain.value_objects.geography import GeographySystem
+from invariant.shared.contracts.enums import (
+    AggregationPolicy,
+    AggregationType,
+    ComparabilityLevel,
+    CrosswalkMethod,
+    DataProductKind,
+    DataType,
+    GeoType,
+    IncompatibilityReason,
+    IndicatorType,
+    PresentationFormat,
+    ReferenceSystemKind,
+    SuppressionEncoding,
+    VariableRole,
+    WeightingMethod,
+)
+from invariant.shared.contracts.value_objects import (
     CodeListDomain,
     EnumeratedDomain,
     GrainSpec,
     RangeDomain,
     VariableRef,
-)
-from invariant.domain.model.variable import Variable
-from invariant.domain.services.validator import (
-    CatalogSnapshot,
-    IndicatorAggregationRule,
 )
 
 # Paths

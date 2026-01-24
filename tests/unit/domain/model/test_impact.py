@@ -2,7 +2,7 @@
 
 import pytest
 
-from invariant.domain.model.impact import (
+from invariant.validation.domain.value_objects.impact import (
     AffectedEntity,
     Impact,
     ImpactSeverity,

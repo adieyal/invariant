@@ -2,12 +2,12 @@
 
 import pytest
 
-from invariant.domain.model.attribution import (
+from invariant.shared.contracts.ids import VariableId
+from invariant.validation.domain.value_objects.attribution import (
     Attribution,
     AttributionDimension,
     AttributionSlice,
 )
-from invariant.domain.model.ids import VariableId
 
 
 class TestAttributionDimension:

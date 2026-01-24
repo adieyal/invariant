@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, ClassVar, Protocol
 
-from invariant.domain.model.enums import (
+from invariant.shared.contracts.enums import (
     AggregationPolicy,
     AggregationType,
     VariableRole,
@@ -18,9 +18,9 @@ from invariant.validation.domain.value_objects.severity import Severity
 if TYPE_CHECKING:
     from invariant.domain.model.data_product import DataProduct
     from invariant.domain.model.dataset import Dataset
-    from invariant.domain.model.ids import DataProductId, DatasetId, VariableId
     from invariant.domain.model.query_plan import QueryPlan
     from invariant.domain.model.semantic import IndicatorDefinition
+    from invariant.shared.contracts.ids import DataProductId, DatasetId, VariableId
 
 
 @dataclass

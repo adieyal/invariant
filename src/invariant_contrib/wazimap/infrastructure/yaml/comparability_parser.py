@@ -8,7 +8,7 @@ from invariant.domain.model.comparability_rules import (
     ComparabilityPolicy,
     ComparabilityRules,
 )
-from invariant.domain.model.ids import ComparabilityRuleId
+from invariant.shared.contracts.ids import ComparabilityRuleId
 
 from .base import YamlLoadError, load_yaml_file
 

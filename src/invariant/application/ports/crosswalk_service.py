@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from invariant.application.ports.query_engine import RawQueryResult
-    from invariant.domain.model.enums import CrosswalkMethod
-    from invariant.domain.model.ids import ReferenceSystemVersionId
     from invariant.domain.model.reference_system import Crosswalk
     from invariant.domain.model.validation import Disclosure
+    from invariant.shared.contracts.enums import CrosswalkMethod
+    from invariant.shared.contracts.ids import ReferenceSystemVersionId
 
 
 class CrosswalkService(Protocol):

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from invariant.domain.model.ids import ConceptId, VariableId
+    from invariant.shared.contracts.ids import ConceptId, VariableId
 
 
 @dataclass

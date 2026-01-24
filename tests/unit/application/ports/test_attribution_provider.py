@@ -7,12 +7,12 @@ from invariant.application.ports.attribution_provider import (
     AttributionRequest,
     NullAttributionProvider,
 )
-from invariant.domain.model.attribution import (
+from invariant.shared.contracts.ids import DatasetId, VariableId
+from invariant.validation.domain.value_objects.attribution import (
     Attribution,
     AttributionDimension,
     AttributionSlice,
 )
-from invariant.domain.model.ids import DatasetId, VariableId
 
 
 def _make_request() -> AttributionRequest:

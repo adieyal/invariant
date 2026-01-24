@@ -1,6 +1,6 @@
 """Tests for domain enumerations."""
 
-from invariant.domain.model.enums import (
+from invariant.shared.contracts.enums import (
     AggregationPolicy,
     AggregationType,
     ComparabilityLevel,

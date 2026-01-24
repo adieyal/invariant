@@ -2,7 +2,9 @@
 
 from invariant.domain.model.data_product import DataProduct
 from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.enums import (
+from invariant.domain.model.semantic import IndicatorDefinition
+from invariant.domain.model.variable import Variable
+from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,
     DataType,
@@ -10,18 +12,18 @@ from invariant.domain.model.enums import (
     IndicatorType,
     VariableRole,
 )
-from invariant.domain.model.ids import (
+from invariant.shared.contracts.ids import (
     DataProductId,
     DatasetId,
     StudyId,
     VariableId,
 )
-from invariant.domain.model.impact import ImpactSeverity
-from invariant.domain.model.semantic import IndicatorDefinition
-from invariant.domain.model.value_objects import GrainSpec, VariableRef
-from invariant.domain.model.variable import Variable
-from invariant.domain.services.semantic_impact_analyzer import SemanticImpactAnalyzer
-from invariant.domain.services.validator import CatalogSnapshot
+from invariant.shared.contracts.value_objects import GrainSpec, VariableRef
+from invariant.validation.domain.services.semantic_impact_analyzer import (
+    SemanticImpactAnalyzer,
+)
+from invariant.validation.domain.services.validator import CatalogSnapshot
+from invariant.validation.domain.value_objects.impact import ImpactSeverity
 
 
 def _make_variable(

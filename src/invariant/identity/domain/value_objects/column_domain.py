@@ -14,7 +14,7 @@ from uuid import UUID, uuid4
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from invariant.domain.model.ids import ConceptId
+    from invariant.shared.contracts.ids import ConceptId
 
 
 class ValueSpace(Enum):

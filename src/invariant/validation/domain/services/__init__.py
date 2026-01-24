@@ -8,6 +8,13 @@ from invariant.validation.domain.services.domain_compatibility_rule import (
     CompatibilityProvider,
     DomainCompatibilityRule,
 )
+from invariant.validation.domain.services.freshness_check import (
+    FreshnessCheck,
+    FreshnessPolicy,
+)
+from invariant.validation.domain.services.semantic_impact_analyzer import (
+    SemanticImpactAnalyzer,
+)
 from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
@@ -20,6 +27,9 @@ from invariant.validation.domain.services.semantic_validator import (
     SemanticQueryRule,
     SemanticValidator,
     TimeGrainRule,
+)
+from invariant.validation.domain.services.time_series_validator import (
+    TimeSeriesValidationRule,
 )
 from invariant.validation.domain.services.validator import (
     CatalogSnapshot,
@@ -34,6 +44,8 @@ __all__ = [
     "ComparabilityValidationRule",
     "CompatibilityProvider",
     "DomainCompatibilityRule",
+    "FreshnessCheck",
+    "FreshnessPolicy",
     "GeographyGrainRule",
     "IndicatorAggregationRule",
     "JoinSafetyRule",
@@ -42,8 +54,10 @@ __all__ = [
     "QueryValidationResult",
     "Rule",
     "SemanticCheck",
+    "SemanticImpactAnalyzer",
     "SemanticQueryRule",
     "SemanticValidator",
     "TimeGrainRule",
+    "TimeSeriesValidationRule",
     "Validator",
 ]

@@ -1,13 +1,5 @@
 """Tests for Validator domain service."""
 
-from invariant.domain.model.enums import (
-    AggregationPolicy,
-    AggregationType,
-    DataProductKind,
-    IndicatorType,
-    PresentationFormat,
-)
-from invariant.domain.model.ids import DataProductId
 from invariant.domain.model.query_plan import (
     Metric,
     PresentationSpec,
@@ -22,6 +14,14 @@ from invariant.domain.services.validator import (
     IndicatorAggregationRule,
     Validator,
 )
+from invariant.shared.contracts.enums import (
+    AggregationPolicy,
+    AggregationType,
+    DataProductKind,
+    IndicatorType,
+    PresentationFormat,
+)
+from invariant.shared.contracts.ids import DataProductId
 from tests.unit.domain.conftest import (
     make_data_product,
     make_dimension,

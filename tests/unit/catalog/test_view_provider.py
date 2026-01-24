@@ -9,9 +9,6 @@ from __future__ import annotations
 from invariant.catalog.application.services.view_provider import CatalogViewProvider
 from invariant.domain.model.data_product import DataProduct
 from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.enums import DataProductKind, DataType, VariableRole
-from invariant.domain.model.ids import DataProductId, DatasetId, StudyId, VariableId
-from invariant.domain.model.value_objects import GrainSpec
 from invariant.domain.model.variable import Variable
 from invariant.shared.contracts.catalog_view import (
     CatalogView,
@@ -19,6 +16,9 @@ from invariant.shared.contracts.catalog_view import (
     DatasetView,
     VariableView,
 )
+from invariant.shared.contracts.enums import DataProductKind, DataType, VariableRole
+from invariant.shared.contracts.ids import DataProductId, DatasetId, StudyId, VariableId
+from invariant.shared.contracts.value_objects import GrainSpec
 from tests.unit.application.fakes import FakeCatalogStore
 
 

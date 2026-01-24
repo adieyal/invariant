@@ -5,7 +5,6 @@ from datetime import date
 
 import pytest
 
-from invariant.domain.model.ids import DimensionId, SemanticDatasetId
 from invariant.domain.model.semantic_dataset import (
     ColumnDataType,
     ColumnDefinition,
@@ -22,6 +21,7 @@ from invariant.domain.model.semantic_dataset import (
     _check_unique,
 )
 from invariant.domain.model.time_series import TimeSeriesColumn, TimeSeriesSpec
+from invariant.shared.contracts.ids import DimensionId, SemanticDatasetId
 
 
 class TestCheckUnique:

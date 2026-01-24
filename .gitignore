@@ -31,3 +31,5 @@ htmlcov/
 
 # MkDocs
 site/
+.beads
+.claude

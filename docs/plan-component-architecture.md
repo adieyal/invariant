@@ -1,6 +1,6 @@
 # Component Architecture Plan
 
-> **Status**: Proposal (v2 - hardened boundaries)
+> **Status**: Implemented (v1.0.0)
 > **Created**: 2026-01-24
 > **Updated**: 2026-01-24
 > **Context**: Restructuring the application layer into cohesive domain components

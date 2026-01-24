@@ -2,16 +2,16 @@
 
 from datetime import date
 
-from invariant.domain.model.enums import CrosswalkMethod, ReferenceSystemKind
-from invariant.domain.model.ids import (
-    CrosswalkId,
-    ReferenceSystemId,
-    ReferenceSystemVersionId,
-)
 from invariant.domain.model.reference_system import (
     Crosswalk,
     ReferenceSystem,
     ReferenceSystemVersion,
+)
+from invariant.shared.contracts.enums import CrosswalkMethod, ReferenceSystemKind
+from invariant.shared.contracts.ids import (
+    CrosswalkId,
+    ReferenceSystemId,
+    ReferenceSystemVersionId,
 )
 
 

@@ -12,7 +12,9 @@ from invariant.domain.model.metric import (
     RatioSpec,
     SimpleAggSpec,
 )
-from invariant.domain.model.plan_ir import (
+from invariant.domain.model.semantic_catalog import SemanticCatalog  # noqa: TC001
+from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.query.domain.ir.plan_ir import (
     AggMeasure,
     AggregateNode,
     FilterNode,
@@ -24,8 +26,6 @@ from invariant.domain.model.plan_ir import (
     SortDirection,
     SortNode,
 )
-from invariant.domain.model.semantic_catalog import SemanticCatalog  # noqa: TC001
-from invariant.domain.model.semantic_dataset import TimeGrain
 from invariant.query.domain.services.query_planner import LogicalPlan  # noqa: TC001
 
 # Type alias for SQL parameter values - covers all types that can be passed to parameterized queries

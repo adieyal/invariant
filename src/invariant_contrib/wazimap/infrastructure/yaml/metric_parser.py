@@ -5,7 +5,6 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
-from invariant.domain.model.ids import MetricId
 from invariant.domain.model.metric import (
     Additivity,
     AdditivityType,
@@ -24,6 +23,7 @@ from invariant.domain.model.metric import (
     WeightedAvgSpec,
 )
 from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.shared.contracts.ids import MetricId
 
 from .base import YamlLoadError, load_yaml_files_from_dir
 

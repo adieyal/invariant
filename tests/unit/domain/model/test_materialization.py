@@ -2,7 +2,6 @@
 
 import pytest
 
-from invariant.domain.model.ids import MaterializationId
 from invariant.domain.model.materialization import (
     Materialization,
     MaterializationGrain,
@@ -13,6 +12,7 @@ from invariant.domain.model.materialization import (
     StorageConfig,
 )
 from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.shared.contracts.ids import MaterializationId
 
 
 class TestRefreshStrategy:

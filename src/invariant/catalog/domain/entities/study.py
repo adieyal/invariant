@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from invariant.domain.model.ids import StudyId
+    from invariant.shared.contracts.ids import StudyId
 
 
 @dataclass

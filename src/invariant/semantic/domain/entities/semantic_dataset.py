@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from invariant.domain.model.time_series import TimeSeriesSpec
 
-from invariant.domain.model.ids import DimensionId, SemanticDatasetId
+from invariant.shared.contracts.ids import DimensionId, SemanticDatasetId
 
 T = TypeVar("T")
 

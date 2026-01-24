@@ -2,8 +2,8 @@
 
 import pytest
 
-from invariant.domain.model.ids import DataProductId, VariableId
-from invariant.domain.model.value_objects import (
+from invariant.shared.contracts.ids import DataProductId, VariableId
+from invariant.shared.contracts.value_objects import (
     CodeListDomain,
     EnumeratedDomain,
     GrainSpec,

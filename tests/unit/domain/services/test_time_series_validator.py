@@ -11,7 +11,9 @@ from invariant.domain.model.semantic_dataset import (
 )
 from invariant.domain.model.time_series import TimeSeriesColumn, TimeSeriesSpec
 from invariant.domain.model.validation import Severity
-from invariant.domain.services.time_series_validator import TimeSeriesValidationRule
+from invariant.validation.domain.services.time_series_validator import (
+    TimeSeriesValidationRule,
+)
 
 
 class TestTimeSeriesValidationRule:
@@ -130,7 +132,7 @@ class TestTimeSeriesValidationRule:
 
         # Create dataset bypassing validation
         dataset = SemanticDataset.__new__(SemanticDataset)
-        from invariant.domain.model.ids import SemanticDatasetId
+        from invariant.shared.contracts.ids import SemanticDatasetId
 
         object.__setattr__(dataset, "id", SemanticDatasetId.create())
         object.__setattr__(dataset, "name", "census")
@@ -171,7 +173,7 @@ class TestTimeSeriesValidationRule:
 
         # Create dataset bypassing validation
         dataset = SemanticDataset.__new__(SemanticDataset)
-        from invariant.domain.model.ids import SemanticDatasetId
+        from invariant.shared.contracts.ids import SemanticDatasetId
 
         object.__setattr__(dataset, "id", SemanticDatasetId.create())
         object.__setattr__(dataset, "name", "my_dataset")
@@ -210,7 +212,7 @@ class TestTimeSeriesValidationRule:
 
         # Create dataset bypassing validation
         dataset = SemanticDataset.__new__(SemanticDataset)
-        from invariant.domain.model.ids import SemanticDatasetId
+        from invariant.shared.contracts.ids import SemanticDatasetId
 
         object.__setattr__(dataset, "id", SemanticDatasetId.create())
         object.__setattr__(dataset, "name", "test")

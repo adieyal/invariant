@@ -9,15 +9,6 @@ from invariant.application.dto.semantic_query import (
     ExplainResultDTO,
     MaterializationDecision,
 )
-from invariant.domain.model.plan_ir import (
-    AggregateNode,
-    FilterNode,
-    JoinNode,
-    LimitNode,
-    ProjectNode,
-    ScanNode,
-    SortNode,
-)
 from invariant.domain.model.validation import Severity
 from invariant.domain.services.postgres_compiler import (
     PostgresCompiler,
@@ -27,6 +18,15 @@ from invariant.domain.services.query_planner import (
     LogicalPlan,
     QueryPlanner,
     QueryPlannerError,
+)
+from invariant.query.domain.ir.plan_ir import (
+    AggregateNode,
+    FilterNode,
+    JoinNode,
+    LimitNode,
+    ProjectNode,
+    ScanNode,
+    SortNode,
 )
 from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
@@ -42,7 +42,7 @@ from invariant.validation.domain.services.semantic_validator import (
 if TYPE_CHECKING:
     from invariant.application.dto.semantic_query import SemanticQueryRequest
     from invariant.application.ports.semantic_asset_store import SemanticAssetStore
-    from invariant.domain.model.plan_ir import PlanNode
+    from invariant.query.domain.ir.plan_ir import PlanNode
 
 
 @dataclass

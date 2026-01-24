@@ -1,6 +1,9 @@
 """Identity domain entities.
 
 Entities are objects with identity that persists over time.
+
+Note: ComparabilityPolicy and ComparabilityRules are available via direct import from
+invariant.identity.domain.entities.comparability_rules to avoid circular imports.
 """
 
 from invariant.identity.domain.entities.column_domain_proposal import (

@@ -26,18 +26,6 @@ from invariant.domain.model.comparability_rules import (
 )
 from invariant.domain.model.dimension import Dimension  # noqa: TC001
 from invariant.domain.model.geo_hierarchy import GeoHierarchy  # noqa: TC001
-from invariant.domain.model.ids import (
-    ConceptId,
-    CrosswalkId,
-    DataProductId,
-    DatasetId,
-    MetricId,
-    ReferenceSystemId,
-    ReferenceSystemVersionId,
-    StudyId,
-    UniverseId,
-    VariableId,
-)
 from invariant.domain.model.materialization import Materialization  # noqa: TC001
 from invariant.domain.model.metric import (
     Additivity,
@@ -55,12 +43,23 @@ from invariant.domain.model.semantic_dataset import (
 )
 from invariant.domain.model.validation import Disclosure, ValidationResult
 from invariant.domain.services.validator import CatalogSnapshot
+from invariant.shared.contracts.ids import (
+    ConceptId,
+    CrosswalkId,
+    DataProductId,
+    DatasetId,
+    MetricId,
+    ReferenceSystemId,
+    ReferenceSystemVersionId,
+    StudyId,
+    UniverseId,
+    VariableId,
+)
 from invariant.validation.application.ports import AuditLog, SuppressionEngine
 
 if TYPE_CHECKING:
     from invariant.domain.model.data_product import DataProduct
     from invariant.domain.model.dataset import Dataset
-    from invariant.domain.model.geography import SuppressionPolicy
     from invariant.domain.model.query_plan import QueryPlan
     from invariant.domain.model.reference_system import (
         Crosswalk,
@@ -70,6 +69,7 @@ if TYPE_CHECKING:
     from invariant.domain.model.study import Study
     from invariant.domain.model.variable import Variable
     from invariant.domain.services.postgres_compiler import CompiledQuery
+    from invariant.reference.domain.value_objects.geography import SuppressionPolicy
 
 
 @dataclass

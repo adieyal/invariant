@@ -2,8 +2,9 @@
 
 from invariant.domain.model.data_product import DataProduct
 from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.enums import DataProductKind, DataType, VariableRole
-from invariant.domain.model.ids import (
+from invariant.domain.model.variable import Variable
+from invariant.shared.contracts.enums import DataProductKind, DataType, VariableRole
+from invariant.shared.contracts.ids import (
     DataProductId,
     DatasetId,
     ReferenceSystemId,
@@ -12,8 +13,7 @@ from invariant.domain.model.ids import (
     UniverseId,
     VariableId,
 )
-from invariant.domain.model.value_objects import GrainSpec
-from invariant.domain.model.variable import Variable
+from invariant.shared.contracts.value_objects import GrainSpec
 
 
 def make_dimension(name: str, dp_id: DataProductId) -> Variable:

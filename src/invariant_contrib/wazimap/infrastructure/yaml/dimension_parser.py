@@ -10,7 +10,7 @@ from invariant.domain.model.dimension import (
     DimensionAttribute,
     SemanticType,
 )
-from invariant.domain.model.ids import DimensionId
+from invariant.shared.contracts.ids import DimensionId
 
 from .base import YamlLoadError, load_yaml_files_from_dir
 

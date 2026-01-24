@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-from invariant.domain.model.ids import GeoHierarchyId
+from invariant.shared.contracts.ids import GeoHierarchyId
 
 
 @dataclass(frozen=True)

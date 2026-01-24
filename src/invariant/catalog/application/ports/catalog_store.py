@@ -7,7 +7,14 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from invariant.domain.model.data_product import DataProduct
     from invariant.domain.model.dataset import Dataset
-    from invariant.domain.model.ids import (
+    from invariant.domain.model.reference_system import (
+        Crosswalk,
+        ReferenceSystemVersion,
+    )
+    from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
+    from invariant.domain.model.study import Study
+    from invariant.domain.model.variable import Variable
+    from invariant.shared.contracts.ids import (
         ConceptId,
         CrosswalkId,
         DataProductId,
@@ -17,13 +24,6 @@ if TYPE_CHECKING:
         UniverseId,
         VariableId,
     )
-    from invariant.domain.model.reference_system import (
-        Crosswalk,
-        ReferenceSystemVersion,
-    )
-    from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
-    from invariant.domain.model.study import Study
-    from invariant.domain.model.variable import Variable
     from invariant.validation.domain.services.validator import CatalogSnapshot
 
 

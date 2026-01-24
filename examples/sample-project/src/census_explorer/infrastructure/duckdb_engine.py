@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import duckdb
 
 from invariant.application.ports.query_engine import CostEstimate, RawQueryResult
-from invariant.domain.model.enums import AggregationType
+from invariant.shared.contracts.enums import AggregationType
 
 if TYPE_CHECKING:
     from pathlib import Path
