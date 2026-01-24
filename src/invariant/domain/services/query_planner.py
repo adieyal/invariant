@@ -8,11 +8,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-from invariant.application.dto.semantic_query import (
-    FilterOp,
-    GroupBySpec,
-    SemanticQueryRequest,
-)
 from invariant.domain.model.ids import MetricId  # noqa: TC001
 from invariant.domain.model.metric import (
     DerivedSpec,
@@ -36,6 +31,12 @@ from invariant.domain.model.plan_ir import (
     SortDirection,
     SortKey,
     SortNode,
+)
+from invariant.domain.model.query_spec import (
+    FilterOperator,
+    GroupBySpec,
+    QuerySpec,
+    SortOrder,
 )
 from invariant.domain.model.semantic_catalog import SemanticCatalog  # noqa: TC001
 from invariant.domain.model.semantic_dataset import SemanticDataset  # noqa: TC001
@@ -85,7 +86,7 @@ class QueryPlannerError(Exception):
 class QueryPlanner:
     """Domain service for building logical query plans from semantic queries.
 
-    QueryPlanner translates a validated SemanticQueryRequest into a LogicalPlan
+    QueryPlanner translates a validated QuerySpec into a LogicalPlan
     that can be compiled to SQL. The planning process involves:
 
     1. Resolving metrics and expanding the dependency DAG
@@ -97,7 +98,7 @@ class QueryPlanner:
 
     def plan(
         self,
-        query: SemanticQueryRequest,
+        query: QuerySpec,
         catalog: SemanticCatalog,
     ) -> LogicalPlan:
         """Build a logical plan from a semantic query.
@@ -182,7 +183,7 @@ class QueryPlanner:
     def _determine_recompute(
         self,
         metrics: list[Metric],
-        query: SemanticQueryRequest,
+        query: QuerySpec,
     ) -> dict[str, bool]:
         """Determine which metrics require recomputation on rollup.
 
@@ -224,7 +225,7 @@ class QueryPlanner:
 
     def _build_plan_tree(
         self,
-        query: SemanticQueryRequest,
+        query: QuerySpec,
         resolved_metrics: list[Metric],
         datasets_needed: dict[str, SemanticDataset],
         group_keys: list[str],
@@ -407,32 +408,32 @@ class QueryPlanner:
             op = f.op
             val = f.value
 
-            if op == FilterOp.EQ:
+            if op == FilterOperator.EQ:
                 predicates.append(f"{col} = {self._quote_value(val)}")
-            elif op == FilterOp.NE:
+            elif op == FilterOperator.NE:
                 predicates.append(f"{col} <> {self._quote_value(val)}")
-            elif op == FilterOp.GT:
+            elif op == FilterOperator.GT:
                 predicates.append(f"{col} > {self._quote_value(val)}")
-            elif op == FilterOp.GTE:
+            elif op == FilterOperator.GTE:
                 predicates.append(f"{col} >= {self._quote_value(val)}")
-            elif op == FilterOp.LT:
+            elif op == FilterOperator.LT:
                 predicates.append(f"{col} < {self._quote_value(val)}")
-            elif op == FilterOp.LTE:
+            elif op == FilterOperator.LTE:
                 predicates.append(f"{col} <= {self._quote_value(val)}")
-            elif op == FilterOp.IN:
+            elif op == FilterOperator.IN:
                 if isinstance(val, (list, tuple)):
                     vals = ", ".join(self._quote_value(v) for v in val)
                     predicates.append(f"{col} IN ({vals})")
                 else:
                     predicates.append(f"{col} IN ({self._quote_value(val)})")
-            elif op == FilterOp.NOT_IN:
+            elif op == FilterOperator.NOT_IN:
                 if isinstance(val, (list, tuple)):
                     vals = ", ".join(self._quote_value(v) for v in val)
                     predicates.append(f"{col} NOT IN ({vals})")
                 else:
                     predicates.append(f"{col} NOT IN ({self._quote_value(val)})")
             elif (
-                op == FilterOp.BETWEEN
+                op == FilterOperator.BETWEEN
                 and isinstance(val, (list, tuple))
                 and len(val) >= 2
             ):
@@ -513,15 +514,11 @@ class QueryPlanner:
         order_by: tuple,  # tuple[OrderBySpec, ...]
     ) -> list[SortKey]:
         """Build sort keys from order by specs."""
-        from invariant.application.dto.semantic_query import (
-            SortDirection as DtoSortDirection,
-        )
-
         keys: list[SortKey] = []
         for spec in order_by:
             direction = (
                 SortDirection.ASC
-                if spec.direction == DtoSortDirection.ASC
+                if spec.direction == SortOrder.ASC
                 else SortDirection.DESC
             )
             keys.append(SortKey(expr=spec.field, direction=direction))

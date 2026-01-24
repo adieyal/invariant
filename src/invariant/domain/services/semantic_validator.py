@@ -24,9 +24,9 @@ from invariant.domain.model.validation import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.application.dto.semantic_query import SemanticQueryRequest
     from invariant.domain.model.check_result import CheckResult
     from invariant.domain.model.query_plan import QueryPlan
+    from invariant.domain.model.query_spec import QuerySpec
     from invariant.domain.model.ruleset_pack import RulesetPack
     from invariant.domain.services.validator import CatalogSnapshot
 
@@ -127,13 +127,11 @@ class SemanticValidator:
 class SemanticQueryRule(Protocol):
     """Protocol for validation rules that evaluate semantic queries.
 
-    Rules evaluate a SemanticQueryRequest against a SemanticCatalog
+    Rules evaluate a QuerySpec against a SemanticCatalog
     and return a list of issues found.
     """
 
-    def evaluate(
-        self, query: SemanticQueryRequest, catalog: SemanticCatalog
-    ) -> list[Issue]:
+    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
         """Evaluate the rule against the query and catalog.
 
         Args:
@@ -153,9 +151,7 @@ class NameResolutionRule:
     the semantic catalog and returns errors for unknown or ambiguous references.
     """
 
-    def evaluate(
-        self, query: SemanticQueryRequest, catalog: SemanticCatalog
-    ) -> list[Issue]:
+    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
         """Evaluate name resolution for the query.
 
         Args:
@@ -247,9 +243,7 @@ class GeographyGrainRule:
     - Illegal rollups (averaging rates) are caught unless metric has RECOMPUTE policy
     """
 
-    def evaluate(
-        self, query: SemanticQueryRequest, catalog: SemanticCatalog
-    ) -> list[Issue]:
+    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
         """Evaluate geography grain constraints for the query.
 
         Args:
@@ -433,9 +427,7 @@ class TimeGrainRule:
         """
         self._require_time_filter = require_time_filter
 
-    def evaluate(
-        self, query: SemanticQueryRequest, catalog: SemanticCatalog
-    ) -> list[Issue]:
+    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
         """Evaluate time grain constraints for the query.
 
         Args:
@@ -573,9 +565,7 @@ class TimeGrainRule:
 
         return issues
 
-    def _has_time_filter(
-        self, query: SemanticQueryRequest, time_group_bys: list
-    ) -> bool:
+    def _has_time_filter(self, query: QuerySpec, time_group_bys: list) -> bool:
         """Check if the query has a time filter.
 
         Args:
@@ -626,9 +616,7 @@ class AdditivityRule:
     - Ratio metrics default to recompute behavior (never sum)
     """
 
-    def evaluate(
-        self, query: SemanticQueryRequest, catalog: SemanticCatalog
-    ) -> list[Issue]:
+    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
         """Evaluate additivity constraints for the query.
 
         Args:
@@ -772,7 +760,7 @@ class AdditivityRule:
         self,
         metric: Metric,
         metric_name: str,
-        query: SemanticQueryRequest,
+        query: QuerySpec,
     ) -> list[Issue]:
         """Check semi-additive constraints for a metric rollup.
 
@@ -857,9 +845,7 @@ class ComparabilityValidationRule:
         """
         self._rules = comparability_rules
 
-    def evaluate(
-        self, query: SemanticQueryRequest, catalog: SemanticCatalog
-    ) -> list[Issue]:
+    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
         """Evaluate comparability constraints for the query.
 
         Args:
@@ -974,7 +960,7 @@ class QueryRuleValidator:
         self.rules = tuple(rules)
 
     def validate(
-        self, query: SemanticQueryRequest, catalog: SemanticCatalog
+        self, query: QuerySpec, catalog: SemanticCatalog
     ) -> QueryValidationResult:
         """Validate a semantic query against the catalog using all rules.
 
@@ -1045,9 +1031,7 @@ class JoinSafetyRule:
     - Validates that metrics requiring joins declare their join_intent
     """
 
-    def evaluate(
-        self, query: SemanticQueryRequest, catalog: SemanticCatalog
-    ) -> list[Issue]:
+    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
         """Evaluate join safety constraints for the query.
 
         Args:
