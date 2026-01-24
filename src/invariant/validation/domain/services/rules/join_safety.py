@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from invariant.domain.model.query_spec import QuerySpec
     from invariant.domain.model.semantic_catalog import SemanticCatalog
 
+from invariant.domain.model.metric import JoinIntent, RatioSpec, SimpleAggSpec
+
 
 class JoinSafetyRule:
     """Validation rule for join safety constraints.
@@ -36,8 +38,6 @@ class JoinSafetyRule:
         Returns:
             A list of issues for join safety constraint violations.
         """
-        from invariant.domain.model.metric import JoinIntent, RatioSpec
-
         issues: list[Issue] = []
 
         for metric_name in query.metrics:
@@ -114,8 +114,6 @@ class JoinSafetyRule:
         Returns:
             The dataset name if it's a SimpleAggSpec metric, None otherwise.
         """
-        from invariant.domain.model.metric import SimpleAggSpec
-
         if isinstance(metric.spec, SimpleAggSpec):
             return metric.spec.dataset_name
         return None

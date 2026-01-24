@@ -7,10 +7,11 @@ refinement of ColumnDomainProposals.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import datetime
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
+from uuid import UUID
 
-from invariant.identity.domain.entities import ProposalStatus
+from invariant.identity.application.use_cases.manage_domain import ColumnDomainDTO
+from invariant.identity.domain.entities import ProposalId, ProposalStatus
 from invariant.identity.domain.value_objects import (
     ColumnDomain,
     ColumnDomainId,
@@ -18,7 +19,11 @@ from invariant.identity.domain.value_objects import (
 )
 
 if TYPE_CHECKING:
-    from invariant.identity.domain.entities import ColumnDomainProposal
+    from invariant.application.ports.clock import Clock
+    from invariant.identity.application.ports.column_domain_store import (
+        ColumnDomainProposalStore,
+        ColumnDomainStore,
+    )
 
 
 class ProposalNotFoundError(Exception):
@@ -38,33 +43,6 @@ class ProposalNotPendingError(Exception):
         super().__init__(
             f"Proposal {proposal_id} is not pending, current status: {status.name}"
         )
-
-
-# Port interfaces
-
-
-class ColumnDomainProposalStore(Protocol):
-    """Protocol for accessing ColumnDomainProposal entities."""
-
-    def get(self, proposal_id: str) -> ColumnDomainProposal | None:
-        """Get a proposal by ID."""
-        ...
-
-    def save(self, proposal: ColumnDomainProposal) -> None:
-        """Save a proposal."""
-        ...
-
-
-class ColumnDomainStore(Protocol):
-    """Protocol for accessing ColumnDomain entities."""
-
-    def get(self, domain_id: str) -> ColumnDomain | None:
-        """Get a domain by ID."""
-        ...
-
-    def save(self, domain: ColumnDomain) -> None:
-        """Save a domain."""
-        ...
 
 
 # Request DTOs
@@ -119,22 +97,24 @@ class AcceptProposalUseCase:
 
     proposal_store: ColumnDomainProposalStore
     domain_store: ColumnDomainStore
+    clock: Clock
 
-    def execute(self, request: AcceptProposalRequest) -> ColumnDomain:
+    def execute(self, request: AcceptProposalRequest) -> ColumnDomainDTO:
         """Accept a proposal and create a confirmed ColumnDomain.
 
         Args:
             request: The acceptance request with proposal ID and acceptor info.
 
         Returns:
-            The created ColumnDomain.
+            A ColumnDomainDTO representing the created domain.
 
         Raises:
             ProposalNotFoundError: If the proposal doesn't exist.
             ProposalNotPendingError: If the proposal is not in PENDING status.
         """
         # Get and validate proposal
-        proposal = self.proposal_store.get(request.proposal_id)
+        proposal_id = ProposalId(UUID(request.proposal_id))
+        proposal = self.proposal_store.get_proposal(proposal_id)
         if proposal is None:
             raise ProposalNotFoundError(request.proposal_id)
 
@@ -142,7 +122,7 @@ class AcceptProposalUseCase:
             raise ProposalNotPendingError(request.proposal_id, proposal.status)
 
         # Create confirmed domain from proposal
-        now = datetime.now()
+        now = self.clock.now()
         domain = ColumnDomain(
             id=ColumnDomainId.create(),
             variable_id=proposal.variable_id,
@@ -158,7 +138,7 @@ class AcceptProposalUseCase:
         )
 
         # Save domain
-        self.domain_store.save(domain)
+        self.domain_store.save_domain(domain)
 
         # Update proposal status
         updated_proposal = replace(
@@ -168,9 +148,9 @@ class AcceptProposalUseCase:
             resolved_by=request.accepted_by,
             resolution_notes=request.notes,
         )
-        self.proposal_store.save(updated_proposal)
+        self.proposal_store.save_proposal(updated_proposal)
 
-        return domain
+        return ColumnDomainDTO.from_domain(domain)
 
 
 @dataclass
@@ -181,6 +161,7 @@ class RejectProposalUseCase:
     """
 
     proposal_store: ColumnDomainProposalStore
+    clock: Clock
 
     def execute(self, request: RejectProposalRequest) -> None:
         """Reject a proposal.
@@ -193,7 +174,8 @@ class RejectProposalUseCase:
             ProposalNotPendingError: If the proposal is not in PENDING status.
         """
         # Get and validate proposal
-        proposal = self.proposal_store.get(request.proposal_id)
+        proposal_id = ProposalId(UUID(request.proposal_id))
+        proposal = self.proposal_store.get_proposal(proposal_id)
         if proposal is None:
             raise ProposalNotFoundError(request.proposal_id)
 
@@ -201,7 +183,7 @@ class RejectProposalUseCase:
             raise ProposalNotPendingError(request.proposal_id, proposal.status)
 
         # Update proposal status
-        now = datetime.now()
+        now = self.clock.now()
         updated_proposal = replace(
             proposal,
             status=ProposalStatus.REJECTED,
@@ -209,7 +191,7 @@ class RejectProposalUseCase:
             resolved_by=request.rejected_by,
             resolution_notes=request.reason,
         )
-        self.proposal_store.save(updated_proposal)
+        self.proposal_store.save_proposal(updated_proposal)
 
 
 @dataclass
@@ -220,6 +202,7 @@ class RequestRefinementUseCase:
     """
 
     proposal_store: ColumnDomainProposalStore
+    clock: Clock
 
     def execute(self, request: RequestRefinementRequest) -> None:
         """Request refinement of a proposal.
@@ -232,7 +215,8 @@ class RequestRefinementUseCase:
             ProposalNotPendingError: If the proposal is not in PENDING status.
         """
         # Get and validate proposal
-        proposal = self.proposal_store.get(request.proposal_id)
+        proposal_id = ProposalId(UUID(request.proposal_id))
+        proposal = self.proposal_store.get_proposal(proposal_id)
         if proposal is None:
             raise ProposalNotFoundError(request.proposal_id)
 
@@ -240,7 +224,7 @@ class RequestRefinementUseCase:
             raise ProposalNotPendingError(request.proposal_id, proposal.status)
 
         # Update proposal status
-        now = datetime.now()
+        now = self.clock.now()
         updated_proposal = replace(
             proposal,
             status=ProposalStatus.NEEDS_REFINEMENT,
@@ -248,4 +232,4 @@ class RequestRefinementUseCase:
             resolved_by=request.requested_by,
             resolution_notes=request.feedback,
         )
-        self.proposal_store.save(updated_proposal)
+        self.proposal_store.save_proposal(updated_proposal)

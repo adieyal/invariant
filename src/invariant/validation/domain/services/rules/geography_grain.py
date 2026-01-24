@@ -13,6 +13,8 @@ if TYPE_CHECKING:
     from invariant.domain.model.query_spec import QuerySpec
     from invariant.domain.model.semantic_catalog import SemanticCatalog
 
+from invariant.domain.model.metric import RollupPolicy
+
 
 class GeographyGrainRule:
     """Validation rule for geography level constraints.
@@ -33,8 +35,6 @@ class GeographyGrainRule:
         Returns:
             A list of issues for geography constraint violations.
         """
-        from invariant.domain.model.metric import RollupPolicy
-
         issues: list[Issue] = []
 
         # Find geo-related group_by specs (those with level set)

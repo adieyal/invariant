@@ -52,6 +52,7 @@ from invariant.identity.domain.value_objects import (
     ReferenceBinding,
     ValueSpace,
 )
+from tests.unit.application.fakes import FakeClock
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -214,14 +215,20 @@ class TestProposalToDomainWorkflow:
         return FakeColumnDomainStore()
 
     @pytest.fixture
+    def clock(self) -> FakeClock:
+        return FakeClock()
+
+    @pytest.fixture
     def accept_use_case(
         self,
         proposal_store: FakeColumnDomainProposalStore,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ) -> AcceptProposalUseCase:
         return AcceptProposalUseCase(
             proposal_store=proposal_store,
             domain_store=domain_store,
+            clock=clock,
         )
 
     def test_submit_proposal_accept_creates_confirmed_domain(
@@ -259,18 +266,18 @@ class TestProposalToDomainWorkflow:
         )
         created_domain = accept_use_case.execute(request)
 
-        # Assert: Domain created with CONFIRMED status
+        # Assert: Domain created with CONFIRMED status (DTO returns strings)
         assert created_domain is not None
         assert created_domain.variable_id == variable_id
-        assert created_domain.concept_id == concept_id
-        assert created_domain.status == DomainStatus.CONFIRMED
+        assert created_domain.concept_id == str(concept_id)
+        assert created_domain.status == "CONFIRMED"
         assert created_domain.confirmed_by == "data-steward"
         assert created_domain.confirmed_at is not None
 
         # Assert: Domain saved in store
         retrieved_domain = domain_store.get_domain_for_variable(variable_id)
         assert retrieved_domain is not None
-        assert retrieved_domain.id == created_domain.id
+        assert str(retrieved_domain.id) == created_domain.domain_id
 
         # Assert: Proposal status updated to ACCEPTED
         updated_proposal = proposal_store.get(str(proposal.id))
@@ -317,12 +324,13 @@ class TestProposalToDomainWorkflow:
         )
         domain = accept_use_case.execute(request)
 
-        # Assert: All metadata transferred
-        assert domain.concept_id == concept_id
+        # Assert: All metadata transferred (DTO uses strings for enums)
+        assert domain.concept_id == str(concept_id)
         assert domain.universe_id == "all-persons"
-        assert domain.value_space == ValueSpace.CATEGORICAL
-        assert domain.measurement_kind == MeasurementKind.OTHER
-        assert domain.reference_binding == reference_binding
+        assert domain.value_space == "CATEGORICAL"
+        assert domain.measurement_kind == "OTHER"
+        assert domain.reference_system_id == reference_binding.system_id
+        assert domain.reference_version_id == reference_binding.version_id
 
 
 class TestDirectDomainManagement:
@@ -333,10 +341,14 @@ class TestDirectDomainManagement:
         return FakeColumnDomainStore()
 
     @pytest.fixture
+    def clock(self) -> FakeClock:
+        return FakeClock()
+
+    @pytest.fixture
     def set_domain_use_case(
-        self, domain_store: FakeColumnDomainStore
+        self, domain_store: FakeColumnDomainStore, clock: FakeClock
     ) -> SetDomainUseCase:
-        return SetDomainUseCase(domain_store=domain_store)
+        return SetDomainUseCase(domain_store=domain_store, clock=clock)
 
     @pytest.fixture
     def deprecate_use_case(
@@ -369,16 +381,16 @@ class TestDirectDomainManagement:
         )
         domain = set_domain_use_case.execute(request)
 
-        # Assert: Domain created with CONFIRMED status
+        # Assert: Domain created with CONFIRMED status (DTO returns strings)
         assert domain.variable_id == variable_id
-        assert domain.concept_id == concept_id
-        assert domain.status == DomainStatus.CONFIRMED
+        assert domain.concept_id == str(concept_id)
+        assert domain.status == "CONFIRMED"
         assert domain.confirmed_by == "admin"
 
         # Assert: Domain retrievable from store
         retrieved = domain_store.get_domain_for_variable(variable_id)
         assert retrieved is not None
-        assert retrieved.id == domain.id
+        assert str(retrieved.id) == domain.domain_id
 
     def test_deprecate_domain_transitions_status(
         self,
@@ -402,18 +414,18 @@ class TestDirectDomainManagement:
             reason="Initial setup",
         )
         domain = set_domain_use_case.execute(request)
-        assert domain.status == DomainStatus.CONFIRMED
+        assert domain.status == "CONFIRMED"
 
         # Act: Deprecate the domain
         deprecate_request = DeprecateDomainRequest(
-            domain_id=str(domain.id),
+            domain_id=domain.domain_id,
             deprecated_by="admin",
             reason="Replaced by new classification",
         )
         deprecate_use_case.execute(deprecate_request)
 
         # Assert: Domain status is DEPRECATED
-        deprecated = domain_store.get(str(domain.id))
+        deprecated = domain_store.get(domain.domain_id)
         assert deprecated is not None
         assert deprecated.status == DomainStatus.DEPRECATED
 
@@ -441,21 +453,21 @@ class TestDirectDomainManagement:
         domain = set_domain_use_case.execute(create_request)
 
         # Verify initial state
-        initial = domain_store.get(str(domain.id))
+        initial = domain_store.get(domain.domain_id)
         assert initial is not None
         assert initial.status == DomainStatus.CONFIRMED
 
         # Act: Deprecate
         deprecate_use_case.execute(
             DeprecateDomainRequest(
-                domain_id=str(domain.id),
+                domain_id=domain.domain_id,
                 deprecated_by="system",
                 reason="Obsolete",
             )
         )
 
         # Assert: Status transitioned
-        final = domain_store.get(str(domain.id))
+        final = domain_store.get(domain.domain_id)
         assert final is not None
         assert final.status == DomainStatus.DEPRECATED
 
@@ -529,9 +541,9 @@ class TestCompatibilityAssessmentFlow:
         result = assess_use_case.execute(request)
 
         # Assert: EQUIVALENT
-        assert result.result.kind == CompatibilityKind.EQUIVALENT
-        assert result.result.is_comparable()
-        assert not result.result.is_blocked()
+        assert result.result.kind == CompatibilityKind.EQUIVALENT.name
+        assert result.result.is_comparable
+        assert not result.result.is_blocked
 
     def test_compatible_domains_different_reference_needs_transform(
         self,
@@ -562,8 +574,8 @@ class TestCompatibilityAssessmentFlow:
         result = assess_use_case.execute(request)
 
         # Assert: COMPATIBLE_WITH_TRANSFORM
-        assert result.result.kind == CompatibilityKind.COMPATIBLE_WITH_TRANSFORM
-        assert result.result.is_comparable()
+        assert result.result.kind == CompatibilityKind.COMPATIBLE_WITH_TRANSFORM.name
+        assert result.result.is_comparable
         assert len(result.result.required_transforms) > 0
 
     def test_incompatible_domains_different_concepts(
@@ -589,9 +601,9 @@ class TestCompatibilityAssessmentFlow:
         result = assess_use_case.execute(request)
 
         # Assert: INCOMPATIBLE
-        assert result.result.kind == CompatibilityKind.INCOMPATIBLE
-        assert not result.result.is_comparable()
-        assert result.result.is_blocked()
+        assert result.result.kind == CompatibilityKind.INCOMPATIBLE.name
+        assert not result.result.is_comparable
+        assert result.result.is_blocked
 
     def test_compatible_with_caveat_universe_mismatch(
         self,
@@ -615,9 +627,9 @@ class TestCompatibilityAssessmentFlow:
         result = assess_use_case.execute(request)
 
         # Assert: COMPATIBLE_WITH_CAVEAT
-        assert result.result.kind == CompatibilityKind.COMPATIBLE_WITH_CAVEAT
-        assert result.result.is_comparable()
-        assert result.result.requires_acknowledgment()
+        assert result.result.kind == CompatibilityKind.COMPATIBLE_WITH_CAVEAT.name
+        assert result.result.is_comparable
+        assert result.result.requires_acknowledgment
         assert len(result.result.caveats) > 0
 
 
@@ -804,21 +816,27 @@ class TestFullColumnDomainWorkflow:
         return CompatibilityChecker()
 
     @pytest.fixture
+    def clock(self) -> FakeClock:
+        return FakeClock()
+
+    @pytest.fixture
     def accept_use_case(
         self,
         proposal_store: FakeColumnDomainProposalStore,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ) -> AcceptProposalUseCase:
         return AcceptProposalUseCase(
             proposal_store=proposal_store,
             domain_store=domain_store,
+            clock=clock,
         )
 
     @pytest.fixture
     def set_domain_use_case(
-        self, domain_store: FakeColumnDomainStore
+        self, domain_store: FakeColumnDomainStore, clock: FakeClock
     ) -> SetDomainUseCase:
-        return SetDomainUseCase(domain_store=domain_store)
+        return SetDomainUseCase(domain_store=domain_store, clock=clock)
 
     @pytest.fixture
     def assess_use_case(
@@ -885,9 +903,9 @@ class TestFullColumnDomainWorkflow:
         )
         domain_a = accept_use_case.execute(accept_request)
 
-        # Verify domain A is created
-        assert domain_a.status == DomainStatus.CONFIRMED
-        assert domain_a.concept_id == concept_population
+        # Verify domain A is created (result is DTO with string values)
+        assert domain_a.status == DomainStatus.CONFIRMED.name
+        assert domain_a.concept_id == str(concept_population.value)
 
         # Step 3: Create second domain directly (same concept, different universe)
         var_b = str(uuid4())
@@ -905,9 +923,9 @@ class TestFullColumnDomainWorkflow:
         )
         domain_b = set_domain_use_case.execute(set_request)
 
-        # Verify domain B created
-        assert domain_b.status == DomainStatus.CONFIRMED
-        assert domain_b.concept_id == concept_population
+        # Verify domain B created (result is DTO with string values)
+        assert domain_b.status == DomainStatus.CONFIRMED.name
+        assert domain_b.concept_id == str(concept_population.value)
 
         # Step 4: Assess compatibility between the two domains
         assess_request = AssessCompatibilityRequest(
@@ -917,8 +935,8 @@ class TestFullColumnDomainWorkflow:
         compatibility = assess_use_case.execute(assess_request)
 
         # Should be compatible with caveat (different universes)
-        assert compatibility.result.kind == CompatibilityKind.COMPATIBLE_WITH_CAVEAT
-        assert compatibility.result.is_comparable()
+        assert compatibility.result.kind == "COMPATIBLE_WITH_CAVEAT"
+        assert compatibility.result.is_comparable
         assert "Universe mismatch" in compatibility.result.caveats[0]
 
         # Step 5: Verify through IdentityContext
@@ -989,9 +1007,9 @@ class TestFullColumnDomainWorkflow:
         )
 
         # Assert: Incompatible
-        assert result.result.kind == CompatibilityKind.INCOMPATIBLE
-        assert result.result.is_blocked()
-        assert not result.result.is_comparable()
+        assert result.result.kind == CompatibilityKind.INCOMPATIBLE.name
+        assert result.result.is_blocked
+        assert not result.result.is_comparable
 
         # Verify through context
         context = context_provider.get_identity_context([var_population, var_income])
@@ -1051,7 +1069,7 @@ class TestFullColumnDomainWorkflow:
         )
 
         # Assert: Equivalent
-        assert result.result.kind == CompatibilityKind.EQUIVALENT
-        assert result.result.is_comparable()
-        assert not result.result.is_blocked()
-        assert not result.result.requires_acknowledgment()
+        assert result.result.kind == CompatibilityKind.EQUIVALENT.name
+        assert result.result.is_comparable
+        assert not result.result.is_blocked
+        assert not result.result.requires_acknowledgment

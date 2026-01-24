@@ -8,8 +8,7 @@ corrections, and other scenarios where proposal review is not needed.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import datetime
-from typing import Protocol
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from invariant.domain.model.ids import ConceptId
@@ -22,6 +21,12 @@ from invariant.identity.domain.value_objects import (
     ReferenceBinding,
     ValueSpace,
 )
+
+if TYPE_CHECKING:
+    from invariant.application.ports.clock import Clock
+    from invariant.identity.application.ports.column_domain_store import (
+        ColumnDomainStore,
+    )
 
 # Exceptions
 
@@ -54,21 +59,6 @@ class InvalidMeasurementKindError(Exception):
         super().__init__(
             f"Invalid measurement kind: {measurement_kind}. Valid values: {valid_values}"
         )
-
-
-# Port interfaces
-
-
-class ColumnDomainStore(Protocol):
-    """Protocol for accessing ColumnDomain entities."""
-
-    def get(self, domain_id: str) -> ColumnDomain | None:
-        """Get a domain by ID."""
-        ...
-
-    def save(self, domain: ColumnDomain) -> None:
-        """Save a domain."""
-        ...
 
 
 # Request DTOs
@@ -108,6 +98,63 @@ class DeprecateDomainRequest:
     reason: str
 
 
+# Response DTOs
+
+
+@dataclass(frozen=True)
+class ColumnDomainDTO:
+    """Response DTO for ColumnDomain.
+
+    Flattens domain entity to primitive types for API boundaries.
+    """
+
+    domain_id: str
+    variable_id: str
+    concept_id: str | None
+    universe_id: str | None
+    value_space: str
+    measurement_kind: str
+    reference_system_id: str | None
+    reference_version_id: str | None
+    grain_keys: tuple[str, ...] | None
+    status: str
+    confirmed_at: str | None
+    confirmed_by: str | None
+
+    @classmethod
+    def from_domain(cls, domain: ColumnDomain) -> ColumnDomainDTO:
+        """Create DTO from domain entity.
+
+        Args:
+            domain: The ColumnDomain entity to convert.
+
+        Returns:
+            A ColumnDomainDTO with flattened primitive fields.
+        """
+        return cls(
+            domain_id=str(domain.id),
+            variable_id=domain.variable_id,
+            concept_id=str(domain.concept_id.value) if domain.concept_id else None,
+            universe_id=domain.universe_id,
+            value_space=domain.value_space.name,
+            measurement_kind=domain.measurement_kind.name,
+            reference_system_id=(
+                domain.reference_binding.system_id if domain.reference_binding else None
+            ),
+            reference_version_id=(
+                domain.reference_binding.version_id
+                if domain.reference_binding
+                else None
+            ),
+            grain_keys=domain.grain.keys if domain.grain else None,
+            status=domain.status.name,
+            confirmed_at=(
+                domain.confirmed_at.isoformat() if domain.confirmed_at else None
+            ),
+            confirmed_by=domain.confirmed_by,
+        )
+
+
 # Use cases
 
 
@@ -121,15 +168,16 @@ class SetDomainUseCase:
     """
 
     domain_store: ColumnDomainStore
+    clock: Clock
 
-    def execute(self, request: SetDomainRequest) -> ColumnDomain:
+    def execute(self, request: SetDomainRequest) -> ColumnDomainDTO:
         """Set a domain directly without proposal workflow.
 
         Args:
             request: The set domain request with all required fields.
 
         Returns:
-            The created ColumnDomain.
+            A ColumnDomainDTO representing the created domain.
 
         Raises:
             InvalidValueSpaceError: If the value space string is invalid.
@@ -166,7 +214,7 @@ class SetDomainUseCase:
             concept_id = ConceptId(UUID(request.concept_id))
 
         # Create confirmed domain
-        now = datetime.now()
+        now = self.clock.now()
         domain = ColumnDomain(
             id=ColumnDomainId.create(),
             variable_id=request.variable_id,
@@ -182,9 +230,9 @@ class SetDomainUseCase:
         )
 
         # Save domain
-        self.domain_store.save(domain)
+        self.domain_store.save_domain(domain)
 
-        return domain
+        return ColumnDomainDTO.from_domain(domain)
 
 
 @dataclass
@@ -206,7 +254,8 @@ class DeprecateDomainUseCase:
             DomainNotFoundError: If the domain doesn't exist.
         """
         # Get existing domain
-        domain = self.domain_store.get(request.domain_id)
+        domain_id = ColumnDomainId(UUID(request.domain_id))
+        domain = self.domain_store.get_domain(domain_id)
         if domain is None:
             raise DomainNotFoundError(request.domain_id)
 
@@ -214,4 +263,4 @@ class DeprecateDomainUseCase:
         deprecated_domain = replace(domain, status=DomainStatus.DEPRECATED)
 
         # Save the updated domain
-        self.domain_store.save(deprecated_domain)
+        self.domain_store.save_domain(deprecated_domain)

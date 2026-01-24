@@ -5,10 +5,12 @@ ColumnDomains, bypassing the proposal workflow, following TDD.
 """
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from uuid import UUID
 
 import pytest
 
+from invariant.identity.application.use_cases.manage_domain import ColumnDomainDTO
 from invariant.identity.domain.value_objects import (
     ColumnDomain,
     ColumnDomainId,
@@ -16,6 +18,7 @@ from invariant.identity.domain.value_objects import (
     MeasurementKind,
     ValueSpace,
 )
+from tests.unit.application.fakes import FakeClock
 
 # Fake stores for testing
 
@@ -26,11 +29,29 @@ class FakeColumnDomainStore:
 
     _domains: dict[str, ColumnDomain] = field(default_factory=dict)
 
-    def get(self, domain_id: str) -> ColumnDomain | None:
-        return self._domains.get(domain_id)
+    def get_domain(self, domain_id: ColumnDomainId) -> ColumnDomain | None:
+        return self._domains.get(str(domain_id))
 
-    def save(self, domain: ColumnDomain) -> None:
+    def get_domain_for_variable(self, variable_id: str) -> ColumnDomain | None:
+        for domain in self._domains.values():
+            if domain.variable_id == variable_id:
+                return domain
+        return None
+
+    def save_domain(self, domain: ColumnDomain) -> None:
         self._domains[str(domain.id)] = domain
+
+    def list_domains_by_status(self, status: DomainStatus) -> list[ColumnDomain]:
+        return [d for d in self._domains.values() if d.status == status]
+
+    def get_domains_for_variables(
+        self, variable_ids: list[str]
+    ) -> dict[str, ColumnDomain]:
+        result: dict[str, ColumnDomain] = {}
+        for domain in self._domains.values():
+            if domain.variable_id in variable_ids:
+                result[domain.variable_id] = domain
+        return result
 
     def add(self, domain: ColumnDomain) -> None:
         """Helper method to seed test data."""
@@ -43,6 +64,11 @@ class FakeColumnDomainStore:
 @pytest.fixture
 def domain_store() -> FakeColumnDomainStore:
     return FakeColumnDomainStore()
+
+
+@pytest.fixture
+def clock() -> FakeClock:
+    return FakeClock()
 
 
 # Test SetDomainRequest
@@ -136,17 +162,18 @@ class TestSetDomainRequest:
 class TestSetDomainUseCase:
     """Tests for SetDomainUseCase."""
 
-    def test_set_domain_returns_column_domain(
+    def test_set_domain_returns_column_domain_dto(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
-        """SetDomainUseCase returns a ColumnDomain."""
+        """SetDomainUseCase returns a ColumnDomainDTO."""
         from invariant.identity.application.use_cases.manage_domain import (
             SetDomainRequest,
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         request = SetDomainRequest(
             variable_id="population",
@@ -162,11 +189,12 @@ class TestSetDomainUseCase:
         )
         result = use_case.execute(request)
 
-        assert isinstance(result, ColumnDomain)
+        assert isinstance(result, ColumnDomainDTO)
 
     def test_set_domain_creates_confirmed_domain(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """SetDomainUseCase creates domain with CONFIRMED status."""
         from invariant.identity.application.use_cases.manage_domain import (
@@ -174,7 +202,7 @@ class TestSetDomainUseCase:
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         request = SetDomainRequest(
             variable_id="population",
@@ -190,13 +218,45 @@ class TestSetDomainUseCase:
         )
         result = use_case.execute(request)
 
-        assert result.status == DomainStatus.CONFIRMED
+        assert result.status == "CONFIRMED"
         assert result.confirmed_by == "admin@example.com"
         assert result.confirmed_at is not None
+
+    def test_set_domain_uses_clock_for_timestamp(
+        self,
+        domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
+    ):
+        """SetDomainUseCase uses injected clock for deterministic timestamps."""
+        from invariant.identity.application.use_cases.manage_domain import (
+            SetDomainRequest,
+            SetDomainUseCase,
+        )
+
+        fixed_time = datetime(2024, 6, 15, 14, 30, 0)
+        clock.set_now(fixed_time)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
+
+        request = SetDomainRequest(
+            variable_id="population",
+            concept_id=None,
+            universe_id=None,
+            value_space="CONTINUOUS",
+            measurement_kind="COUNT",
+            reference_system_id=None,
+            reference_version_id=None,
+            grain_keys=None,
+            set_by="admin@example.com",
+            reason="Testing clock",
+        )
+        result = use_case.execute(request)
+
+        assert result.confirmed_at == fixed_time.isoformat()
 
     def test_set_domain_maps_value_space_enum(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """SetDomainUseCase maps string to ValueSpace enum."""
         from invariant.identity.application.use_cases.manage_domain import (
@@ -204,7 +264,7 @@ class TestSetDomainUseCase:
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         for value_space_name in ["CATEGORICAL", "CONTINUOUS", "TEMPORAL"]:
             request = SetDomainRequest(
@@ -221,12 +281,12 @@ class TestSetDomainUseCase:
             )
             result = use_case.execute(request)
 
-            expected = ValueSpace[value_space_name]
-            assert result.value_space == expected
+            assert result.value_space == value_space_name
 
     def test_set_domain_maps_measurement_kind_enum(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """SetDomainUseCase maps string to MeasurementKind enum."""
         from invariant.identity.application.use_cases.manage_domain import (
@@ -234,7 +294,7 @@ class TestSetDomainUseCase:
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         for kind_name in ["COUNT", "AMOUNT", "RATE", "RATIO", "INDEX", "OTHER"]:
             request = SetDomainRequest(
@@ -251,12 +311,12 @@ class TestSetDomainUseCase:
             )
             result = use_case.execute(request)
 
-            expected = MeasurementKind[kind_name]
-            assert result.measurement_kind == expected
+            assert result.measurement_kind == kind_name
 
     def test_set_domain_raises_for_invalid_value_space(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """SetDomainUseCase raises error for invalid value space."""
         from invariant.identity.application.use_cases.manage_domain import (
@@ -265,7 +325,7 @@ class TestSetDomainUseCase:
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         request = SetDomainRequest(
             variable_id="population",
@@ -288,6 +348,7 @@ class TestSetDomainUseCase:
     def test_set_domain_raises_for_invalid_measurement_kind(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """SetDomainUseCase raises error for invalid measurement kind."""
         from invariant.identity.application.use_cases.manage_domain import (
@@ -296,7 +357,7 @@ class TestSetDomainUseCase:
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         request = SetDomainRequest(
             variable_id="population",
@@ -319,6 +380,7 @@ class TestSetDomainUseCase:
     def test_set_domain_creates_reference_binding(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """SetDomainUseCase creates ReferenceBinding when both IDs provided."""
         from invariant.identity.application.use_cases.manage_domain import (
@@ -326,7 +388,7 @@ class TestSetDomainUseCase:
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         request = SetDomainRequest(
             variable_id="country",
@@ -342,13 +404,13 @@ class TestSetDomainUseCase:
         )
         result = use_case.execute(request)
 
-        assert result.reference_binding is not None
-        assert result.reference_binding.system_id == "ISO-3166"
-        assert result.reference_binding.version_id == "2020"
+        assert result.reference_system_id == "ISO-3166"
+        assert result.reference_version_id == "2020"
 
     def test_set_domain_creates_grain(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """SetDomainUseCase creates Grain when grain_keys provided."""
         from invariant.identity.application.use_cases.manage_domain import (
@@ -356,7 +418,7 @@ class TestSetDomainUseCase:
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         request = SetDomainRequest(
             variable_id="population",
@@ -372,12 +434,12 @@ class TestSetDomainUseCase:
         )
         result = use_case.execute(request)
 
-        assert result.grain is not None
-        assert result.grain.keys == ("country_code", "year")
+        assert result.grain_keys == ("country_code", "year")
 
     def test_set_domain_saves_domain(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """SetDomainUseCase persists the domain to the store."""
         from invariant.identity.application.use_cases.manage_domain import (
@@ -385,7 +447,7 @@ class TestSetDomainUseCase:
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         request = SetDomainRequest(
             variable_id="population",
@@ -401,13 +463,14 @@ class TestSetDomainUseCase:
         )
         result = use_case.execute(request)
 
-        saved_domain = domain_store.get(str(result.id))
+        saved_domain = domain_store.get_domain(ColumnDomainId(UUID(result.domain_id)))
         assert saved_domain is not None
         assert saved_domain.variable_id == "population"
 
     def test_set_domain_with_all_fields(
         self,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """SetDomainUseCase handles all fields correctly."""
         from invariant.identity.application.use_cases.manage_domain import (
@@ -415,7 +478,7 @@ class TestSetDomainUseCase:
             SetDomainUseCase,
         )
 
-        use_case = SetDomainUseCase(domain_store=domain_store)
+        use_case = SetDomainUseCase(domain_store=domain_store, clock=clock)
 
         concept_uuid = "00000000-0000-0000-0000-000000000123"
         request = SetDomainRequest(
@@ -434,8 +497,8 @@ class TestSetDomainUseCase:
 
         assert result.variable_id == "population"
         assert result.universe_id == "global"
-        assert result.value_space == ValueSpace.CONTINUOUS
-        assert result.measurement_kind == MeasurementKind.COUNT
+        assert result.value_space == "CONTINUOUS"
+        assert result.measurement_kind == "COUNT"
 
 
 # Test DeprecateDomainRequest
@@ -545,7 +608,7 @@ class TestDeprecateDomainUseCase:
         )
         use_case.execute(request)
 
-        updated_domain = domain_store.get(str(existing_domain.id))
+        updated_domain = domain_store.get_domain(existing_domain.id)
         assert updated_domain is not None
         assert updated_domain.status == DomainStatus.DEPRECATED
 
@@ -570,7 +633,7 @@ class TestDeprecateDomainUseCase:
         )
         use_case.execute(request)
 
-        updated_domain = domain_store.get(str(existing_domain.id))
+        updated_domain = domain_store.get_domain(existing_domain.id)
         assert updated_domain is not None
         assert updated_domain.id == existing_domain.id
         assert updated_domain.variable_id == existing_domain.variable_id
@@ -596,8 +659,10 @@ class TestDeprecateDomainUseCase:
 
         use_case = DeprecateDomainUseCase(domain_store=domain_store)
 
+        # Use a valid UUID format
+        nonexistent_id = "00000000-0000-0000-0000-000000000099"
         request = DeprecateDomainRequest(
-            domain_id="nonexistent-id",
+            domain_id=nonexistent_id,
             deprecated_by="admin@example.com",
             reason="Testing",
         )
@@ -605,7 +670,7 @@ class TestDeprecateDomainUseCase:
         with pytest.raises(DomainNotFoundError) as exc_info:
             use_case.execute(request)
 
-        assert "nonexistent-id" in str(exc_info.value)
+        assert nonexistent_id in str(exc_info.value)
 
 
 # Test exports

@@ -14,8 +14,6 @@ from invariant.identity.domain.services import CompatibilityChecker
 from invariant.identity.domain.value_objects import (
     ColumnDomain,
     ColumnDomainId,
-    CompatibilityKind,
-    CompatibilityResult,
     DomainStatus,
     MeasurementKind,
     ValueSpace,
@@ -172,8 +170,78 @@ class TestAssessCompatibilityRequest:
 
 
 # ============================================================================
-# Test Result DTO
+# Test Result DTOs
 # ============================================================================
+
+
+class TestCompatibilityResultDTO:
+    """Tests for CompatibilityResultDTO frozen dataclass."""
+
+    def test_dto_is_frozen(self):
+        """CompatibilityResultDTO is immutable."""
+        from invariant.identity.application.use_cases.assess_compatibility import (
+            CompatibilityResultDTO,
+        )
+
+        dto = CompatibilityResultDTO(
+            kind="UNKNOWN",
+            reasons=("test",),
+            required_transforms=(),
+            caveats=(),
+            is_comparable=False,
+            is_blocked=False,
+            requires_acknowledgment=False,
+            evidence_concept_id_a=None,
+            evidence_concept_id_b=None,
+            evidence_universe_id_a=None,
+            evidence_universe_id_b=None,
+            evidence_value_space_a=None,
+            evidence_value_space_b=None,
+            evidence_measurement_kind_a=None,
+            evidence_measurement_kind_b=None,
+            evidence_reference_binding_a=None,
+            evidence_reference_binding_b=None,
+            evidence_status_a=None,
+            evidence_status_b=None,
+        )
+
+        with pytest.raises(AttributeError):
+            dto.kind = "other"  # type: ignore[misc]
+
+    def test_dto_has_primitive_types_only(self):
+        """CompatibilityResultDTO uses only primitive types."""
+        from invariant.identity.application.use_cases.assess_compatibility import (
+            CompatibilityResultDTO,
+        )
+
+        dto = CompatibilityResultDTO(
+            kind="EQUIVALENT",
+            reasons=("reason1", "reason2"),
+            required_transforms=("transform1",),
+            caveats=("caveat1",),
+            is_comparable=True,
+            is_blocked=False,
+            requires_acknowledgment=False,
+            evidence_concept_id_a="concept-1",
+            evidence_concept_id_b="concept-2",
+            evidence_universe_id_a="adults",
+            evidence_universe_id_b="children",
+            evidence_value_space_a="CONTINUOUS",
+            evidence_value_space_b="DISCRETE",
+            evidence_measurement_kind_a="COUNT",
+            evidence_measurement_kind_b="RATE",
+            evidence_reference_binding_a="system:v1",
+            evidence_reference_binding_b="system:v2",
+            evidence_status_a="CONFIRMED",
+            evidence_status_b="CONFIRMED",
+        )
+
+        # All fields should be primitives
+        assert isinstance(dto.kind, str)
+        assert isinstance(dto.reasons, tuple)
+        assert all(isinstance(r, str) for r in dto.reasons)
+        assert isinstance(dto.is_comparable, bool)
+        assert isinstance(dto.evidence_concept_id_a, str)
 
 
 class TestAssessCompatibilityResult:
@@ -183,17 +251,32 @@ class TestAssessCompatibilityResult:
         """AssessCompatibilityResult is immutable."""
         from invariant.identity.application.use_cases.assess_compatibility import (
             AssessCompatibilityResult,
+            CompatibilityResultDTO,
         )
 
         result = AssessCompatibilityResult(
             variable_id_a="var_a",
             variable_id_b="var_b",
-            result=CompatibilityResult(
-                kind=CompatibilityKind.UNKNOWN,
+            result=CompatibilityResultDTO(
+                kind="UNKNOWN",
                 reasons=("test",),
                 required_transforms=(),
                 caveats=(),
-                evidence={},
+                is_comparable=False,
+                is_blocked=False,
+                requires_acknowledgment=False,
+                evidence_concept_id_a=None,
+                evidence_concept_id_b=None,
+                evidence_universe_id_a=None,
+                evidence_universe_id_b=None,
+                evidence_value_space_a=None,
+                evidence_value_space_b=None,
+                evidence_measurement_kind_a=None,
+                evidence_measurement_kind_b=None,
+                evidence_reference_binding_a=None,
+                evidence_reference_binding_b=None,
+                evidence_status_a=None,
+                evidence_status_b=None,
             ),
             domain_a_status=None,
             domain_b_status=None,
@@ -206,14 +289,29 @@ class TestAssessCompatibilityResult:
         """AssessCompatibilityResult has all required fields."""
         from invariant.identity.application.use_cases.assess_compatibility import (
             AssessCompatibilityResult,
+            CompatibilityResultDTO,
         )
 
-        compat_result = CompatibilityResult(
-            kind=CompatibilityKind.EQUIVALENT,
+        compat_result = CompatibilityResultDTO(
+            kind="EQUIVALENT",
             reasons=("Domains are semantically equivalent",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            is_comparable=True,
+            is_blocked=False,
+            requires_acknowledgment=False,
+            evidence_concept_id_a="concept-1",
+            evidence_concept_id_b="concept-1",
+            evidence_universe_id_a="adults",
+            evidence_universe_id_b="adults",
+            evidence_value_space_a="CONTINUOUS",
+            evidence_value_space_b="CONTINUOUS",
+            evidence_measurement_kind_a="COUNT",
+            evidence_measurement_kind_b="COUNT",
+            evidence_reference_binding_a=None,
+            evidence_reference_binding_b=None,
+            evidence_status_a="CONFIRMED",
+            evidence_status_b="CONFIRMED",
         )
 
         result = AssessCompatibilityResult(
@@ -234,17 +332,32 @@ class TestAssessCompatibilityResult:
         """AssessCompatibilityResult domain_a_status and domain_b_status can be None."""
         from invariant.identity.application.use_cases.assess_compatibility import (
             AssessCompatibilityResult,
+            CompatibilityResultDTO,
         )
 
         result = AssessCompatibilityResult(
             variable_id_a="var_a",
             variable_id_b="var_b",
-            result=CompatibilityResult(
-                kind=CompatibilityKind.UNKNOWN,
+            result=CompatibilityResultDTO(
+                kind="UNKNOWN",
                 reasons=("No domain for variable var_a",),
                 required_transforms=(),
                 caveats=(),
-                evidence={},
+                is_comparable=False,
+                is_blocked=False,
+                requires_acknowledgment=False,
+                evidence_concept_id_a=None,
+                evidence_concept_id_b=None,
+                evidence_universe_id_a=None,
+                evidence_universe_id_b=None,
+                evidence_value_space_a=None,
+                evidence_value_space_b=None,
+                evidence_measurement_kind_a=None,
+                evidence_measurement_kind_b=None,
+                evidence_reference_binding_a=None,
+                evidence_reference_binding_b=None,
+                evidence_status_a=None,
+                evidence_status_b=None,
             ),
             domain_a_status=None,
             domain_b_status=None,
@@ -291,7 +404,9 @@ class TestAssessCompatibilityUseCase:
 
         assert result.variable_id_a == "var_a"
         assert result.variable_id_b == "var_b"
-        assert result.result.kind == CompatibilityKind.EQUIVALENT
+        assert result.result.kind == "EQUIVALENT"
+        assert result.result.is_comparable is True
+        assert result.result.is_blocked is False
         assert result.domain_a_status == "CONFIRMED"
         assert result.domain_b_status == "CONFIRMED"
 
@@ -324,7 +439,9 @@ class TestAssessCompatibilityUseCase:
 
         assert result.variable_id_a == "var_a"
         assert result.variable_id_b == "var_b"
-        assert result.result.kind == CompatibilityKind.INCOMPATIBLE
+        assert result.result.kind == "INCOMPATIBLE"
+        assert result.result.is_blocked is True
+        assert result.result.is_comparable is False
         assert result.domain_a_status == "CONFIRMED"
         assert result.domain_b_status == "CONFIRMED"
 
@@ -356,7 +473,7 @@ class TestAssessCompatibilityUseCase:
 
         assert result.variable_id_a == "var_a"
         assert result.variable_id_b == "var_b"
-        assert result.result.kind == CompatibilityKind.UNKNOWN
+        assert result.result.kind == "UNKNOWN"
         assert "No domain for variable var_a" in result.result.reasons
         assert result.domain_a_status is None
         assert result.domain_b_status == "CONFIRMED"
@@ -389,7 +506,7 @@ class TestAssessCompatibilityUseCase:
 
         assert result.variable_id_a == "var_a"
         assert result.variable_id_b == "var_b"
-        assert result.result.kind == CompatibilityKind.UNKNOWN
+        assert result.result.kind == "UNKNOWN"
         assert "No domain for variable var_b" in result.result.reasons
         assert result.domain_a_status == "CONFIRMED"
         assert result.domain_b_status is None
@@ -418,11 +535,86 @@ class TestAssessCompatibilityUseCase:
 
         assert result.variable_id_a == "var_a"
         assert result.variable_id_b == "var_b"
-        assert result.result.kind == CompatibilityKind.UNKNOWN
+        assert result.result.kind == "UNKNOWN"
         assert "No domain for variable var_a" in result.result.reasons
         assert "No domain for variable var_b" in result.result.reasons
         assert result.domain_a_status is None
         assert result.domain_b_status is None
+
+    def test_result_has_flattened_evidence_when_domains_exist(
+        self,
+        domain_store: FakeColumnDomainStore,
+        checker: CompatibilityChecker,
+        confirmed_domain_a: ColumnDomain,
+        confirmed_domain_b: ColumnDomain,
+    ):
+        """Returns DTO with flattened evidence fields when domains exist."""
+        from invariant.identity.application.use_cases.assess_compatibility import (
+            AssessCompatibilityRequest,
+            AssessCompatibilityUseCase,
+        )
+
+        domain_store.save_domain(confirmed_domain_a)
+        domain_store.save_domain(confirmed_domain_b)
+
+        use_case = AssessCompatibilityUseCase(
+            domain_store=domain_store,
+            checker=checker,
+        )
+
+        request = AssessCompatibilityRequest(
+            variable_id_a="var_a",
+            variable_id_b="var_b",
+        )
+        result = use_case.execute(request)
+
+        # Verify flattened evidence fields are populated
+        assert result.result.evidence_concept_id_a is not None
+        assert result.result.evidence_concept_id_b is not None
+        assert result.result.evidence_universe_id_a == "adults"
+        assert result.result.evidence_universe_id_b == "adults"
+        assert result.result.evidence_value_space_a == "CONTINUOUS"
+        assert result.result.evidence_value_space_b == "CONTINUOUS"
+        assert result.result.evidence_measurement_kind_a == "COUNT"
+        assert result.result.evidence_measurement_kind_b == "COUNT"
+        assert result.result.evidence_status_a == "CONFIRMED"
+        assert result.result.evidence_status_b == "CONFIRMED"
+
+    def test_result_has_null_evidence_when_domains_missing(
+        self,
+        domain_store: FakeColumnDomainStore,
+        checker: CompatibilityChecker,
+    ):
+        """Returns DTO with null evidence fields when domains are missing."""
+        from invariant.identity.application.use_cases.assess_compatibility import (
+            AssessCompatibilityRequest,
+            AssessCompatibilityUseCase,
+        )
+
+        use_case = AssessCompatibilityUseCase(
+            domain_store=domain_store,
+            checker=checker,
+        )
+
+        request = AssessCompatibilityRequest(
+            variable_id_a="var_a",
+            variable_id_b="var_b",
+        )
+        result = use_case.execute(request)
+
+        # All evidence fields should be None when domains are missing
+        assert result.result.evidence_concept_id_a is None
+        assert result.result.evidence_concept_id_b is None
+        assert result.result.evidence_universe_id_a is None
+        assert result.result.evidence_universe_id_b is None
+        assert result.result.evidence_value_space_a is None
+        assert result.result.evidence_value_space_b is None
+        assert result.result.evidence_measurement_kind_a is None
+        assert result.result.evidence_measurement_kind_b is None
+        assert result.result.evidence_reference_binding_a is None
+        assert result.result.evidence_reference_binding_b is None
+        assert result.result.evidence_status_a is None
+        assert result.result.evidence_status_b is None
 
 
 # ============================================================================
@@ -439,8 +631,10 @@ class TestExports:
             AssessCompatibilityRequest,
             AssessCompatibilityResult,
             AssessCompatibilityUseCase,
+            CompatibilityResultDTO,
         )
 
         assert AssessCompatibilityRequest is not None
         assert AssessCompatibilityResult is not None
         assert AssessCompatibilityUseCase is not None
+        assert CompatibilityResultDTO is not None

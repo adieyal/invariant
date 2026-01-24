@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from invariant.domain.model.semantic_catalog import SemanticCatalog
     from invariant.domain.model.semantic_dataset import SemanticDataset
 
+from invariant.domain.model.metric import SimpleAggSpec
+
 
 class TimeGrainRule:
     """Validation rule for time grain constraints.
@@ -204,8 +206,6 @@ class TimeGrainRule:
         Returns:
             The dataset if found, None otherwise.
         """
-        from invariant.domain.model.metric import SimpleAggSpec
-
         # Only SimpleAggSpec metrics have a direct dataset reference
         if isinstance(metric.spec, SimpleAggSpec):
             return catalog.get_dataset(metric.spec.dataset_name)

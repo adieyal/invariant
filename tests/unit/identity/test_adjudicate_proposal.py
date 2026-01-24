@@ -10,6 +10,7 @@ from uuid import UUID
 
 import pytest
 
+from invariant.identity.application.use_cases.manage_domain import ColumnDomainDTO
 from invariant.identity.domain.entities import (
     ColumnDomainProposal,
     ProposalId,
@@ -17,10 +18,12 @@ from invariant.identity.domain.entities import (
 )
 from invariant.identity.domain.value_objects import (
     ColumnDomain,
+    ColumnDomainId,
     DomainStatus,
     MeasurementKind,
     ValueSpace,
 )
+from tests.unit.application.fakes import FakeClock
 
 # Fake stores for testing
 
@@ -31,15 +34,25 @@ class FakeColumnDomainProposalStore:
 
     _proposals: dict[str, ColumnDomainProposal] = field(default_factory=dict)
 
-    def get(self, proposal_id: str) -> ColumnDomainProposal | None:
-        return self._proposals.get(proposal_id)
+    def get_proposal(self, proposal_id: ProposalId) -> ColumnDomainProposal | None:
+        return self._proposals.get(str(proposal_id))
 
-    def save(self, proposal: ColumnDomainProposal) -> None:
+    def save_proposal(self, proposal: ColumnDomainProposal) -> None:
         self._proposals[str(proposal.id)] = proposal
 
     def add(self, proposal: ColumnDomainProposal) -> None:
         """Helper method to seed test data."""
         self._proposals[str(proposal.id)] = proposal
+
+    def get_proposals_for_variable(
+        self, variable_id: str
+    ) -> list[ColumnDomainProposal]:
+        return [p for p in self._proposals.values() if p.variable_id == variable_id]
+
+    def list_pending_proposals(self) -> list[ColumnDomainProposal]:
+        return [
+            p for p in self._proposals.values() if p.status == ProposalStatus.PENDING
+        ]
 
 
 @dataclass
@@ -48,17 +61,29 @@ class FakeColumnDomainStore:
 
     _domains: dict[str, ColumnDomain] = field(default_factory=dict)
 
-    def get(self, domain_id: str) -> ColumnDomain | None:
-        return self._domains.get(domain_id)
+    def get_domain(self, domain_id: ColumnDomainId) -> ColumnDomain | None:
+        return self._domains.get(str(domain_id))
 
-    def save(self, domain: ColumnDomain) -> None:
-        self._domains[str(domain.id)] = domain
-
-    def get_by_variable_id(self, variable_id: str) -> ColumnDomain | None:
+    def get_domain_for_variable(self, variable_id: str) -> ColumnDomain | None:
         for domain in self._domains.values():
             if domain.variable_id == variable_id:
                 return domain
         return None
+
+    def save_domain(self, domain: ColumnDomain) -> None:
+        self._domains[str(domain.id)] = domain
+
+    def list_domains_by_status(self, status: DomainStatus) -> list[ColumnDomain]:
+        return [d for d in self._domains.values() if d.status == status]
+
+    def get_domains_for_variables(
+        self, variable_ids: list[str]
+    ) -> dict[str, ColumnDomain]:
+        result: dict[str, ColumnDomain] = {}
+        for domain in self._domains.values():
+            if domain.variable_id in variable_ids:
+                result[domain.variable_id] = domain
+        return result
 
 
 # Fixtures
@@ -72,6 +97,11 @@ def proposal_store() -> FakeColumnDomainProposalStore:
 @pytest.fixture
 def domain_store() -> FakeColumnDomainStore:
     return FakeColumnDomainStore()
+
+
+@pytest.fixture
+def clock() -> FakeClock:
+    return FakeClock()
 
 
 @pytest.fixture
@@ -244,13 +274,14 @@ class TestRequestRefinementRequest:
 class TestAcceptProposalUseCase:
     """Tests for AcceptProposalUseCase."""
 
-    def test_accept_proposal_returns_column_domain(
+    def test_accept_proposal_returns_column_domain_dto(
         self,
         proposal_store: FakeColumnDomainProposalStore,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
         pending_proposal: ColumnDomainProposal,
     ):
-        """AcceptProposalUseCase returns a ColumnDomain."""
+        """AcceptProposalUseCase returns a ColumnDomainDTO."""
         from invariant.identity.application.use_cases.adjudicate_proposal import (
             AcceptProposalRequest,
             AcceptProposalUseCase,
@@ -260,6 +291,7 @@ class TestAcceptProposalUseCase:
         use_case = AcceptProposalUseCase(
             proposal_store=proposal_store,
             domain_store=domain_store,
+            clock=clock,
         )
 
         request = AcceptProposalRequest(
@@ -269,12 +301,13 @@ class TestAcceptProposalUseCase:
         )
         result = use_case.execute(request)
 
-        assert isinstance(result, ColumnDomain)
+        assert isinstance(result, ColumnDomainDTO)
 
     def test_accept_proposal_creates_domain_with_proposal_fields(
         self,
         proposal_store: FakeColumnDomainProposalStore,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
         pending_proposal: ColumnDomainProposal,
     ):
         """AcceptProposalUseCase creates domain with proposal's semantic fields."""
@@ -287,6 +320,7 @@ class TestAcceptProposalUseCase:
         use_case = AcceptProposalUseCase(
             proposal_store=proposal_store,
             domain_store=domain_store,
+            clock=clock,
         )
 
         request = AcceptProposalRequest(
@@ -297,17 +331,22 @@ class TestAcceptProposalUseCase:
         result = use_case.execute(request)
 
         assert result.variable_id == pending_proposal.variable_id
-        assert result.concept_id == pending_proposal.concept_id
+        # DTO uses string for concept_id, compare appropriately
+        expected_concept_id = (
+            str(pending_proposal.concept_id.value)
+            if pending_proposal.concept_id
+            else None
+        )
+        assert result.concept_id == expected_concept_id
         assert result.universe_id == pending_proposal.universe_id
-        assert result.value_space == pending_proposal.value_space
-        assert result.measurement_kind == pending_proposal.measurement_kind
-        assert result.reference_binding == pending_proposal.reference_binding
-        assert result.grain == pending_proposal.grain
+        assert result.value_space == pending_proposal.value_space.name
+        assert result.measurement_kind == pending_proposal.measurement_kind.name
 
     def test_accept_proposal_sets_confirmed_status(
         self,
         proposal_store: FakeColumnDomainProposalStore,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
         pending_proposal: ColumnDomainProposal,
     ):
         """AcceptProposalUseCase creates domain with CONFIRMED status."""
@@ -320,6 +359,7 @@ class TestAcceptProposalUseCase:
         use_case = AcceptProposalUseCase(
             proposal_store=proposal_store,
             domain_store=domain_store,
+            clock=clock,
         )
 
         request = AcceptProposalRequest(
@@ -329,13 +369,14 @@ class TestAcceptProposalUseCase:
         )
         result = use_case.execute(request)
 
-        assert result.status == DomainStatus.CONFIRMED
+        assert result.status == DomainStatus.CONFIRMED.name
         assert result.confirmed_by == "admin@example.com"
 
     def test_accept_proposal_saves_domain(
         self,
         proposal_store: FakeColumnDomainProposalStore,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
         pending_proposal: ColumnDomainProposal,
     ):
         """AcceptProposalUseCase persists the domain to the store."""
@@ -348,6 +389,7 @@ class TestAcceptProposalUseCase:
         use_case = AcceptProposalUseCase(
             proposal_store=proposal_store,
             domain_store=domain_store,
+            clock=clock,
         )
 
         request = AcceptProposalRequest(
@@ -357,7 +399,8 @@ class TestAcceptProposalUseCase:
         )
         result = use_case.execute(request)
 
-        saved_domain = domain_store.get(str(result.id))
+        # Result is a DTO with string domain_id
+        saved_domain = domain_store.get_domain(ColumnDomainId(UUID(result.domain_id)))
         assert saved_domain is not None
         assert saved_domain.variable_id == pending_proposal.variable_id
 
@@ -365,6 +408,7 @@ class TestAcceptProposalUseCase:
         self,
         proposal_store: FakeColumnDomainProposalStore,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
         pending_proposal: ColumnDomainProposal,
     ):
         """AcceptProposalUseCase updates proposal status to ACCEPTED."""
@@ -377,6 +421,7 @@ class TestAcceptProposalUseCase:
         use_case = AcceptProposalUseCase(
             proposal_store=proposal_store,
             domain_store=domain_store,
+            clock=clock,
         )
 
         request = AcceptProposalRequest(
@@ -386,7 +431,7 @@ class TestAcceptProposalUseCase:
         )
         use_case.execute(request)
 
-        updated_proposal = proposal_store.get(str(pending_proposal.id))
+        updated_proposal = proposal_store.get_proposal(pending_proposal.id)
         assert updated_proposal is not None
         assert updated_proposal.status == ProposalStatus.ACCEPTED
         assert updated_proposal.resolved_by == "admin@example.com"
@@ -396,6 +441,7 @@ class TestAcceptProposalUseCase:
         self,
         proposal_store: FakeColumnDomainProposalStore,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
     ):
         """AcceptProposalUseCase raises error when proposal not found."""
         from invariant.identity.application.use_cases.adjudicate_proposal import (
@@ -407,10 +453,12 @@ class TestAcceptProposalUseCase:
         use_case = AcceptProposalUseCase(
             proposal_store=proposal_store,
             domain_store=domain_store,
+            clock=clock,
         )
 
+        # Use a valid UUID format for the proposal_id
         request = AcceptProposalRequest(
-            proposal_id="nonexistent-id",
+            proposal_id="00000000-0000-0000-0000-000000000099",
             accepted_by="admin@example.com",
             notes=None,
         )
@@ -422,6 +470,7 @@ class TestAcceptProposalUseCase:
         self,
         proposal_store: FakeColumnDomainProposalStore,
         domain_store: FakeColumnDomainStore,
+        clock: FakeClock,
         accepted_proposal: ColumnDomainProposal,
     ):
         """AcceptProposalUseCase raises error when proposal is not PENDING."""
@@ -435,6 +484,7 @@ class TestAcceptProposalUseCase:
         use_case = AcceptProposalUseCase(
             proposal_store=proposal_store,
             domain_store=domain_store,
+            clock=clock,
         )
 
         request = AcceptProposalRequest(
@@ -456,6 +506,7 @@ class TestRejectProposalUseCase:
     def test_reject_proposal_updates_status_to_rejected(
         self,
         proposal_store: FakeColumnDomainProposalStore,
+        clock: FakeClock,
         pending_proposal: ColumnDomainProposal,
     ):
         """RejectProposalUseCase updates proposal status to REJECTED."""
@@ -465,7 +516,7 @@ class TestRejectProposalUseCase:
         )
 
         proposal_store.add(pending_proposal)
-        use_case = RejectProposalUseCase(proposal_store=proposal_store)
+        use_case = RejectProposalUseCase(proposal_store=proposal_store, clock=clock)
 
         request = RejectProposalRequest(
             proposal_id=str(pending_proposal.id),
@@ -474,7 +525,7 @@ class TestRejectProposalUseCase:
         )
         use_case.execute(request)
 
-        updated_proposal = proposal_store.get(str(pending_proposal.id))
+        updated_proposal = proposal_store.get_proposal(pending_proposal.id)
         assert updated_proposal is not None
         assert updated_proposal.status == ProposalStatus.REJECTED
         assert updated_proposal.resolved_by == "admin@example.com"
@@ -483,6 +534,7 @@ class TestRejectProposalUseCase:
     def test_reject_proposal_returns_none(
         self,
         proposal_store: FakeColumnDomainProposalStore,
+        clock: FakeClock,
         pending_proposal: ColumnDomainProposal,
     ):
         """RejectProposalUseCase returns None."""
@@ -492,7 +544,7 @@ class TestRejectProposalUseCase:
         )
 
         proposal_store.add(pending_proposal)
-        use_case = RejectProposalUseCase(proposal_store=proposal_store)
+        use_case = RejectProposalUseCase(proposal_store=proposal_store, clock=clock)
 
         request = RejectProposalRequest(
             proposal_id=str(pending_proposal.id),
@@ -506,6 +558,7 @@ class TestRejectProposalUseCase:
     def test_reject_proposal_raises_for_not_found(
         self,
         proposal_store: FakeColumnDomainProposalStore,
+        clock: FakeClock,
     ):
         """RejectProposalUseCase raises error when proposal not found."""
         from invariant.identity.application.use_cases.adjudicate_proposal import (
@@ -514,10 +567,11 @@ class TestRejectProposalUseCase:
             RejectProposalUseCase,
         )
 
-        use_case = RejectProposalUseCase(proposal_store=proposal_store)
+        use_case = RejectProposalUseCase(proposal_store=proposal_store, clock=clock)
 
+        # Use a valid UUID format for the proposal_id
         request = RejectProposalRequest(
-            proposal_id="nonexistent-id",
+            proposal_id="00000000-0000-0000-0000-000000000099",
             rejected_by="admin@example.com",
             reason="Invalid",
         )
@@ -528,6 +582,7 @@ class TestRejectProposalUseCase:
     def test_reject_proposal_raises_for_non_pending(
         self,
         proposal_store: FakeColumnDomainProposalStore,
+        clock: FakeClock,
         accepted_proposal: ColumnDomainProposal,
     ):
         """RejectProposalUseCase raises error when proposal is not PENDING."""
@@ -538,7 +593,7 @@ class TestRejectProposalUseCase:
         )
 
         proposal_store.add(accepted_proposal)
-        use_case = RejectProposalUseCase(proposal_store=proposal_store)
+        use_case = RejectProposalUseCase(proposal_store=proposal_store, clock=clock)
 
         request = RejectProposalRequest(
             proposal_id=str(accepted_proposal.id),
@@ -559,6 +614,7 @@ class TestRequestRefinementUseCase:
     def test_request_refinement_updates_status(
         self,
         proposal_store: FakeColumnDomainProposalStore,
+        clock: FakeClock,
         pending_proposal: ColumnDomainProposal,
     ):
         """RequestRefinementUseCase updates status to NEEDS_REFINEMENT."""
@@ -568,7 +624,7 @@ class TestRequestRefinementUseCase:
         )
 
         proposal_store.add(pending_proposal)
-        use_case = RequestRefinementUseCase(proposal_store=proposal_store)
+        use_case = RequestRefinementUseCase(proposal_store=proposal_store, clock=clock)
 
         request = RequestRefinementRequest(
             proposal_id=str(pending_proposal.id),
@@ -577,7 +633,7 @@ class TestRequestRefinementUseCase:
         )
         use_case.execute(request)
 
-        updated_proposal = proposal_store.get(str(pending_proposal.id))
+        updated_proposal = proposal_store.get_proposal(pending_proposal.id)
         assert updated_proposal is not None
         assert updated_proposal.status == ProposalStatus.NEEDS_REFINEMENT
         assert updated_proposal.resolved_by == "admin@example.com"
@@ -588,6 +644,7 @@ class TestRequestRefinementUseCase:
     def test_request_refinement_returns_none(
         self,
         proposal_store: FakeColumnDomainProposalStore,
+        clock: FakeClock,
         pending_proposal: ColumnDomainProposal,
     ):
         """RequestRefinementUseCase returns None."""
@@ -597,7 +654,7 @@ class TestRequestRefinementUseCase:
         )
 
         proposal_store.add(pending_proposal)
-        use_case = RequestRefinementUseCase(proposal_store=proposal_store)
+        use_case = RequestRefinementUseCase(proposal_store=proposal_store, clock=clock)
 
         request = RequestRefinementRequest(
             proposal_id=str(pending_proposal.id),
@@ -611,6 +668,7 @@ class TestRequestRefinementUseCase:
     def test_request_refinement_raises_for_not_found(
         self,
         proposal_store: FakeColumnDomainProposalStore,
+        clock: FakeClock,
     ):
         """RequestRefinementUseCase raises error when proposal not found."""
         from invariant.identity.application.use_cases.adjudicate_proposal import (
@@ -619,10 +677,11 @@ class TestRequestRefinementUseCase:
             RequestRefinementUseCase,
         )
 
-        use_case = RequestRefinementUseCase(proposal_store=proposal_store)
+        use_case = RequestRefinementUseCase(proposal_store=proposal_store, clock=clock)
 
+        # Use a valid UUID format for the proposal_id
         request = RequestRefinementRequest(
-            proposal_id="nonexistent-id",
+            proposal_id="00000000-0000-0000-0000-000000000099",
             requested_by="admin@example.com",
             feedback="More details",
         )
@@ -633,6 +692,7 @@ class TestRequestRefinementUseCase:
     def test_request_refinement_raises_for_non_pending(
         self,
         proposal_store: FakeColumnDomainProposalStore,
+        clock: FakeClock,
         accepted_proposal: ColumnDomainProposal,
     ):
         """RequestRefinementUseCase raises error when proposal is not PENDING."""
@@ -643,7 +703,7 @@ class TestRequestRefinementUseCase:
         )
 
         proposal_store.add(accepted_proposal)
-        use_case = RequestRefinementUseCase(proposal_store=proposal_store)
+        use_case = RequestRefinementUseCase(proposal_store=proposal_store, clock=clock)
 
         request = RequestRefinementRequest(
             proposal_id=str(accepted_proposal.id),

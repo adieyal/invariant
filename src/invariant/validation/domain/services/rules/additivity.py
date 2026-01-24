@@ -12,6 +12,13 @@ if TYPE_CHECKING:
     from invariant.domain.model.query_spec import QuerySpec
     from invariant.domain.model.semantic_catalog import SemanticCatalog
 
+from invariant.domain.model.metric import (
+    AdditivityType,
+    MetricKind,
+    RollupPolicy,
+    SimpleAggSpec,
+)
+
 
 class AdditivityRule:
     """Validation rule for additivity constraints.
@@ -33,12 +40,6 @@ class AdditivityRule:
         Returns:
             A list of issues for additivity constraint violations.
         """
-        from invariant.domain.model.metric import (
-            AdditivityType,
-            MetricKind,
-            RollupPolicy,
-        )
-
         issues: list[Issue] = []
 
         # Determine query grain dimensions from group_by
@@ -122,8 +123,6 @@ class AdditivityRule:
         Returns:
             True if a rollup is being attempted, False otherwise.
         """
-        from invariant.domain.model.metric import SimpleAggSpec
-
         # Only SimpleAggSpec metrics have a direct dataset reference
         if not isinstance(metric.spec, SimpleAggSpec):
             # For derived/weighted_avg metrics, check dependencies
