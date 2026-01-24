@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Dictionary</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --tag-bg: #e0e7ff;
+            --tag-text: #4338ca;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .nav-brand a {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        .nav-links { display: flex; gap: 1.5rem; }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary-color); }
+        .nav-search { margin-left: auto; }
+        .nav-search input {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            width: 250px;
+        }
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .card-title { font-size: 1.125rem; font-weight: 600; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); }
+        .stat-label { color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background-color: var(--bg-color);
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        tr:hover { background-color: var(--bg-color); }
+        td a, .link {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        td a:hover, .link:hover { text-decoration: underline; }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-fact { background-color: #dcfce7; color: #166534; }
+        .badge-dimension { background-color: #e0e7ff; color: #4338ca; }
+        .badge-simple-agg { background-color: #dcfce7; color: #166534; }
+        .badge-ratio { background-color: #fef3c7; color: #92400e; }
+        .badge-derived { background-color: #e0e7ff; color: #4338ca; }
+        .badge-weighted-avg { background-color: #fce7f3; color: #9d174d; }
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+        }
+        .tag:hover { opacity: 0.8; }
+        .detail-header { margin-bottom: 2rem; }
+        .detail-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .detail-subtitle { color: var(--text-muted); font-size: 0.875rem; }
+        .detail-section { margin-bottom: 2rem; }
+        .detail-section h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .detail-item {
+            padding: 1rem;
+            background-color: var(--bg-color);
+            border-radius: 6px;
+        }
+        .detail-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .detail-value { font-weight: 500; }
+        .filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .filter-btn {
+            padding: 0.25rem 0.75rem;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .back-link { margin-top: 1rem; display: inline-block; }
+        footer {
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: auto;
+        }
+        .hidden { display: none !important; }
+        #view-search .card { margin-bottom: 1.5rem; }
+        .card-title .badge { font-size: 0.875rem; margin-left: 0.5rem; }
+        .description {
+            max-width: 400px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @media (max-width: 768px) {
+            nav { flex-direction: column; align-items: stretch; }
+            .nav-search { margin-left: 0; }
+            .nav-search input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-brand">
+                <a href="#/">Data Dictionary</a>
+            </div>
+            <div class="nav-links">
+                <a id="nav-home" class="active" href="#/">Home</a>
+                <a id="nav-datasets" href="#/datasets">Datasets</a>
+                <a id="nav-indicators" href="#/indicators">Indicators</a>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="search-input" placeholder="Search datasets, columns, indicators..." oninput="debounceSearch(this.value)">
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Home View -->
+        <div id="view-home">
+            <div class="detail-header">
+                <h1 class="detail-title">Catalog Overview</h1>
+                <p class="detail-subtitle">Browse your semantic data catalog</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="dataset-count">0</div>
+                    <div class="stat-label">Datasets</div>
+                    <a class="link" href="#/datasets">View all</a>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="indicator-count">0</div>
+                    <div class="stat-label">Indicators</div>
+                    <a class="link" href="#/indicators">View all</a>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Quick Links</h2>
+                </div>
+                <ul>
+                    <li><a class="link" href="#/datasets">Browse Datasets</a> - View fact and dimension tables</li>
+                    <li><a class="link" href="#/indicators">Browse Indicators</a> - Explore metrics with filtering</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">About</h2>
+                </div>
+                <p>Generated: <span id="generated-at">-</span></p>
+            </div>
+        </div>
+
+        <!-- Search Results View -->
+        <div id="view-search" class="hidden">
+            <div class="detail-header">
+                <h1 class="detail-title">Search Results</h1>
+                <p class="detail-subtitle" id="search-subtitle">Results for ""</p>
+            </div>
+            <div id="search-datasets-section" class="card hidden">
+                <div class="card-header">
+                    <h2 class="card-title">Datasets <span id="search-datasets-count" class="badge">0</span></h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Match</th>
+                        </tr>
+                    </thead>
+                    <tbody id="search-datasets-table"></tbody>
+                </table>
+            </div>
+            <div id="search-columns-section" class="card hidden">
+                <div class="card-header">
+                    <h2 class="card-title">Columns <span id="search-columns-count" class="badge">0</span></h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Dataset</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="search-columns-table"></tbody>
+                </table>
+            </div>
+            <div id="search-indicators-section" class="card hidden">
+                <div class="card-header">
+                    <h2 class="card-title">Indicators <span id="search-indicators-count" class="badge">0</span></h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Kind</th>
+                            <th>Match</th>
+                        </tr>
+                    </thead>
+                    <tbody id="search-indicators-table"></tbody>
+                </table>
+            </div>
+            <div id="search-no-results" class="card hidden">
+                <p>No results found.</p>
+            </div>
+        </div>
+
+        <!-- Datasets List View -->
+        <div id="view-datasets" class="hidden">
+            <div class="detail-header">
+                <h1 class="detail-title">Datasets</h1>
+                <p class="detail-subtitle">Fact and dimension tables in your semantic catalog</p>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><span id="datasets-count">0</span> Datasets</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Source</th>
+                            <th>Grain Keys</th>
+                        </tr>
+                    </thead>
+                    <tbody id="datasets-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Dataset Detail View -->
+        <div id="view-dataset-detail" class="hidden">
+            <div class="detail-header">
+                <h1 class="detail-title" id="dataset-name"></h1>
+                <p class="detail-subtitle" id="dataset-type"></p>
+            </div>
+            <div class="detail-section">
+                <h2>Metadata</h2>
+                <div class="detail-grid" id="dataset-metadata"></div>
+            </div>
+            <div id="dataset-columns-section" class="detail-section hidden">
+                <h2>Columns</h2>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Nullable</th>
+                                <th>Description</th>
+                                <th>Distinct</th>
+                                <th>Non-Null</th>
+                                <th>Sample Values</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataset-columns-table"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="dataset-timeseries-section" class="detail-section hidden">
+                <h2>Time Series</h2>
+                <div id="dataset-timeseries"></div>
+            </div>
+            <a class="back-link link" href="#/datasets">&larr; Back to Datasets</a>
+        </div>
+
+        <!-- Indicators List View -->
+        <div id="view-indicators" class="hidden">
+            <div class="detail-header">
+                <h1 class="detail-title">Indicators</h1>
+                <p class="detail-subtitle">Metrics and calculated measures in your semantic catalog</p>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Filters</h2>
+                </div>
+                <div class="filters">
+                    <button class="filter-btn active" onclick="filterKind('')">All</button>
+                    <span id="kind-filters"></span>
+                </div>
+                <div class="filters" id="tag-filters"></div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><span id="indicators-count">0</span> Indicators</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Kind</th>
+                            <th>Tags</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="indicators-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Indicator Detail View -->
+        <div id="view-indicator-detail" class="hidden">
+            <div class="detail-header">
+                <h1 class="detail-title" id="indicator-name"></h1>
+                <p class="detail-subtitle" id="indicator-type"></p>
+            </div>
+            <div id="indicator-description-section" class="card hidden">
+                <div class="card-header"><h2 class="card-title">Description</h2></div>
+                <p id="indicator-description"></p>
+            </div>
+            <div id="indicator-tags-section" class="detail-section hidden">
+                <h2>Tags</h2>
+                <div id="indicator-tags"></div>
+            </div>
+            <div class="detail-section">
+                <h2>Specification</h2>
+                <div class="detail-grid" id="indicator-spec"></div>
+            </div>
+            <div id="indicator-deps-section" class="detail-section hidden">
+                <h2>Dependencies</h2>
+                <div id="indicator-deps"></div>
+            </div>
+            <div class="detail-section">
+                <h2>Aggregation Rules</h2>
+                <div class="detail-grid" id="indicator-additivity"></div>
+            </div>
+            <a class="back-link link" href="#/indicators">&larr; Back to Indicators</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>Data Dictionary - Semantic Catalog Explorer</p>
+    </footer>
+
+    <script>
+        let catalog = null;
+        let currentKindFilter = '';
+        let currentTagFilter = '';
+        let searchQuery = '';
+
+        // Router - handles hash-based navigation
+        function router() {
+            if (!catalog) return;
+
+            const hash = window.location.hash || '#/';
+            const path = hash.slice(1); // Remove #
+            const parts = path.split('/').filter(Boolean);
+
+            if (parts.length === 0 || parts[0] === '') {
+                showView('home');
+            } else if (parts[0] === 'search' && parts.length === 2) {
+                const query = decodeURIComponent(parts[1]);
+                document.getElementById('search-input').value = query;
+                searchQuery = query;
+                showSearchResults(query);
+            } else if (parts[0] === 'datasets' && parts.length === 1) {
+                showView('datasets');
+            } else if (parts[0] === 'datasets' && parts.length === 2) {
+                showDatasetDetail(decodeURIComponent(parts[1]));
+            } else if (parts[0] === 'indicators' && parts.length === 1) {
+                showView('indicators');
+            } else if (parts[0] === 'indicators' && parts.length === 2) {
+                showIndicatorDetail(decodeURIComponent(parts[1]));
+            } else {
+                showView('home');
+            }
+        }
+
+        // Navigate to a route (updates hash, which triggers router)
+        function navigate(path) {
+            window.location.hash = path;
+        }
+
+        async function loadCatalog() {
+            try {
+                const response = await fetch('catalog.json');
+                catalog = await response.json();
+                renderHome();
+                renderDatasetsList();
+                renderIndicatorsList();
+                buildFilters();
+                // Route to current hash after loading
+                router();
+            } catch (e) {
+                console.error('Failed to load catalog.json:', e);
+                document.querySelector('main').innerHTML = `
+                    <div class="card">
+                        <h2>Error Loading Catalog</h2>
+                        <p>Could not load catalog.json. Make sure the file exists in the same directory.</p>
+                        <p>Error: ${e.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function showView(view) {
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active'));
+
+            if (view === 'home') {
+                document.getElementById('view-home').classList.remove('hidden');
+                document.getElementById('nav-home').classList.add('active');
+            } else if (view === 'datasets') {
+                document.getElementById('view-datasets').classList.remove('hidden');
+                document.getElementById('nav-datasets').classList.add('active');
+            } else if (view === 'indicators') {
+                document.getElementById('view-indicators').classList.remove('hidden');
+                document.getElementById('nav-indicators').classList.add('active');
+            }
+        }
+
+        function renderHome() {
+            document.getElementById('dataset-count').textContent = catalog.datasets.length;
+            document.getElementById('indicator-count').textContent = catalog.indicators.length;
+            document.getElementById('generated-at').textContent = catalog.generated_at;
+        }
+
+        function renderDatasetsList() {
+            const tbody = document.getElementById('datasets-table');
+            const filtered = catalog.datasets.filter(d =>
+                !searchQuery || d.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            document.getElementById('datasets-count').textContent = filtered.length;
+
+            tbody.innerHTML = filtered.map(d => `
+                <tr>
+                    <td><a class="link" href="#/datasets/${encodeURIComponent(d.name)}">${d.name}</a></td>
+                    <td><span class="badge badge-${d.kind.toLowerCase()}">${d.kind}</span></td>
+                    <td class="description">${d.physical_schema}.${d.physical_table}</td>
+                    <td>${[...d.grain_keys.geo, ...d.grain_keys.time, ...d.grain_keys.other].join(', ') || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function showDatasetDetail(name) {
+            const d = catalog.datasets.find(ds => ds.name === name);
+            if (!d) {
+                navigate('/datasets');
+                return;
+            }
+
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-dataset-detail').classList.remove('hidden');
+
+            document.getElementById('dataset-name').textContent = d.name;
+            document.getElementById('dataset-type').innerHTML = `<span class="badge badge-${d.kind.toLowerCase()}">${d.kind} Table</span>`;
+
+            const allKeys = [...d.grain_keys.geo, ...d.grain_keys.time, ...d.grain_keys.other];
+            document.getElementById('dataset-metadata').innerHTML = `
+                <div class="detail-item">
+                    <div class="detail-label">Source Table</div>
+                    <div class="detail-value">${d.physical_schema}.${d.physical_table}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Geo Keys</div>
+                    <div class="detail-value">${d.grain_keys.geo.join(', ') || '-'}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Time Keys</div>
+                    <div class="detail-value">${d.grain_keys.time.join(', ') || '-'}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Other Keys</div>
+                    <div class="detail-value">${d.grain_keys.other.join(', ') || '-'}</div>
+                </div>
+            `;
+
+            // Render columns
+            const colsSection = document.getElementById('dataset-columns-section');
+            if (d.columns && d.columns.length > 0) {
+                colsSection.classList.remove('hidden');
+                document.getElementById('dataset-columns-table').innerHTML = d.columns.map(col => {
+                    const stats = col.stats || {};
+                    const samples = stats.sample_values && stats.sample_values.length > 0
+                        ? stats.sample_values.slice(0, 5).map(v => `<code>${v}</code>`).join(', ')
+                        : '-';
+                    return `
+                        <tr>
+                            <td><strong>${col.name}</strong></td>
+                            <td><span class="badge">${col.data_type}</span></td>
+                            <td>${col.nullable ? 'Yes' : 'No'}</td>
+                            <td class="description">${col.description || '-'}</td>
+                            <td>${stats.distinct_count != null ? stats.distinct_count.toLocaleString() : '-'}</td>
+                            <td>${stats.non_null_count != null ? stats.non_null_count.toLocaleString() : '-'}</td>
+                            <td>${samples}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                colsSection.classList.add('hidden');
+            }
+
+            const tsSection = document.getElementById('dataset-timeseries-section');
+            if (d.time_series && d.time_series.length > 0) {
+                tsSection.classList.remove('hidden');
+                document.getElementById('dataset-timeseries').innerHTML = d.time_series.map(ts => `
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">${ts.base_name}</h3></div>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Grain</div>
+                                <div class="detail-value">${ts.grain}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Period Range</div>
+                                <div class="detail-value">${ts.start_period} to ${ts.end_period}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Columns</div>
+                                <div class="detail-value">${ts.columns.length}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                tsSection.classList.add('hidden');
+            }
+        }
+
+        function buildFilters() {
+            const kinds = [...new Set(catalog.indicators.map(i => i.kind))];
+            document.getElementById('kind-filters').innerHTML = kinds.map(k =>
+                `<button class="filter-btn" onclick="filterKind('${k}')">${k}</button>`
+            ).join('');
+
+            const tags = [...new Set(catalog.indicators.flatMap(i => i.tags))].sort();
+            document.getElementById('tag-filters').innerHTML = tags.map(t =>
+                `<span class="tag" onclick="filterTag('${t}')">${t}</span>`
+            ).join('');
+        }
+
+        function filterKind(kind) {
+            currentKindFilter = kind;
+            document.querySelectorAll('#view-indicators .filter-btn').forEach(btn => {
+                btn.classList.toggle('active', (kind === '' && btn.textContent === 'All') || btn.textContent === kind);
+            });
+            renderIndicatorsList();
+        }
+
+        function filterTag(tag) {
+            currentTagFilter = currentTagFilter === tag ? '' : tag;
+            renderIndicatorsList();
+        }
+
+        function renderIndicatorsList() {
+            const tbody = document.getElementById('indicators-table');
+            let filtered = catalog.indicators;
+
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                filtered = filtered.filter(i =>
+                    i.name.toLowerCase().includes(q) ||
+                    (i.description && i.description.toLowerCase().includes(q))
+                );
+            }
+            if (currentKindFilter) {
+                filtered = filtered.filter(i => i.kind === currentKindFilter);
+            }
+            if (currentTagFilter) {
+                filtered = filtered.filter(i => i.tags.includes(currentTagFilter));
+            }
+
+            document.getElementById('indicators-count').textContent = filtered.length;
+
+            tbody.innerHTML = filtered.map(i => `
+                <tr>
+                    <td><a class="link" href="#/indicators/${encodeURIComponent(i.name)}">${i.name}</a></td>
+                    <td><span class="badge badge-${i.kind.toLowerCase().replace('_', '-')}">${i.kind}</span></td>
+                    <td>${i.tags.map(t => `<span class="tag" onclick="filterTag('${t}')">${t}</span>`).join('')}</td>
+                    <td class="description">${i.description || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function showIndicatorDetail(name) {
+            const i = catalog.indicators.find(ind => ind.name === name);
+            if (!i) {
+                navigate('/indicators');
+                return;
+            }
+
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-indicator-detail').classList.remove('hidden');
+
+            document.getElementById('indicator-name').textContent = i.name;
+            document.getElementById('indicator-type').innerHTML = `<span class="badge badge-${i.kind.toLowerCase().replace('_', '-')}">${i.kind}</span>`;
+
+            const descSection = document.getElementById('indicator-description-section');
+            if (i.description) {
+                descSection.classList.remove('hidden');
+                document.getElementById('indicator-description').textContent = i.description;
+            } else {
+                descSection.classList.add('hidden');
+            }
+
+            const tagsSection = document.getElementById('indicator-tags-section');
+            if (i.tags.length > 0) {
+                tagsSection.classList.remove('hidden');
+                document.getElementById('indicator-tags').innerHTML = i.tags.map(t =>
+                    `<span class="tag">${t}</span>`
+                ).join('');
+            } else {
+                tagsSection.classList.add('hidden');
+            }
+
+            // Build spec summary
+            let specHtml = '';
+            for (const [key, value] of Object.entries(i.spec_summary)) {
+                specHtml += `
+                    <div class="detail-item">
+                        <div class="detail-label">${key}</div>
+                        <div class="detail-value">${Array.isArray(value) ? value.join(', ') : value}</div>
+                    </div>
+                `;
+            }
+            document.getElementById('indicator-spec').innerHTML = specHtml;
+
+            const depsSection = document.getElementById('indicator-deps-section');
+            if (i.dependencies.length > 0) {
+                depsSection.classList.remove('hidden');
+                document.getElementById('indicator-deps').innerHTML = i.dependencies.map(d => {
+                    const exists = catalog.indicators.some(ind => ind.name === d);
+                    return exists
+                        ? `<a class="link" href="#/indicators/${encodeURIComponent(d)}">${d}</a>`
+                        : `<span>${d} (not found)</span>`;
+                }).join(', ');
+            } else {
+                depsSection.classList.add('hidden');
+            }
+
+            document.getElementById('indicator-additivity').innerHTML = `
+                <div class="detail-item">
+                    <div class="detail-label">Additivity Type</div>
+                    <div class="detail-value">${i.additivity.type}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Rollup Policy</div>
+                    <div class="detail-value">${i.additivity.rollup_policy}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Additive Across Time</div>
+                    <div class="detail-value">${i.additivity.across_time ? 'Yes' : 'No'}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Additive Across Geo</div>
+                    <div class="detail-value">${i.additivity.across_geo ? 'Yes' : 'No'}</div>
+                </div>
+            `;
+        }
+
+        let searchTimeout = null;
+        function debounceSearch(query) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => handleSearch(query), 300);
+        }
+
+        function handleSearch(query) {
+            searchQuery = query;
+            if (query && query.trim()) {
+                navigate('/search/' + encodeURIComponent(query.trim()));
+            } else {
+                // Clear search - go home
+                navigate('/');
+            }
+        }
+
+        function showSearchResults(query) {
+            const q = query.toLowerCase();
+
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-search').classList.remove('hidden');
+            document.getElementById('search-subtitle').textContent = `Results for "${query}"`;
+
+            // Search datasets by name
+            const matchedDatasets = catalog.datasets.filter(d =>
+                d.name.toLowerCase().includes(q)
+            ).map(d => ({ ...d, matchType: 'name' }));
+
+            // Search columns
+            const matchedColumns = [];
+            catalog.datasets.forEach(d => {
+                (d.columns || []).forEach(col => {
+                    if (col.name.toLowerCase().includes(q) ||
+                        (col.description && col.description.toLowerCase().includes(q))) {
+                        matchedColumns.push({
+                            column: col,
+                            dataset: d,
+                            matchType: col.name.toLowerCase().includes(q) ? 'name' : 'description'
+                        });
+                    }
+                });
+            });
+
+            // Search indicators by name, description, tags
+            const matchedIndicators = catalog.indicators.filter(i =>
+                i.name.toLowerCase().includes(q) ||
+                (i.description && i.description.toLowerCase().includes(q)) ||
+                i.tags.some(t => t.toLowerCase().includes(q))
+            ).map(i => ({
+                ...i,
+                matchType: i.name.toLowerCase().includes(q) ? 'name' :
+                    (i.description && i.description.toLowerCase().includes(q)) ? 'description' : 'tag'
+            }));
+
+            // Render datasets
+            const dsSection = document.getElementById('search-datasets-section');
+            if (matchedDatasets.length > 0) {
+                dsSection.classList.remove('hidden');
+                document.getElementById('search-datasets-count').textContent = matchedDatasets.length;
+                document.getElementById('search-datasets-table').innerHTML = matchedDatasets.map(d => `
+                    <tr>
+                        <td><a class="link" href="#/datasets/${encodeURIComponent(d.name)}">${d.name}</a></td>
+                        <td><span class="badge badge-${d.kind.toLowerCase()}">${d.kind}</span></td>
+                        <td>${d.matchType}</td>
+                    </tr>
+                `).join('');
+            } else {
+                dsSection.classList.add('hidden');
+            }
+
+            // Render columns
+            const colSection = document.getElementById('search-columns-section');
+            if (matchedColumns.length > 0) {
+                colSection.classList.remove('hidden');
+                document.getElementById('search-columns-count').textContent = matchedColumns.length;
+                document.getElementById('search-columns-table').innerHTML = matchedColumns.map(({ column, dataset }) => `
+                    <tr>
+                        <td><strong>${column.name}</strong></td>
+                        <td><a class="link" href="#/datasets/${encodeURIComponent(dataset.name)}">${dataset.name}</a></td>
+                        <td><span class="badge">${column.data_type}</span></td>
+                        <td class="description">${column.description || '-'}</td>
+                    </tr>
+                `).join('');
+            } else {
+                colSection.classList.add('hidden');
+            }
+
+            // Render indicators
+            const indSection = document.getElementById('search-indicators-section');
+            if (matchedIndicators.length > 0) {
+                indSection.classList.remove('hidden');
+                document.getElementById('search-indicators-count').textContent = matchedIndicators.length;
+                document.getElementById('search-indicators-table').innerHTML = matchedIndicators.map(i => `
+                    <tr>
+                        <td><a class="link" href="#/indicators/${encodeURIComponent(i.name)}">${i.name}</a></td>
+                        <td><span class="badge badge-${i.kind.toLowerCase().replace('_', '-')}">${i.kind}</span></td>
+                        <td>${i.matchType}</td>
+                    </tr>
+                `).join('');
+            } else {
+                indSection.classList.add('hidden');
+            }
+
+            // No results
+            const noResults = document.getElementById('search-no-results');
+            if (matchedDatasets.length === 0 && matchedColumns.length === 0 && matchedIndicators.length === 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        }
+
+        // Listen for hash changes (back/forward navigation)
+        window.addEventListener('hashchange', router);
+
+        // Load catalog on page load
+        loadCatalog();
+    </script>
+</body>
+</html>
