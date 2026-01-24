@@ -41,6 +41,9 @@ extra_css:
 
 nav:
   - Home: index.md
+  - User Guide:
+    - Overview: user-guide/index.md
+    - Architecture: user-guide/architecture.md
   - Getting Started:
     - Quickstart: developer/quickstart.md
     - Core Concepts: developer/concepts.md
@@ -67,6 +70,13 @@ nav:
     - Application Layer: 06-application-layer.md
     - API Contracts: 07-api-contracts.md
     - Capability Examples: 08-capability-examples.md
+  - Component Charters:
+    - Catalog: charters/catalog-charter.md
+    - Identity: charters/identity-charter.md
+    - Semantic: charters/semantic-charter.md
+    - Query: charters/query-charter.md
+    - Validation: charters/validation-charter.md
+    - Reference: charters/reference-charter.md
 
 docs_dir: docs
 site_dir: site
