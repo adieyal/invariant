@@ -31,3 +31,54 @@ dimensions:
 quality:
   suppression_column: suppressed
   suppression_threshold: 5
+
+columns:
+  - name: geo_level
+    data_type: STRING
+    description: Geographic level (province, municipality, ward)
+    nullable: false
+    stats:
+      row_count: 10000
+      null_count: 0
+      distinct_count: 3
+      sample_values: ["province", "municipality", "ward"]
+
+  - name: geo_code
+    data_type: STRING
+    description: Geographic code identifier
+    nullable: false
+    stats:
+      row_count: 10000
+      null_count: 0
+      distinct_count: 4500
+      sample_values: ["ZA", "ZA-WC", "ZA-EC", "ZA-GT"]
+
+  - name: year
+    data_type: INTEGER
+    description: Census year
+    nullable: false
+    stats:
+      row_count: 10000
+      null_count: 0
+      distinct_count: 3
+      sample_values: ["2011", "2016", "2022"]
+
+  - name: total_population
+    data_type: INTEGER
+    description: Total population count
+    nullable: true
+    stats:
+      row_count: 10000
+      null_count: 150
+      distinct_count: 8000
+      sample_values: ["1234", "5678", "91011"]
+
+  - name: age_group_id
+    data_type: STRING
+    description: Foreign key to age group dimension
+    nullable: true
+
+  - name: suppressed
+    data_type: BOOLEAN
+    description: Whether data is suppressed for privacy
+    nullable: false

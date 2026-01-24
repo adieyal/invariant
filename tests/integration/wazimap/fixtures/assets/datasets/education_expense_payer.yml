@@ -1,0 +1,48 @@
+name: education_expense_payer
+physical_ref:
+  schema: nlss
+  table: education_expense_payer
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of students by who pays for their education"
+
+tags:
+  - education
+  - education-financing
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: education_expense_payer
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 9
+      sample_values: ["FATHER", "MOTHER", "BOTH PARENTS", "OTHER HH MEMBER", "OTHER RELATIVE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 189
+      sample_values: ["0", "1", "2", "3", "4"]

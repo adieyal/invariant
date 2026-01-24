@@ -1,0 +1,48 @@
+name: experienced_shock
+physical_ref:
+  schema: nlss
+  table: experienced_shock
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Proportion of households who experienced economic shocks"
+
+tags:
+  - social-protection
+  - economic-shocks
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 765
+      null_count: 0
+      distinct_count: 765
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: experienced_shock
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 765
+      null_count: 0
+      distinct_count: 1
+      sample_values: ["YES"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 765
+      null_count: 0
+      distinct_count: 163
+      sample_values: ["11", "17", "9", "19", "18"]

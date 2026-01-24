@@ -1,0 +1,48 @@
+name: migration_constraint
+physical_ref:
+  schema: nlss
+  table: migration_constraint
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of factors preventing migration"
+
+tags:
+  - migration
+  - migration-intentions
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 10738
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: migration_constraint
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 10738
+      null_count: 0
+      distinct_count: 14
+      sample_values: ["LACK OF MONEY", "DON'T KNOW HOW TO DO IT", "DON'T KNOW WHERE TO GO", "FREQUENT ILLNESS (MYSELF)", "FREQUENT ILLNESS OF A FAMILY MEMBER"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 10738
+      null_count: 0
+      distinct_count: 157
+      sample_values: ["0", "1", "2", "3", "4"]

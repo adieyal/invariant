@@ -1,0 +1,48 @@
+name: health_provider_consulted
+physical_ref:
+  schema: nlss
+  table: health_provider_consulted
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of population by type of health provider consulted"
+
+tags:
+  - health
+  - healthcare-access
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 11505
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: health_provider_consulted
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 11505
+      null_count: 0
+      distinct_count: 15
+      sample_values: ["NO ONE", "TRADITIONAL HEALER", "DOCTOR", "DENTIST", "NURSE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 11505
+      null_count: 0
+      distinct_count: 211
+      sample_values: ["0", "1", "2", "3", "4"]

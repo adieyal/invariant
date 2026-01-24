@@ -1,0 +1,48 @@
+name: toilet_facility_type
+physical_ref:
+  schema: nlss
+  table: toilet_facility_type
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of households by type of toilet facility"
+
+tags:
+  - water-and-sanitation
+  - sanitation
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 9971
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: toilet_facility_type
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 9971
+      null_count: 0
+      distinct_count: 13
+      sample_values: ["FLUSH TO PIPED SEWAGE SYSTEM", "FLUSH TO SEPTIC TANK", "FLUSH TO PIT LATRINE", "FLUSH TO OPEN DRAIN", "FLUSH TO SOMEWHERE ELSE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 9971
+      null_count: 0
+      distinct_count: 162
+      sample_values: ["0", "1", "2", "3", "4"]

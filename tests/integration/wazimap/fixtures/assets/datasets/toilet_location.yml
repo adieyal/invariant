@@ -1,0 +1,48 @@
+name: toilet_location
+physical_ref:
+  schema: nlss
+  table: toilet_location
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of households by toilet location (inside/outside dwelling)"
+
+tags:
+  - water-and-sanitation
+  - sanitation
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 2301
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: toilet_location
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 2301
+      null_count: 0
+      distinct_count: 3
+      sample_values: ["IN OWN DWELLING", "IN OWN YARD/PLOT", "ELSEWHERE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 2301
+      null_count: 0
+      distinct_count: 133
+      sample_values: ["0", "1", "2", "3", "4"]

@@ -1,0 +1,48 @@
+name: food_insecurity_cause
+physical_ref:
+  schema: nlss
+  table: food_insecurity_cause
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of causes of food insecurity"
+
+tags:
+  - food-security
+  - food-insecurity
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 8437
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: food_insecurity_cause
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 8437
+      null_count: 0
+      distinct_count: 11
+      sample_values: ["INADEQUATE HOUSEHOLD STOCKS DUE TO DROUGHT/POOR RAINS", "INADEQUATE HOUSEHOLD FOOD STOCKS DUE TO CROP PEST DAMAGE", "INADEQUATE HOUSEHOLD FOOD STOCKS DUE TO SMALL LAND SIZE", "INADEQUATE HOUSEHOLD FOOD STOCKS DUE TO LACK OF FARM INPUTS", "FOOD IN THE MARKET WAS VERY EXPENSIVE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 8437
+      null_count: 0
+      distinct_count: 112
+      sample_values: ["0", "1", "2", "3", "4"]

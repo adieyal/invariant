@@ -1,0 +1,56 @@
+name: sex_by_toilet_type
+physical_ref:
+  schema: nlss
+  table: sex_by_toilet_type
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Cross-tabulation of toilet facility type by sex"
+
+tags:
+  - water-and-sanitation
+  - sanitation
+
+columns:
+  - name: Geography
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 19942
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: sex
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 19942
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["MALE", "FEMALE"]
+
+  - name: toilet_type
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 19942
+      null_count: 0
+      distinct_count: 13
+      sample_values: ["FLUSH TO PIPED SEWAGE SYSTEM", "FLUSH TO SEPTIC TANK", "FLUSH TO PIT LATRINE", "FLUSH TO OPEN DRAIN", "FLUSH TO SOMEWHERE ELSE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 19942
+      null_count: 0
+      distinct_count: 354
+      sample_values: ["0", "3", "2", "1", "4"]

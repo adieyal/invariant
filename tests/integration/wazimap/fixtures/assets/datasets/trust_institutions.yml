@@ -1,0 +1,48 @@
+name: trust_institutions
+physical_ref:
+  schema: nlss
+  table: trust_institutions
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Overall distribution of trust in government institutions"
+
+tags:
+  - social-attitudes
+  - institutional-trust
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: trust_institutions
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 4
+      sample_values: ["YES", "NO", "DON'T KNOW ANYONE FROM THIS GROUP", "REFUSE TO ANSWER"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 236
+      sample_values: ["0", "1", "2", "3", "4"]

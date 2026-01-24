@@ -1,0 +1,48 @@
+name: main_activity_status
+physical_ref:
+  schema: nlss
+  table: main_activity_status
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of working-age population by main activity status"
+
+tags:
+  - employment
+  - employment-status
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: main_activity_status
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 9
+      sample_values: ["STUDYING OR TRAINING", "ENGAGED IN HOUSEHOLD OR FAMILY RESPONSIBILITIES", "HOUSEHOLD FARMING,LIVESTOCK, FISHING, OR FOREST ACTIVITIES FOR  HOUSEHOLD USE", "RETIRED OR PENSIONER", "WITH A LONG-TERM ILLNESS, INJURY OR DISABILITY"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 233
+      sample_values: ["0", "1", "2", "3", "4"]

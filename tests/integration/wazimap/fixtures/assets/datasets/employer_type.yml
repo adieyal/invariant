@@ -1,0 +1,48 @@
+name: employer_type
+physical_ref:
+  schema: nlss
+  table: employer_type
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of employees by type of employer"
+
+tags:
+  - employment
+  - employment-status
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 9204
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: employer_type
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 9204
+      null_count: 0
+      distinct_count: 12
+      sample_values: ["FEDERAL GOVERNMENT", "STATE GOVERNMENT", "LOCAL GOVERNMENT", "STATE-OWNED ENTERPRISE", "PRIVATE SECTOR (INCLUDING PAID APPRENTICES)"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 9204
+      null_count: 0
+      distinct_count: 84
+      sample_values: ["0", "1", "2", "3", "4"]

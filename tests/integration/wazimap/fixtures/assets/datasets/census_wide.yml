@@ -42,3 +42,69 @@ time_series:
       - column: households_2022
         period: "2022-01-01"
         grain: YEAR
+
+columns:
+  - name: geo_level
+    data_type: STRING
+    description: Geographic hierarchy level
+    nullable: false
+    stats:
+      row_count: 5000
+      null_count: 0
+      distinct_count: 3
+      sample_values: ["province", "municipality", "ward"]
+
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code
+    nullable: false
+    stats:
+      row_count: 5000
+      null_count: 0
+      distinct_count: 4500
+      sample_values: ["ZA", "ZA-WC", "CPT", "WC011"]
+
+  - name: population_2011
+    data_type: INTEGER
+    description: Population count from 2011 census
+    nullable: true
+    stats:
+      row_count: 5000
+      null_count: 50
+      distinct_count: 4200
+      sample_values: ["51770560", "5822734", "3740026"]
+
+  - name: population_2016
+    data_type: INTEGER
+    description: Population count from 2016 community survey
+    nullable: true
+    stats:
+      row_count: 5000
+      null_count: 75
+      distinct_count: 4150
+      sample_values: ["55653654", "6279730", "4055116"]
+
+  - name: population_2022
+    data_type: INTEGER
+    description: Population count from 2022 census
+    nullable: true
+    stats:
+      row_count: 5000
+      null_count: 100
+      distinct_count: 4100
+      sample_values: ["62027503", "7113776", "4807162"]
+
+  - name: households_2011
+    data_type: INTEGER
+    description: Household count from 2011 census
+    nullable: true
+
+  - name: households_2016
+    data_type: INTEGER
+    description: Household count from 2016 community survey
+    nullable: true
+
+  - name: households_2022
+    data_type: INTEGER
+    description: Household count from 2022 census
+    nullable: true

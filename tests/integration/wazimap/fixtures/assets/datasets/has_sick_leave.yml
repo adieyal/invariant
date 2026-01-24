@@ -1,0 +1,48 @@
+name: has_sick_leave
+physical_ref:
+  schema: nlss
+  table: has_sick_leave
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Proportion of employees entitled to sick leave"
+
+tags:
+  - employment
+  - employment-benefits
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: has_sick_leave
+    data_type: FLOAT
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["0.0", "1.0"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 103
+      sample_values: ["0", "1", "2", "3", "4"]

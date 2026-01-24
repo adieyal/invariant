@@ -1,0 +1,48 @@
+name: covid_vaccine_refusal_reason
+physical_ref:
+  schema: nlss
+  table: covid_vaccine_refusal_reason
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of reasons for refusing COVID-19 vaccination"
+
+tags:
+  - health
+  - covid-19
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 15340
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: covid_vaccine_refusal_reason
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 15340
+      null_count: 0
+      distinct_count: 20
+      sample_values: ["THINK HE/SHE IS NOT ELIGIBLE FOR VACCINE IN CURRENT PHASE", "DO NOT KNOW HOW OR WHERE TO GET/REGISTER FOR VACCINE", "TOO CROWDED/LONG LINES AT VACCINATION CENTERS", "FACILITY INACCESIBLE (FOR PEOPLE WITH DISABILITIES)", "TOO FAR/NO TRANSPORT"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 15340
+      null_count: 0
+      distinct_count: 216
+      sample_values: ["0", "1", "2", "3", "4"]

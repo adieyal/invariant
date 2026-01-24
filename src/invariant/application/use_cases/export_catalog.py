@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 from invariant.application.dto.catalog_export import (
     AdditivityExportDTO,
     CatalogExportDTO,
+    ColumnExportDTO,
+    ColumnStatsExportDTO,
     DatasetExportDTO,
     GrainKeysExportDTO,
     IndicatorExportDTO,
@@ -25,7 +27,10 @@ from invariant.domain.model.metric import (
 if TYPE_CHECKING:
     from invariant.application.ports.semantic_asset_store import SemanticAssetStore
     from invariant.domain.model.metric import Metric
-    from invariant.domain.model.semantic_dataset import SemanticDataset
+    from invariant.domain.model.semantic_dataset import (
+        ColumnDefinition,
+        SemanticDataset,
+    )
     from invariant.domain.model.time_series import TimeSeriesSpec
 
 
@@ -72,6 +77,7 @@ class ExportCatalogUseCase:
     def _export_dataset(self, dataset: SemanticDataset) -> DatasetExportDTO:
         """Export a single dataset."""
         time_series = [self._export_time_series(ts) for ts in dataset.time_series]
+        columns = [self._export_column(col) for col in dataset.columns]
 
         return DatasetExportDTO(
             name=dataset.name,
@@ -84,6 +90,27 @@ class ExportCatalogUseCase:
                 other=dataset.grain_keys.other,
             ),
             time_series=time_series,
+            columns=columns,
+        )
+
+    def _export_column(self, col: ColumnDefinition) -> ColumnExportDTO:
+        """Export a single column definition."""
+        stats = None
+        if col.stats:
+            stats = ColumnStatsExportDTO(
+                row_count=col.stats.row_count,
+                null_count=col.stats.null_count,
+                non_null_count=col.stats.non_null_count,
+                distinct_count=col.stats.distinct_count,
+                sample_values=col.stats.sample_values,
+            )
+
+        return ColumnExportDTO(
+            name=col.name,
+            data_type=col.data_type.value,
+            description=col.description,
+            nullable=col.nullable,
+            stats=stats,
         )
 
     def _export_time_series(self, ts: TimeSeriesSpec) -> TimeSeriesExportDTO:

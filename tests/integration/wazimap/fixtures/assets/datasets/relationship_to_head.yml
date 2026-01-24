@@ -1,0 +1,48 @@
+name: relationship_to_head
+physical_ref:
+  schema: nlss
+  table: relationship_to_head
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of household members by relationship to household head"
+
+tags:
+  - demographics
+  - household-composition
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 12272
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: relationship_to_head
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 12272
+      null_count: 0
+      distinct_count: 16
+      sample_values: ["HEAD", "SPOUSE", "OWN CHILD", "STEP CHILD", "ADOPTED CHILD"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 12272
+      null_count: 0
+      distinct_count: 320
+      sample_values: ["0", "1", "2", "3", "10"]

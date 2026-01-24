@@ -1,0 +1,48 @@
+name: floor_material
+physical_ref:
+  schema: nlss
+  table: floor_material
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of dwellings by main floor material"
+
+tags:
+  - housing
+  - building-materials
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 5369
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: floor_material
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 5369
+      null_count: 0
+      distinct_count: 7
+      sample_values: ["SAND/DIRT/STRAW", "SMOOTHED MUD", "SMOOTH CEMENT/CONCRETE", "WOOD", "TILE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 5369
+      null_count: 0
+      distinct_count: 154
+      sample_values: ["0", "1", "2", "3", "4"]

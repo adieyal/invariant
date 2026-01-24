@@ -1,0 +1,48 @@
+name: has_occupancy_documentation
+physical_ref:
+  schema: nlss
+  table: has_occupancy_documentation
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Proportion of households with documentation for dwelling occupancy"
+
+tags:
+  - housing
+  - dwelling-characteristics
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: has_occupancy_documentation
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["YES", "NO"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 152
+      sample_values: ["0", "1", "9", "10", "3"]

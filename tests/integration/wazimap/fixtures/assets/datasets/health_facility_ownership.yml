@@ -1,0 +1,48 @@
+name: health_facility_ownership
+physical_ref:
+  schema: nlss
+  table: health_facility_ownership
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of health consultations by facility ownership (public/private)"
+
+tags:
+  - health
+  - healthcare-facilities
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: health_facility_ownership
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 9
+      sample_values: ["FEDERAL GOVT", "STATE GOVT", "LOCAL GOVT", "COMMUNITY", "RELIGIOUS BODY"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 183
+      sample_values: ["0", "1", "2", "3", "4"]

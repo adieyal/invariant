@@ -1,0 +1,48 @@
+name: born_in_nigeria_migration
+physical_ref:
+  schema: nlss
+  table: born_in_nigeria_migration
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Detailed migration data on population born in Nigeria"
+
+tags:
+  - migration
+  - origin-and-residency
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 7670
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: born_in_nigeria_migration
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 7670
+      null_count: 0
+      distinct_count: 10
+      sample_values: ["ITALY", "UNITED STATES OF AMERICA", "CAMEROON", "NIGER", "BENIN"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 7670
+      null_count: 0
+      distinct_count: 20
+      sample_values: ["0", "1", "2", "3", "4"]

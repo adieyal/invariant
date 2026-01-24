@@ -31,7 +31,9 @@ class TestYamlSemanticAssetStoreLoading:
         store = YamlSemanticAssetStore(base_path=fixtures_path)
         catalog = store.load_catalog()
 
-        assert len(catalog.datasets) == 3  # population, geography, census_wide
+        assert (
+            len(catalog.datasets) == 207
+        )  # population, geography, census_wide + 204 imported NLSS datasets
         assert len(catalog.dimensions) == 1
         assert len(catalog.geo_hierarchies) == 1
         assert len(catalog.metrics) == 3

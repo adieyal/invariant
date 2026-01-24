@@ -1,0 +1,48 @@
+name: reason_not_attending_school
+physical_ref:
+  schema: nlss
+  table: reason_not_attending_school
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of reasons for not currently attending school"
+
+tags:
+  - education
+  - school-attendance
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 16107
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: reason_not_attending_school
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 16107
+      null_count: 0
+      distinct_count: 21
+      sample_values: ["HAD ENOUGH/COMPLETED SCHOOLING", "AWAITING ADMISSION", "NO SCHOOL/LACK OF TEACHERS", "NO TIME", "CHILD DOESNT LEARN  ANYTHING IN SCHOOL"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 16107
+      null_count: 0
+      distinct_count: 208
+      sample_values: ["0", "1", "2", "3", "4"]

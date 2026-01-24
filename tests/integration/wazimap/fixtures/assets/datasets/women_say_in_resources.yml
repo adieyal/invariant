@@ -1,0 +1,48 @@
+name: women_say_in_resources
+physical_ref:
+  schema: nlss
+  table: women_say_in_resources
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of attitudes on women's role in household resource decisions"
+
+tags:
+  - social-attitudes
+  - gender-attitudes
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 4602
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: women_say_in_resources
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 4602
+      null_count: 0
+      distinct_count: 6
+      sample_values: ["STRONGLY DISAGREE", "SOMEWHAT DISAGREE", "NEITHER AGREE OR DISAGREE", "SOMEWHAT AGREE", "STRONGLY AGREE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 4602
+      null_count: 0
+      distinct_count: 258
+      sample_values: ["0", "1", "3", "4", "2"]

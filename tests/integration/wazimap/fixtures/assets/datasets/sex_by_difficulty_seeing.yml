@@ -1,0 +1,57 @@
+name: sex_by_difficulty_seeing
+physical_ref:
+  schema: nlss
+  table: sex_by_difficulty_seeing
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Cross-tabulation of vision difficulty by sex"
+
+tags:
+  - health
+  - disability
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 6136
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: sex
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 6136
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["MALE", "FEMALE"]
+
+  - name: difficulty_seeing
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 6136
+      null_count: 0
+      distinct_count: 4
+      sample_values: ["NO, NO DIFFICULTY", "YES, SOME", "YES, A LOT", "CANNOT SEE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 6136
+      null_count: 0
+      distinct_count: 279
+      sample_values: ["0", "1", "2", "3", "4"]

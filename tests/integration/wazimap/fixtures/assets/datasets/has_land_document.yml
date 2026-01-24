@@ -1,0 +1,48 @@
+name: has_land_document
+physical_ref:
+  schema: nlss
+  table: has_land_document
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Proportion of landowners with documentation for land ownership"
+
+tags:
+  - agriculture
+  - land-tenure
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 2301
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: has_land_document
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 2301
+      null_count: 0
+      distinct_count: 3
+      sample_values: ["YES", "NO", "DON'T KNOW"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 2301
+      null_count: 0
+      distinct_count: 124
+      sample_values: ["0", "1", "2", "3", "4"]

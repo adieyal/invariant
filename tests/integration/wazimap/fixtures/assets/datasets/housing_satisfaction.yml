@@ -1,0 +1,48 @@
+name: housing_satisfaction
+physical_ref:
+  schema: nlss
+  table: housing_satisfaction
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of households by satisfaction with housing"
+
+tags:
+  - housing
+  - dwelling-characteristics
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: housing_satisfaction
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 4
+      sample_values: ["WILL INCREASE", "WILL REMAIN THE SAME", "WILL DECREASE", "DO NOT KNOW"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 148
+      sample_values: ["0", "1", "2", "3", "4"]

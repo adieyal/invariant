@@ -1,0 +1,48 @@
+name: food_security_unhealthy
+physical_ref:
+  schema: nlss
+  table: food_security_unhealthy
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Proportion of households unable to eat healthy and nutritious food"
+
+tags:
+  - food-security
+  - food-security-indicators
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: food_security_unhealthy
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["YES", "NO"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 147
+      sample_values: ["4", "7", "3", "8", "2"]

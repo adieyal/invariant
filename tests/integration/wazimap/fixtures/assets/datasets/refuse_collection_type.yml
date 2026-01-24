@@ -1,0 +1,48 @@
+name: refuse_collection_type
+physical_ref:
+  schema: nlss
+  table: refuse_collection_type
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of households by method of refuse disposal"
+
+tags:
+  - water-and-sanitation
+  - waste-management
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: refuse_collection_type
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 9
+      sample_values: ["HOUSEHOLD BIN COLLECTED BY GOVERNMENT", "HOUSEHOLD BIN COLLECTED BY PRIVATE FIRM OR INDIVIDUAL", "TAKE TO PUBLIC/DESIGNATED RUBBISH HEAP/GOVT BIN OR SHED", "BURNING", "COMPOST SOLID WASTE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 6903
+      null_count: 0
+      distinct_count: 156
+      sample_values: ["0", "1", "3", "2", "4"]

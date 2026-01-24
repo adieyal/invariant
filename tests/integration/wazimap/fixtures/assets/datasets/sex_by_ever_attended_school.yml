@@ -1,0 +1,56 @@
+name: sex_by_ever_attended_school
+physical_ref:
+  schema: nlss
+  table: sex_by_ever_attended_school
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Cross-tabulation of school attendance by sex"
+
+tags:
+  - education
+  - school-attendance
+
+columns:
+  - name: Geography
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: sex
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["MALE", "FEMALE"]
+
+  - name: ever_attended_school
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["YES", "NO"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 303
+      sample_values: ["1", "0", "2", "3", "6"]

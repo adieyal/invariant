@@ -157,6 +157,80 @@ class QualityConfig:
         object.__setattr__(self, "confidence_column", confidence_column)
 
 
+class ColumnDataType(str, Enum):
+    """Data types for dataset columns."""
+
+    STRING = "STRING"
+    INTEGER = "INTEGER"
+    FLOAT = "FLOAT"
+    DECIMAL = "DECIMAL"
+    BOOLEAN = "BOOLEAN"
+    DATE = "DATE"
+    TIMESTAMP = "TIMESTAMP"
+    JSON = "JSON"
+
+
+@dataclass(frozen=True)
+class ColumnStats:
+    """Statistics for a dataset column.
+
+    These can be provided manually or computed by a profiling tool.
+    """
+
+    row_count: int | None
+    null_count: int | None
+    distinct_count: int | None
+    sample_values: tuple[str, ...]
+
+    def __init__(
+        self,
+        row_count: int | None = None,
+        null_count: int | None = None,
+        distinct_count: int | None = None,
+        sample_values: Sequence[str] | None = None,
+    ) -> None:
+        object.__setattr__(self, "row_count", row_count)
+        object.__setattr__(self, "null_count", null_count)
+        object.__setattr__(self, "distinct_count", distinct_count)
+        object.__setattr__(
+            self, "sample_values", tuple(sample_values) if sample_values else ()
+        )
+
+    @property
+    def non_null_count(self) -> int | None:
+        """Return count of non-null values."""
+        if self.row_count is not None and self.null_count is not None:
+            return self.row_count - self.null_count
+        return None
+
+
+@dataclass(frozen=True)
+class ColumnDefinition:
+    """Definition of a column in a semantic dataset."""
+
+    name: str
+    data_type: ColumnDataType
+    description: str | None
+    nullable: bool
+    stats: ColumnStats | None
+
+    def __init__(
+        self,
+        name: str,
+        data_type: ColumnDataType,
+        description: str | None = None,
+        nullable: bool = True,
+        stats: ColumnStats | None = None,
+    ) -> None:
+        if not name:
+            raise ValueError("name must not be empty")
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "data_type", data_type)
+        object.__setattr__(self, "description", description)
+        object.__setattr__(self, "nullable", nullable)
+        object.__setattr__(self, "stats", stats)
+
+
 @dataclass
 class SemanticDataset:
     """A logical dataset backed by a physical Postgres relation.
@@ -180,6 +254,7 @@ class SemanticDataset:
     dimensions: dict[str, DimensionSpec] = field(default_factory=dict)
     quality: QualityConfig | None = None
     time_series: tuple[TimeSeriesSpec, ...] = ()
+    columns: tuple[ColumnDefinition, ...] = ()
 
     def __post_init__(self) -> None:
         self._validate_invariants()
@@ -205,6 +280,12 @@ class SemanticDataset:
             if len(base_names) != len(set(base_names)):
                 raise ValueError("time_series must not have duplicate base_name values")
 
+        # Validate no duplicate column names
+        if self.columns:
+            col_names = [col.name for col in self.columns]
+            if len(col_names) != len(set(col_names)):
+                raise ValueError("columns must not have duplicate name values")
+
     @classmethod
     def create(
         cls,
@@ -218,6 +299,7 @@ class SemanticDataset:
         dimensions: Mapping[str, DimensionSpec] | None = None,
         quality: QualityConfig | None = None,
         time_series: Sequence[TimeSeriesSpec] | None = None,
+        columns: Sequence[ColumnDefinition] | None = None,
     ) -> SemanticDataset:
         """Factory method to create a SemanticDataset with a new ID."""
         return cls(
@@ -231,6 +313,7 @@ class SemanticDataset:
             dimensions=dict(dimensions) if dimensions else {},
             quality=quality,
             time_series=tuple(time_series) if time_series else (),
+            columns=tuple(columns) if columns else (),
         )
 
     def get_dimension_spec(self, name: str) -> DimensionSpec | None:
@@ -242,4 +325,11 @@ class SemanticDataset:
         for ts in self.time_series:
             if ts.base_name == base_name:
                 return ts
+        return None
+
+    def get_column(self, name: str) -> ColumnDefinition | None:
+        """Get a column definition by name."""
+        for col in self.columns:
+            if col.name == name:
+                return col
         return None

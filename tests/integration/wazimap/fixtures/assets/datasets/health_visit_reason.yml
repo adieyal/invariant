@@ -1,0 +1,48 @@
+name: health_visit_reason
+physical_ref:
+  schema: nlss
+  table: health_visit_reason
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of reasons for health facility visits"
+
+tags:
+  - health
+  - healthcare-access
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 4602
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: health_visit_reason
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 4602
+      null_count: 0
+      distinct_count: 6
+      sample_values: ["ILLNESS", "INJURY", "GENERAL CHECKUP (NOT FOR PREGNANCY)", "PRENATAL/POSTNATAL CHECKUP", "GIVING BIRTH"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 4602
+      null_count: 0
+      distinct_count: 172
+      sample_values: ["0", "1", "2", "3", "4"]

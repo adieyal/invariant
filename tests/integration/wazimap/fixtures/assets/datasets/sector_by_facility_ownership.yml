@@ -1,0 +1,57 @@
+name: sector_by_facility_ownership
+physical_ref:
+  schema: nlss
+  table: sector_by_facility_ownership
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Cross-tabulation of facility ownership by urban/rural sector"
+
+tags:
+  - health
+  - healthcare-facilities
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 13806
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: sector
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 13806
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["URBAN", "RURAL"]
+
+  - name: facility_ownership
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 13806
+      null_count: 0
+      distinct_count: 9
+      sample_values: ["FEDERAL GOVT", "STATE GOVT", "LOCAL GOVT", "COMMUNITY", "RELIGIOUS BODY"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 13806
+      null_count: 0
+      distinct_count: 189
+      sample_values: ["0", "1", "2", "3", "4"]

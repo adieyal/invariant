@@ -1,0 +1,48 @@
+name: reason_not_consulted
+physical_ref:
+  schema: nlss
+  table: reason_not_consulted
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of reasons for not consulting a health provider when sick"
+
+tags:
+  - health
+  - healthcare-access
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 9971
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: reason_not_consulted
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 9971
+      null_count: 0
+      distinct_count: 13
+      sample_values: ["NO NEED, MIONR ILLNESS OR INJURY", "TOO FAR", "TOO EXPENSIVE/LACK OF MONEY RELATED TO COVID-19 INCOME LOSS", "POOR QUALITY OF CARE", "NO MEDICAL PERSONAL AVAILABLE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 9971
+      null_count: 0
+      distinct_count: 79
+      sample_values: ["0", "1", "2", "3", "4"]

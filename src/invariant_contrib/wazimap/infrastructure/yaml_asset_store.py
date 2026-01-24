@@ -62,6 +62,9 @@ from invariant.domain.model.metric import (
 )
 from invariant.domain.model.semantic_catalog import SemanticCatalog
 from invariant.domain.model.semantic_dataset import (
+    ColumnDataType,
+    ColumnDefinition,
+    ColumnStats,
     DatasetKind,
     DimensionSpec,
     GeographyConfig,
@@ -269,7 +272,7 @@ class YamlSemanticAssetStore:
             time_series: list[TimeSeriesSpec] = []
             if "time_series" in data:
                 for ts_data in data["time_series"]:
-                    columns = [
+                    ts_columns = [
                         TimeSeriesColumn(
                             column_name=col["column"],
                             period=self._parse_date(col["period"]),
@@ -280,7 +283,30 @@ class YamlSemanticAssetStore:
                     time_series.append(
                         TimeSeriesSpec(
                             base_name=ts_data["base_name"],
-                            columns=columns,
+                            columns=ts_columns,
+                        )
+                    )
+
+            # Parse columns
+            columns: list[ColumnDefinition] = []
+            if "columns" in data:
+                for col_data in data["columns"]:
+                    stats = None
+                    if "stats" in col_data:
+                        s = col_data["stats"]
+                        stats = ColumnStats(
+                            row_count=s.get("row_count"),
+                            null_count=s.get("null_count"),
+                            distinct_count=s.get("distinct_count"),
+                            sample_values=s.get("sample_values"),
+                        )
+                    columns.append(
+                        ColumnDefinition(
+                            name=col_data["name"],
+                            data_type=ColumnDataType(col_data["data_type"]),
+                            description=col_data.get("description"),
+                            nullable=col_data.get("nullable", True),
+                            stats=stats,
                         )
                     )
 
@@ -295,6 +321,7 @@ class YamlSemanticAssetStore:
                 dimensions=dimensions,
                 quality=quality,
                 time_series=tuple(time_series),
+                columns=tuple(columns),
             )
         except KeyError as e:
             raise YamlLoadError(f"Missing required field: {e}", file_path) from e

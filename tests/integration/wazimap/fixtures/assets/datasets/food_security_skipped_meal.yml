@@ -1,0 +1,48 @@
+name: food_security_skipped_meal
+physical_ref:
+  schema: nlss
+  table: food_security_skipped_meal
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Proportion of households who skipped a meal due to lack of resources"
+
+tags:
+  - food-security
+  - food-security-indicators
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: food_security_skipped_meal
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["YES", "NO"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 1534
+      null_count: 0
+      distinct_count: 143
+      sample_values: ["6", "7", "4", "8", "10"]

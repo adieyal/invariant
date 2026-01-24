@@ -1,0 +1,48 @@
+name: school_level_enrolled
+physical_ref:
+  schema: nlss
+  table: school_level_enrolled
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of students by level of school enrollment"
+
+tags:
+  - education
+  - school-characteristics
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 26845
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: school_level_enrolled
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 26845
+      null_count: 0
+      distinct_count: 35
+      sample_values: ["NONE", "N1", "N2", "PRE-NURSERY", "P1"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 26845
+      null_count: 0
+      distinct_count: 151
+      sample_values: ["0", "1", "2", "3", "4"]

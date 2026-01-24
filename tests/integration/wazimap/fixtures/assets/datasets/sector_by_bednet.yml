@@ -1,0 +1,57 @@
+name: sector_by_bednet
+physical_ref:
+  schema: nlss
+  table: sector_by_bednet
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Cross-tabulation of bednet use by urban/rural sector"
+
+tags:
+  - health
+  - malaria-prevention
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: sector
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["URBAN", "RURAL"]
+
+  - name: bednet
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["YES", "NO"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 3068
+      null_count: 0
+      distinct_count: 347
+      sample_values: ["0", "2", "1", "3", "32"]

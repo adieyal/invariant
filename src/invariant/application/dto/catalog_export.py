@@ -66,6 +66,78 @@ class TimeSeriesExportDTO:
 
 
 @dataclass(frozen=True)
+class ColumnStatsExportDTO:
+    """Export DTO for column statistics."""
+
+    row_count: int | None
+    null_count: int | None
+    non_null_count: int | None
+    distinct_count: int | None
+    sample_values: tuple[str, ...]
+
+    def __init__(
+        self,
+        row_count: int | None = None,
+        null_count: int | None = None,
+        non_null_count: int | None = None,
+        distinct_count: int | None = None,
+        sample_values: Sequence[str] | None = None,
+    ) -> None:
+        object.__setattr__(self, "row_count", row_count)
+        object.__setattr__(self, "null_count", null_count)
+        object.__setattr__(self, "non_null_count", non_null_count)
+        object.__setattr__(self, "distinct_count", distinct_count)
+        object.__setattr__(
+            self, "sample_values", tuple(sample_values) if sample_values else ()
+        )
+
+    def to_dict(self) -> dict:
+        """Convert to JSON-serializable dict."""
+        return {
+            "row_count": self.row_count,
+            "null_count": self.null_count,
+            "non_null_count": self.non_null_count,
+            "distinct_count": self.distinct_count,
+            "sample_values": list(self.sample_values),
+        }
+
+
+@dataclass(frozen=True)
+class ColumnExportDTO:
+    """Export DTO for a dataset column definition."""
+
+    name: str
+    data_type: str
+    description: str | None
+    nullable: bool
+    stats: ColumnStatsExportDTO | None
+
+    def __init__(
+        self,
+        name: str,
+        data_type: str,
+        description: str | None = None,
+        nullable: bool = True,
+        stats: ColumnStatsExportDTO | None = None,
+    ) -> None:
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "data_type", data_type)
+        object.__setattr__(self, "description", description)
+        object.__setattr__(self, "nullable", nullable)
+        object.__setattr__(self, "stats", stats)
+
+    def to_dict(self) -> dict:
+        """Convert to JSON-serializable dict."""
+        return {
+            "name": self.name,
+            "data_type": self.data_type,
+            "description": self.description,
+            "nullable": self.nullable,
+            "stats": self.stats.to_dict() if self.stats else None,
+        }
+
+
+@dataclass(frozen=True)
 class GrainKeysExportDTO:
     """Export DTO for grain keys."""
 
@@ -102,6 +174,7 @@ class DatasetExportDTO:
     physical_table: str
     grain_keys: GrainKeysExportDTO
     time_series: tuple[TimeSeriesExportDTO, ...]
+    columns: tuple[ColumnExportDTO, ...]
 
     def __init__(
         self,
@@ -111,6 +184,7 @@ class DatasetExportDTO:
         physical_table: str,
         grain_keys: GrainKeysExportDTO,
         time_series: Sequence[TimeSeriesExportDTO] | None = None,
+        columns: Sequence[ColumnExportDTO] | None = None,
     ) -> None:
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "kind", kind)
@@ -120,6 +194,7 @@ class DatasetExportDTO:
         object.__setattr__(
             self, "time_series", tuple(time_series) if time_series else ()
         )
+        object.__setattr__(self, "columns", tuple(columns) if columns else ())
 
     def to_dict(self) -> dict:
         """Convert to JSON-serializable dict."""
@@ -130,6 +205,7 @@ class DatasetExportDTO:
             "physical_table": self.physical_table,
             "grain_keys": self.grain_keys.to_dict(),
             "time_series": [ts.to_dict() for ts in self.time_series],
+            "columns": [c.to_dict() for c in self.columns],
         }
 
 

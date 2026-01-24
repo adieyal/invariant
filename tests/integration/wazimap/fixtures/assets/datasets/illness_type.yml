@@ -1,0 +1,48 @@
+name: illness_type
+physical_ref:
+  schema: nlss
+  table: illness_type
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Distribution of population by type of illness experienced"
+
+tags:
+  - health
+  - illness-and-injury
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 26845
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: illness_type
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 26845
+      null_count: 0
+      distinct_count: 35
+      sample_values: ["CHOLERA", "MALARIA", "TYPHOID", "HYPERTENSION", "COMMON COLD"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 26845
+      null_count: 0
+      distinct_count: 192
+      sample_values: ["0", "1", "2", "3", "4"]

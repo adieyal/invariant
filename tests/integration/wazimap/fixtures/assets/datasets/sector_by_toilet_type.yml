@@ -1,0 +1,57 @@
+name: sector_by_toilet_type
+physical_ref:
+  schema: nlss
+  table: sector_by_toilet_type
+
+kind: FACT
+
+grain_keys:
+  geo:
+    - geo_code
+  time: []
+  other: []
+
+description: "Cross-tabulation of toilet facility type by urban/rural sector"
+
+tags:
+  - water-and-sanitation
+  - sanitation
+
+columns:
+  - name: geo_code
+    data_type: STRING
+    description: Geographic area code (state or LGA)
+    nullable: false
+    stats:
+      row_count: 19942
+      null_count: 0
+      distinct_count: 767
+      sample_values: ["NGA", "NG001", "NG002", "NG003", "NG004"]
+
+  - name: sector
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 19942
+      null_count: 0
+      distinct_count: 2
+      sample_values: ["URBAN", "RURAL"]
+
+  - name: toilet_type
+    data_type: STRING
+    nullable: false
+    stats:
+      row_count: 19942
+      null_count: 0
+      distinct_count: 13
+      sample_values: ["FLUSH TO PIPED SEWAGE SYSTEM", "FLUSH TO SEPTIC TANK", "FLUSH TO PIT LATRINE", "FLUSH TO OPEN DRAIN", "FLUSH TO SOMEWHERE ELSE"]
+
+  - name: count
+    data_type: INTEGER
+    description: Population count
+    nullable: false
+    stats:
+      row_count: 19942
+      null_count: 0
+      distinct_count: 352
+      sample_values: ["0", "5", "6", "7", "4"]
