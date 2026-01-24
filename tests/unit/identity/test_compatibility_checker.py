@@ -143,8 +143,8 @@ class TestEquivalentDomains:
         checker = CompatibilityChecker()
         result = checker.check_compatibility(domain_a, domain_b)
 
-        assert "concept_id_a" in result.evidence
-        assert "concept_id_b" in result.evidence
+        assert hasattr(result.evidence, "concept_id_a")
+        assert hasattr(result.evidence, "concept_id_b")
 
 
 class TestCompatibleWithTransform:
@@ -350,9 +350,7 @@ class TestIncompatibleDomains:
         checker = CompatibilityChecker()
         result = checker.check_compatibility(domain_a, domain_b)
 
-        assert result.evidence.get("concept_id_a") != result.evidence.get(
-            "concept_id_b"
-        )
+        assert result.evidence.concept_id_a != result.evidence.concept_id_b
 
 
 class TestUnknownCompatibility:
@@ -541,10 +539,10 @@ class TestResultEvidence:
         result = checker.check_compatibility(domain_a, domain_b)
 
         # Evidence should have field values from both domains
-        assert "concept_id_a" in result.evidence
-        assert "concept_id_b" in result.evidence
-        assert "universe_id_a" in result.evidence
-        assert "universe_id_b" in result.evidence
+        assert hasattr(result.evidence, "concept_id_a")
+        assert hasattr(result.evidence, "concept_id_b")
+        assert hasattr(result.evidence, "universe_id_a")
+        assert hasattr(result.evidence, "universe_id_b")
 
 
 class TestCompatibilityCheckerExports:

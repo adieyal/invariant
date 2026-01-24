@@ -7,12 +7,16 @@ process queries without depending on application-layer DTOs.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from collections.abc import Sequence
+# Type alias for filter values
+# - Single scalar values: str, int, float, bool, None
+# - Sequences for IN/NOT_IN operators
+# - Two-element tuples for BETWEEN operator
+ScalarValue = str | int | float | bool | None
+FilterValue = ScalarValue | Sequence[ScalarValue] | tuple[ScalarValue, ScalarValue]
 
 
 class FilterOperator(str, Enum):
@@ -83,14 +87,14 @@ class FilterSpec:
     dimension: str
     attribute: str
     op: FilterOperator
-    value: Any
+    value: FilterValue
 
     def __init__(
         self,
         dimension: str,
         attribute: str,
         op: FilterOperator | str,
-        value: Any,
+        value: FilterValue,
     ) -> None:
         if not dimension:
             raise ValueError("dimension must not be empty")

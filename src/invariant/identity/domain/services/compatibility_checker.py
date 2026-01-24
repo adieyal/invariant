@@ -8,10 +8,10 @@ and reference_binding).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from invariant.identity.domain.value_objects import (
     ColumnDomain,
+    CompatibilityEvidence,
     CompatibilityKind,
     CompatibilityResult,
     DomainStatus,
@@ -162,7 +162,9 @@ class CompatibilityChecker:
         """
         if binding_a is None:
             # binding_b must be non-None here since binding_a != binding_b
-            assert binding_b is not None
+            # Type narrowing for the type checker
+            if binding_b is None:
+                return "crosswalk from unbound to unbound"  # unreachable
             return f"crosswalk from unbound to {binding_b.system_id}:{binding_b.version_id}"
         if binding_b is None:
             return f"crosswalk from {binding_a.system_id}:{binding_a.version_id} to unbound"
@@ -195,30 +197,30 @@ class CompatibilityChecker:
         self,
         domain_a: ColumnDomain,
         domain_b: ColumnDomain,
-    ) -> dict[str, Any]:
-        """Build evidence dictionary with compared field values.
+    ) -> CompatibilityEvidence:
+        """Build evidence with compared field values.
 
         Args:
             domain_a: First ColumnDomain.
             domain_b: Second ColumnDomain.
 
         Returns:
-            Dictionary with field values from both domains.
+            CompatibilityEvidence with field values from both domains.
         """
-        return {
-            "concept_id_a": str(domain_a.concept_id) if domain_a.concept_id else None,
-            "concept_id_b": str(domain_b.concept_id) if domain_b.concept_id else None,
-            "universe_id_a": domain_a.universe_id,
-            "universe_id_b": domain_b.universe_id,
-            "value_space_a": domain_a.value_space.name,
-            "value_space_b": domain_b.value_space.name,
-            "measurement_kind_a": domain_a.measurement_kind.name,
-            "measurement_kind_b": domain_b.measurement_kind.name,
-            "reference_binding_a": self._binding_to_str(domain_a.reference_binding),
-            "reference_binding_b": self._binding_to_str(domain_b.reference_binding),
-            "status_a": domain_a.status.name,
-            "status_b": domain_b.status.name,
-        }
+        return CompatibilityEvidence(
+            concept_id_a=str(domain_a.concept_id) if domain_a.concept_id else None,
+            concept_id_b=str(domain_b.concept_id) if domain_b.concept_id else None,
+            universe_id_a=domain_a.universe_id,
+            universe_id_b=domain_b.universe_id,
+            value_space_a=domain_a.value_space.name,
+            value_space_b=domain_b.value_space.name,
+            measurement_kind_a=domain_a.measurement_kind.name,
+            measurement_kind_b=domain_b.measurement_kind.name,
+            reference_binding_a=self._binding_to_str(domain_a.reference_binding),
+            reference_binding_b=self._binding_to_str(domain_b.reference_binding),
+            status_a=domain_a.status.name,
+            status_b=domain_b.status.name,
+        )
 
     def _binding_to_str(self, binding: ReferenceBinding | None) -> str | None:
         """Convert a ReferenceBinding to a string representation.

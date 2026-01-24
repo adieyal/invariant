@@ -44,10 +44,12 @@ from invariant.query.application.services import QueryAnalyzer
 from invariant.query.domain.value_objects.query_spec import (
     FilterOperator,
     FilterSpec,
+    FilterValue,
     GroupBySpec,
     OrderBySpec,
     QueryOptions,
     QuerySpec,
+    ScalarValue,
     SortOrder,
 )
 from invariant.shared.contracts import QueryAnalysis
@@ -72,6 +74,7 @@ __all__ = [
     "ExecutionResult",
     "FilterOperator",
     "FilterSpec",
+    "FilterValue",
     "GroupBySpec",
     "OrderBySpec",
     "QueryAnalysis",
@@ -80,6 +83,7 @@ __all__ = [
     "QueryOptions",
     "QuerySpec",
     "RawQueryResult",
+    "ScalarValue",
     "SortOrder",
     "SqlExecutor",
     "application",

@@ -8,10 +8,28 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping
+
+@dataclass(frozen=True)
+class CompatibilityEvidence:
+    """Evidence supporting a compatibility decision.
+
+    Captures the field values from both domains that were used
+    to determine compatibility.
+    """
+
+    concept_id_a: str | None
+    concept_id_b: str | None
+    universe_id_a: str | None
+    universe_id_b: str | None
+    value_space_a: str
+    value_space_b: str
+    measurement_kind_a: str
+    measurement_kind_b: str
+    reference_binding_a: str | None
+    reference_binding_b: str | None
+    status_a: str
+    status_b: str
 
 
 class CompatibilityKind(Enum):
@@ -58,7 +76,7 @@ class CompatibilityResult:
     caveats: tuple[str, ...]
     """Caveats about the comparison (e.g., 'universe mismatch: adults vs all_ages')."""
 
-    evidence: Mapping[str, Any]
+    evidence: CompatibilityEvidence
     """Supporting data for the decision."""
 
     def is_comparable(self) -> bool:

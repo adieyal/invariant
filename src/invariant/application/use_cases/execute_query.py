@@ -168,12 +168,17 @@ class ExecuteQueryUseCase:
             return self.kernel.run_query(request)
 
         # Legacy orchestration (deprecated)
-        # These assertions are safe because __post_init__ validates all are set
-        assert self.id_generator is not None
-        assert self.catalog_store is not None
-        assert self.query_engine is not None
-        assert self.suppression_engine is not None
-        assert self.audit_log is not None
+        # Explicit validation - asserts can be disabled with -O flag
+        if self.id_generator is None:
+            raise ValueError("id_generator is required in legacy mode")
+        if self.catalog_store is None:
+            raise ValueError("catalog_store is required in legacy mode")
+        if self.query_engine is None:
+            raise ValueError("query_engine is required in legacy mode")
+        if self.suppression_engine is None:
+            raise ValueError("suppression_engine is required in legacy mode")
+        if self.audit_log is None:
+            raise ValueError("audit_log is required in legacy mode")
 
         # Generate or use provided query ID
         qid = query_id or self.id_generator.generate_query_id()

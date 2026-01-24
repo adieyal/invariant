@@ -13,6 +13,7 @@ from invariant.identity.domain.value_objects.column_domain import (
     ValueSpace,
 )
 from invariant.identity.domain.value_objects.compatibility_result import (
+    CompatibilityEvidence,
     CompatibilityKind,
     CompatibilityResult,
 )
@@ -22,6 +23,7 @@ from invariant.identity.domain.value_objects.indicator_identity import Indicator
 __all__ = [
     "ColumnDomain",
     "ColumnDomainId",
+    "CompatibilityEvidence",
     "CompatibilityKind",
     "CompatibilityResult",
     "ConceptVersion",

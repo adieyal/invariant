@@ -6,6 +6,30 @@ the result of comparing two domains for compatibility.
 
 import pytest
 
+from invariant.identity.domain.value_objects.compatibility_result import (
+    CompatibilityEvidence,
+)
+
+
+def make_evidence(**overrides: str | None) -> CompatibilityEvidence:
+    """Create a CompatibilityEvidence with default values."""
+    defaults = {
+        "concept_id_a": None,
+        "concept_id_b": None,
+        "universe_id_a": None,
+        "universe_id_b": None,
+        "value_space_a": "CONTINUOUS",
+        "value_space_b": "CONTINUOUS",
+        "measurement_kind_a": "COUNT",
+        "measurement_kind_b": "COUNT",
+        "reference_binding_a": None,
+        "reference_binding_b": None,
+        "status_a": "CONFIRMED",
+        "status_b": "CONFIRMED",
+    }
+    defaults.update(overrides)
+    return CompatibilityEvidence(**defaults)  # type: ignore[arg-type]
+
 
 class TestCompatibilityKind:
     """Tests for CompatibilityKind enum."""
@@ -74,7 +98,7 @@ class TestCompatibilityResultConstruction:
             reasons=("domains are identical",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         with pytest.raises(AttributeError):
@@ -87,19 +111,23 @@ class TestCompatibilityResultConstruction:
             CompatibilityResult,
         )
 
+        evidence = make_evidence(
+            reference_binding_a="geo:v1",
+            reference_binding_b="geo:v2",
+        )
         result = CompatibilityResult(
             kind=CompatibilityKind.COMPATIBLE_WITH_TRANSFORM,
             reasons=("geography codes differ", "crosswalk available"),
             required_transforms=("crosswalk:geo_v1_to_v2",),
             caveats=(),
-            evidence={"source_version": "v1", "target_version": "v2"},
+            evidence=evidence,
         )
 
         assert result.kind == CompatibilityKind.COMPATIBLE_WITH_TRANSFORM
         assert result.reasons == ("geography codes differ", "crosswalk available")
         assert result.required_transforms == ("crosswalk:geo_v1_to_v2",)
         assert result.caveats == ()
-        assert result.evidence == {"source_version": "v1", "target_version": "v2"}
+        assert result.evidence == evidence
 
     def test_compatibility_result_with_caveats(self):
         """CompatibilityResult works with caveats populated."""
@@ -113,7 +141,10 @@ class TestCompatibilityResultConstruction:
             reasons=("universe definitions differ",),
             required_transforms=(),
             caveats=("universe mismatch: adults vs all_ages",),
-            evidence={"source_universe": "adults", "target_universe": "all_ages"},
+            evidence=make_evidence(
+                universe_id_a="adults",
+                universe_id_b="all_ages",
+            ),
         )
 
         assert result.kind == CompatibilityKind.COMPATIBLE_WITH_CAVEAT
@@ -134,7 +165,7 @@ class TestCompatibilityResultConstruction:
                 "unit_conversion:kg_to_lb",
             ),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert len(result.required_transforms) == 2
@@ -151,14 +182,14 @@ class TestCompatibilityResultConstruction:
             reasons=("identical",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
         result2 = CompatibilityResult(
             kind=CompatibilityKind.EQUIVALENT,
             reasons=("identical",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result1 == result2
@@ -176,7 +207,7 @@ class TestCompatibilityResultConstruction:
                 reasons=("test reason",),
                 required_transforms=(),
                 caveats=(),
-                evidence={},
+                evidence=make_evidence(),
             )
             assert result.kind == kind
 
@@ -196,7 +227,7 @@ class TestCompatibilityResultIsComparable:
             reasons=("identical",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_comparable() is True
@@ -213,7 +244,7 @@ class TestCompatibilityResultIsComparable:
             reasons=("need crosswalk",),
             required_transforms=("crosswalk:v1_to_v2",),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_comparable() is True
@@ -230,7 +261,7 @@ class TestCompatibilityResultIsComparable:
             reasons=("universe mismatch",),
             required_transforms=(),
             caveats=("universe mismatch: adults vs all_ages",),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_comparable() is True
@@ -247,7 +278,7 @@ class TestCompatibilityResultIsComparable:
             reasons=("different concepts",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_comparable() is False
@@ -264,7 +295,7 @@ class TestCompatibilityResultIsComparable:
             reasons=("insufficient metadata",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_comparable() is False
@@ -285,7 +316,7 @@ class TestCompatibilityResultRequiresAcknowledgment:
             reasons=("identical",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.requires_acknowledgment() is False
@@ -302,7 +333,7 @@ class TestCompatibilityResultRequiresAcknowledgment:
             reasons=("need crosswalk",),
             required_transforms=("crosswalk:v1_to_v2",),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.requires_acknowledgment() is False
@@ -319,7 +350,7 @@ class TestCompatibilityResultRequiresAcknowledgment:
             reasons=("universe mismatch",),
             required_transforms=(),
             caveats=("universe mismatch: adults vs all_ages",),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.requires_acknowledgment() is True
@@ -336,7 +367,7 @@ class TestCompatibilityResultRequiresAcknowledgment:
             reasons=("different concepts",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.requires_acknowledgment() is False
@@ -353,7 +384,7 @@ class TestCompatibilityResultRequiresAcknowledgment:
             reasons=("insufficient metadata",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.requires_acknowledgment() is False
@@ -374,7 +405,7 @@ class TestCompatibilityResultIsBlocked:
             reasons=("identical",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_blocked() is False
@@ -391,7 +422,7 @@ class TestCompatibilityResultIsBlocked:
             reasons=("need crosswalk",),
             required_transforms=("crosswalk:v1_to_v2",),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_blocked() is False
@@ -408,7 +439,7 @@ class TestCompatibilityResultIsBlocked:
             reasons=("universe mismatch",),
             required_transforms=(),
             caveats=("universe mismatch: adults vs all_ages",),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_blocked() is False
@@ -425,7 +456,7 @@ class TestCompatibilityResultIsBlocked:
             reasons=("different concepts",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_blocked() is True
@@ -442,7 +473,7 @@ class TestCompatibilityResultIsBlocked:
             reasons=("insufficient metadata",),
             required_transforms=(),
             caveats=(),
-            evidence={},
+            evidence=make_evidence(),
         )
 
         assert result.is_blocked() is False

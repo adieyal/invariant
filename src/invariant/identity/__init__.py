@@ -8,6 +8,7 @@ Public API:
     domain: Domain layer (entities, value objects, services)
     application: Application layer (ports, services)
     CompatibilityChecker: Domain service for checking domain compatibility
+    CompatibilityEvidence: Evidence supporting a compatibility decision
     CompatibilityKind: Classification of compatibility between domains
     CompatibilityResult: Result of comparing two domains for compatibility
     Concept: Semantic identity for cross-dataset alignment
@@ -21,6 +22,7 @@ from invariant.identity import application, domain
 from invariant.identity.domain.entities import Concept, Universe, VariableSemantics
 from invariant.identity.domain.services import CompatibilityChecker
 from invariant.identity.domain.value_objects import (
+    CompatibilityEvidence,
     CompatibilityKind,
     CompatibilityResult,
     ConceptVersion,
@@ -29,6 +31,7 @@ from invariant.identity.domain.value_objects import (
 
 __all__ = [
     "CompatibilityChecker",
+    "CompatibilityEvidence",
     "CompatibilityKind",
     "CompatibilityResult",
     "Concept",

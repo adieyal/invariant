@@ -7,7 +7,7 @@ primitive types to avoid coupling to domain model internals.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -132,7 +132,7 @@ class _FrozenDict(Mapping[str, Any]):
     def __getitem__(self, key: str) -> Any:
         return self._data[key]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
     def __len__(self) -> int:

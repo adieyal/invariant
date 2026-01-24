@@ -176,7 +176,7 @@ def validate_dataset(
 
 
 def _validate_time_series_spec(
-    file_path: Path, data: Any, prefix: str
+    file_path: Path, data: object, prefix: str
 ) -> list[SchemaError]:
     """Validate a time series specification."""
     errors: list[SchemaError] = []
@@ -230,7 +230,7 @@ def _validate_time_series_spec(
 
 
 def _validate_time_series_column(
-    file_path: Path, data: Any, prefix: str
+    file_path: Path, data: object, prefix: str
 ) -> tuple[list[SchemaError], str | None]:
     """Validate a time series column. Returns (errors, grain)."""
     errors: list[SchemaError] = []
