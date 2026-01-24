@@ -11,8 +11,15 @@ from invariant.application.dto.semantic_query import (
     SemanticIssueDTO,
 )
 from invariant.domain.model.validation import Severity
-from invariant.domain.services.postgres_compiler import PostgresCompiler
-from invariant.domain.services.query_planner import LogicalPlan, QueryPlanner
+from invariant.domain.services.postgres_compiler import (
+    PostgresCompiler,
+    PostgresCompilerError,
+)
+from invariant.domain.services.query_planner import (
+    LogicalPlan,
+    QueryPlanner,
+    QueryPlannerError,
+)
 from invariant.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
@@ -105,7 +112,7 @@ class ExplainSemanticQueryUseCase:
             compiled_sql = self._format_sql_with_comments(
                 compiled_query.sql, validation_result, plan
             )
-        except Exception as e:
+        except (QueryPlannerError, PostgresCompilerError) as e:
             # If planning or compilation fails (e.g., due to validation errors),
             # provide error information instead
             logical_plan_json = {"error": str(e)}
