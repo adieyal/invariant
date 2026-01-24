@@ -6,12 +6,10 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from invariant.domain.model.attribution import Attribution
-
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from invariant.domain.model.attribution import AttributionDimension
+    from invariant.domain.model.attribution import Attribution, AttributionDimension
     from invariant.domain.model.ids import DatasetId
 
 
@@ -82,4 +80,6 @@ class NullAttributionProvider(AttributionProvider):
 
     def compute_attribution(self, request: AttributionRequest) -> Attribution:
         """Return an unavailable attribution."""
+        from invariant.domain.model.attribution import Attribution
+
         return Attribution.unavailable()
