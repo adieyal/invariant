@@ -161,7 +161,9 @@ class CompatibilityChecker:
             Human-readable description of the required crosswalk.
         """
         if binding_a is None:
-            return f"crosswalk from unbound to {binding_b.system_id}:{binding_b.version_id}"  # type: ignore[union-attr]
+            # binding_b must be non-None here since binding_a != binding_b
+            assert binding_b is not None
+            return f"crosswalk from unbound to {binding_b.system_id}:{binding_b.version_id}"
         if binding_b is None:
             return f"crosswalk from {binding_a.system_id}:{binding_a.version_id} to unbound"
 

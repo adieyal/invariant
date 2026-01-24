@@ -18,7 +18,10 @@ from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy  # noq
 from invariant.semantic.domain.entities.materialization import (
     Materialization,  # noqa: TC001
 )
-from invariant.semantic.domain.entities.metric import Metric  # noqa: TC001
+from invariant.semantic.domain.entities.metric import (
+    Metric,
+    SimpleAggSpec,
+)
 from invariant.semantic.domain.entities.semantic_dataset import (
     SemanticDataset,  # noqa: TC001
 )
@@ -90,8 +93,8 @@ class SemanticCatalog:
         # Build metrics by dataset index
         metrics_by_dataset: dict[str, list[Metric]] = {}
         for metric in self.metrics:
-            # SimpleAggSpec has a dataset_name field
-            if hasattr(metric.spec, "dataset_name"):
+            # Only SimpleAggSpec has a dataset_name field
+            if isinstance(metric.spec, SimpleAggSpec):
                 dataset_name = metric.spec.dataset_name
                 if dataset_name not in metrics_by_dataset:
                     metrics_by_dataset[dataset_name] = []
@@ -107,7 +110,10 @@ class SemanticCatalog:
         Uses lazy import to avoid circular dependencies.
         """
         if self._metric_graph is None:
-            # Lazy import to avoid circular dependency
+            # Lazy import to avoid circular dependency: MetricGraph imports Metric
+            # (for type hints), and SemanticCatalog contains list[Metric]. If imported
+            # at module level, this would create: semantic_catalog -> metric_graph ->
+            # metric -> (both modules reference Metric during import resolution).
             from invariant.semantic.domain.services.metric_graph import MetricGraph
 
             object.__setattr__(self, "_metric_graph", MetricGraph.build(self.metrics))
@@ -207,9 +213,14 @@ class SemanticCatalog:
                 result_ids.update(graph.get_transitive_dependencies(metric.id))
 
         # Get evaluation order for all metrics
+        # Lazy import to avoid circular dependency
+        from invariant.semantic.domain.services.metric_graph import (
+            CyclicDependencyError,
+        )
+
         try:
             eval_order = graph.evaluation_order()
-        except Exception:
+        except CyclicDependencyError:
             # If cycle detected, fall back to non-ordered list
             return [
                 self._metrics_by_name[m.name]

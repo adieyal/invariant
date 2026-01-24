@@ -120,7 +120,7 @@ class ValidationAuditor(Protocol):
     Provides validation and audit capabilities for query plans and metric creation.
     """
 
-    def validate(self, plan: object, catalog: object) -> object:
+    def validate(self, plan: object | None, catalog: object | None) -> object:
         """Validate a query plan against the catalog."""
         ...
 
@@ -221,7 +221,7 @@ class InvariantKernel:
         # The validator expects a QueryPlan and CatalogSnapshot, which will be
         # implemented in a future story. For now, we pass None placeholders.
         # Real implementation will build plan from resolution and catalog.
-        self.validation.validate(None, None)  # type: ignore[arg-type]
+        self.validation.validate(None, None)
 
         # Steps 8-10: Execute, suppress, audit (stubbed for now)
         # These will be implemented when the query engine is integrated.

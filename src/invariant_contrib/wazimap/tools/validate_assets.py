@@ -28,8 +28,11 @@ from invariant_contrib.wazimap.infrastructure.yaml_schema import (
 )
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Run the asset validation CLI.
+
+    Args:
+        argv: Command line arguments. If None, uses sys.argv[1:].
 
     Returns:
         Exit code: 0 for success, 1 for errors, 2 for usage errors.
@@ -75,7 +78,7 @@ Examples:
         help="Output results as JSON",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     base_path = Path(args.path)
     if not base_path.exists():

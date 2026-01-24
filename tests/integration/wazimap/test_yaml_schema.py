@@ -270,54 +270,37 @@ class TestCLIValidateAssets:
 
     def test_cli_main_with_valid_assets(self) -> None:
         """CLI should return 0 for valid assets."""
-        import sys
-        from unittest.mock import patch
-
         from invariant_contrib.wazimap.tools.validate_assets import main
 
-        with patch.object(sys, "argv", ["validate_assets", str(FIXTURES_DIR)]):
-            result = main()
+        result = main([str(FIXTURES_DIR)])
 
         # Should succeed (0) or have warnings only (0)
         assert result == 0
 
     def test_cli_main_with_invalid_assets(self) -> None:
         """CLI should return 1 for invalid assets."""
-        import sys
-        from unittest.mock import patch
-
         from invariant_contrib.wazimap.tools.validate_assets import main
 
-        with patch.object(sys, "argv", ["validate_assets", str(INVALID_FIXTURES_DIR)]):
-            result = main()
+        result = main([str(INVALID_FIXTURES_DIR)])
 
         # Should fail with errors
         assert result == 1
 
     def test_cli_main_with_nonexistent_path(self) -> None:
         """CLI should return 2 for nonexistent path."""
-        import sys
-        from unittest.mock import patch
-
         from invariant_contrib.wazimap.tools.validate_assets import main
 
-        with patch.object(sys, "argv", ["validate_assets", "/nonexistent/path"]):
-            result = main()
+        result = main(["/nonexistent/path"])
 
         assert result == 2
 
     def test_cli_json_output(self, capsys: pytest.CaptureFixture) -> None:
         """CLI should output JSON when --json flag is used."""
         import json
-        import sys
-        from unittest.mock import patch
 
         from invariant_contrib.wazimap.tools.validate_assets import main
 
-        with patch.object(
-            sys, "argv", ["validate_assets", str(FIXTURES_DIR), "--json"]
-        ):
-            main()
+        main([str(FIXTURES_DIR), "--json"])
 
         captured = capsys.readouterr()
         result = json.loads(captured.out)

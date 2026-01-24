@@ -160,7 +160,7 @@ class IdentityContext:
     concepts: Mapping[str, ConceptView]
     variable_semantics: Mapping[str, VariableSemanticsView]
     comparability_assertions: Mapping[tuple[str, str], ComparabilityStatus]
-    column_domains: Mapping[str, ColumnDomainView] = None  # type: ignore[assignment]
+    column_domains: Mapping[str, ColumnDomainView] | None = None
 
     def __post_init__(self) -> None:
         """Initialize default values for optional fields."""
@@ -176,6 +176,8 @@ class IdentityContext:
         Returns:
             The ColumnDomainView if found, None otherwise.
         """
+        if self.column_domains is None:
+            return None
         return self.column_domains.get(variable_id)
 
     def to_dict(self) -> dict[str, Any]:
@@ -194,7 +196,7 @@ class IdentityContext:
             },
             "column_domains": {
                 variable_id: view.to_dict()
-                for variable_id, view in self.column_domains.items()
+                for variable_id, view in (self.column_domains or {}).items()
             },
         }
 

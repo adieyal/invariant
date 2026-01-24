@@ -118,8 +118,8 @@ def cmd_generate(args: argparse.Namespace) -> int:
         use_case.execute(args.output_dir)
         print(f"Data dictionary generated at: {args.output_dir}")
         return 0
-    except Exception as e:
-        print(f"Error generating data dictionary: {e}", file=sys.stderr)
+    except OSError as e:
+        print(f"Error writing files: {e}", file=sys.stderr)
         return 1
 
 
@@ -127,6 +127,7 @@ def cmd_export(args: argparse.Namespace) -> int:
     """Execute the export command."""
     from invariant.application.use_cases.export_catalog import ExportCatalogUseCase
     from invariant_contrib.wazimap.infrastructure.yaml_asset_store import (
+        YamlLoadError,
         YamlSemanticAssetStore,
     )
 
@@ -141,8 +142,11 @@ def cmd_export(args: argparse.Namespace) -> int:
     try:
         use_case = ExportCatalogUseCase(asset_store=asset_store)
         export = use_case.execute()
-    except Exception as e:
+    except YamlLoadError as e:
         print(f"Error loading catalog: {e}", file=sys.stderr)
+        return 1
+    except OSError as e:
+        print(f"Error reading files: {e}", file=sys.stderr)
         return 1
 
     # Convert to JSON

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Any
 
 from invariant.domain.model.metric import (
     Metric,
@@ -29,6 +28,9 @@ from invariant.domain.model.semantic_catalog import SemanticCatalog  # noqa: TC0
 from invariant.domain.model.semantic_dataset import TimeGrain
 from invariant.query.domain.services.query_planner import LogicalPlan  # noqa: TC001
 
+# Type alias for SQL parameter values - covers all types that can be passed to parameterized queries
+ParameterValue = str | int | float | bool | None
+
 
 @dataclass(frozen=True)
 class CompiledQuery:
@@ -41,13 +43,13 @@ class CompiledQuery:
     """
 
     sql: str
-    parameters: dict[str, Any]
+    parameters: dict[str, ParameterValue]
     sql_hash: str
 
     def __init__(
         self,
         sql: str,
-        parameters: dict[str, Any] | None = None,
+        parameters: dict[str, ParameterValue] | None = None,
     ) -> None:
         if not sql:
             raise ValueError("sql must not be empty")
@@ -319,14 +321,14 @@ class _CompileContext:
 
     catalog: SemanticCatalog
     plan: LogicalPlan
-    parameters: dict[str, Any] | None = None
+    parameters: dict[str, ParameterValue] | None = None
     _param_counter: int = 0
 
     def __post_init__(self) -> None:
         if self.parameters is None:
             object.__setattr__(self, "parameters", {})
 
-    def add_parameter(self, name_hint: str, value: Any) -> str:
+    def add_parameter(self, name_hint: str, value: ParameterValue) -> str:
         """Add a parameter and return its unique name."""
         # Make unique parameter name
         param_name = f"p_{self._param_counter}_{name_hint}"
