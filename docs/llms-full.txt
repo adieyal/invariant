@@ -894,6 +894,21 @@ These enable advanced features:
 5. **[Validation Rules](validation-rules.md)** — Configure rule strictness
 6. **[CLI Patterns](cli-patterns.md)** — Build command-line tools
 
+## Semantic Layer
+
+The semantic layer provides a metrics-first approach to analytical queries:
+
+1. **[Semantic Layer Overview](semantic-layer.md)** — Metrics, dimensions, datasets, and query execution
+2. **[Semantic Validation Rules](semantic-validation-rules.md)** — How queries are validated
+3. **[YAML Asset Definitions](yaml-assets.md)** — Define assets in YAML files
+4. **[Golden Testing](golden-testing.md)** — Regression testing for SQL compilation
+
+## Contrib Modules
+
+Optional extensions that build on the kernel:
+
+1. **[Data Dictionary](data-dictionary-contrib.md)** — Generate Markdown documentation from catalog content
+
 ## Sample Project
 
 The best way to understand integration is to study the [sample project](../../examples/sample-project/):
@@ -944,6 +959,8 @@ elif result.status == "BLOCK":
 - [Implementing Ports](integrating.md) — Detailed port interface documentation
 - [Use Cases](use-cases.md) — All available use cases
 - [Architecture](../03-architecture.md) — Design philosophy and the validation gate
+- [Semantic Layer](semantic-layer.md) — Metrics-first query approach
+- [YAML Assets](yaml-assets.md) — Define assets declaratively
 
 ---
 
@@ -3077,81 +3094,115 @@ Compact, LLM-safe projections of kernel results.
 
 # Application Layer
 
-> **See also:** [Implementation Plan](plan-application-layer.md) for detailed design and TDD phases.
+> **Updated:** January 2025 - Reflects component-based architecture.
 
 ## Package Layout
 
+The application layer is split between a shared layer and component-specific layers:
+
 ```
-invariant/
-  application/
+src/invariant/
+  application/                    # Shared application layer
     ports/
-      catalog_store.py        # CRUD for catalog entities + snapshot
-      query_engine.py         # Execute validated plans
-      indicator_engine.py     # Recomputation logic
-      crosswalk_service.py    # Geography crosswalks
-      suppression_engine.py   # Apply suppression policies
-      attribution_provider.py # Compute attributions (optional)
-      audit_log.py            # Record queries/acknowledgments
-      clock.py                # Time abstraction
-      id_gen.py               # ID generation
+      catalog_store.py           # Catalog persistence (stub)
+      query_engine.py            # Execute validated plans
+      sql_executor.py            # Compile and execute SQL
+      semantic_asset_store.py    # Load semantic catalog from YAML/DB
+      indicator_engine.py        # Recomputation logic
+      crosswalk_service.py       # Geography crosswalks
+      attribution_provider.py    # Compute attributions (optional)
+      clock.py                   # Time abstraction
+      id_gen.py                  # ID generation
 
     dto/
-      catalog_write.py      # Create/update requests
-      catalog_read.py       # Read responses + documentation
-      query_request.py      # Query building request
-      validation_dto.py     # Validation results (with attributions, impacts, remediations)
-      results_dto.py        # Query execution results
-      context_slices.py     # LLM-safe projections
+      query_request.py           # Query building request
+      semantic_query.py          # Semantic query DTOs (QuerySpec, results)
+      validation_dto.py          # Validation results, issues, disclosures
+      results_dto.py             # Query execution results
+      indicator_dto.py           # Indicator search/details DTOs
 
     use_cases/
-      # Catalog management
-      upsert_catalog.py
-      get_catalog.py
-      get_catalog_docs_index.py   # List datasets/data products
-      get_dataset_doc.py          # Dataset documentation
-      get_data_product_doc.py     # Data product documentation
-      get_variable_doc.py         # Variable documentation
-      get_concept_doc.py          # Concept documentation
+      # Study management
+      create_study.py            # Create new study
 
-      # Query lifecycle
-      build_query_plan.py
-      validate_query_plan.py
-      acknowledge_validation.py
-      execute_query.py
+      # Semantic query lifecycle
+      validate_semantic_query.py # Validate semantic queries
+      execute_semantic_query.py  # Execute validated semantic queries
+      explain_semantic_query.py  # Explain query plan without executing
 
-      # Cross-dataset operations
-      compare_datasets.py
-      create_curated_indicator.py
+      # Legacy query lifecycle
+      validate_query.py          # Validate query plans
+      execute_query.py           # Execute validated queries
+      acknowledge_issues.py      # Acknowledge validation issues
 
-      # Semantic analysis (NEW)
-      analyze_semantic_impact.py  # What breaks if this changes?
-      enrich_with_attribution.py  # Attach dimensional attributions to issues
-      execute_tool.py             # Dispatch semantic tool calls (AI/LLM integration)
+      # Catalog operations
+      export_catalog.py          # Export catalog to various formats
+      search_indicators.py       # Search for indicators
+      get_indicator_details.py   # Get indicator details
 
-    services/               # Application services (orchestrators)
-      plan_compiler.py      # Request → QueryPlan resolution
-      result_normalizer.py  # Engine result → DTO formats
-      rigor_pipeline.py     # Wires validator + rewriters + suppression
-      semantic_impact_analyzer.py  # Traverse catalog for impact analysis (NEW)
-      context_slice_projector.py   # Project results for LLM consumption (NEW)
-      tool_registry.py             # Registry of semantic tool contracts (NEW)
+    services/
+      dto_translators.py         # Domain ↔ DTO conversion
+      query_plan_builder.py      # Build query plans from requests
+      schema_builder.py          # Build result schemas
+      provenance_builder.py      # Track data lineage
+      explain_builder.py         # Generate query explanations
 
-    policies/               # "Rigour packs" (configure rule sets)
-      minimal.py            # Fast, permissive
-      standard.py           # Production defaults
-      strict.py             # Research/academic rigor
-      regulated.py          # Strict suppression + freshness enforcement (NEW)
+  # Component-specific application layers
+  identity/application/
+    use_cases/
+      manage_domain.py           # Domain lifecycle operations
+      assess_compatibility.py    # Compatibility evaluation
+      adjudicate_proposal.py     # Handle domain proposals
+
+  validation/application/
+    use_cases/
+      validate_query.py          # Component-specific validation
 ```
 
-**Key principle:** `application/use_cases` are the only entry points your UI or API should call.
+**Key principle:** Use cases are the entry points. Services orchestrate. Ports abstract infrastructure.
 
 ---
 
 ## Ports (Interfaces)
 
-Ports define what the application layer needs from infrastructure. They are protocols, not implementations.
+Ports define what the application layer needs from infrastructure. They are Protocols, not base classes.
+
+### SemanticAssetStore
+
+The primary port for loading semantic assets (metrics, dimensions, datasets):
+
+```python
+class SemanticAssetStore(Protocol):
+    """Port for loading semantic catalog assets."""
+
+    def load_catalog(self) -> SemanticCatalog:
+        """Load the complete semantic catalog."""
+        ...
+```
+
+**Implementations:**
+- `FakeSemanticAssetStore` - In-memory for testing
+- `YamlAssetStore` - Load from YAML files (in invariant_contrib/wazimap)
+
+### SqlExecutor
+
+Execute compiled SQL queries:
+
+```python
+class SqlExecutor(Protocol):
+    """Port for SQL compilation and execution."""
+
+    def execute(self, query: CompiledQuery) -> ExecutionResult:
+        """Execute a compiled query and return results."""
+        ...
+```
+
+**Implementations:**
+- `FakeSqlExecutor` - Returns canned results for testing
 
 ### CatalogStore
+
+Basic catalog persistence:
 
 ```python
 class CatalogStore(Protocol):
@@ -3159,629 +3210,330 @@ class CatalogStore(Protocol):
 
     def get_study(self, study_id: StudyId) -> Study | None: ...
     def save_study(self, study: Study) -> None: ...
-    def list_studies(self) -> list[Study]: ...
-
-    def get_dataset(self, dataset_id: DatasetId) -> Dataset | None: ...
-    def save_dataset(self, dataset: Dataset) -> None: ...
-    def list_datasets(self, study_id: StudyId | None = None) -> list[Dataset]: ...
-
-    def get_data_product(self, dp_id: DataProductId) -> DataProduct | None: ...
-    def save_data_product(self, dp: DataProduct) -> None: ...
-
-    def get_indicator_definition(self, var_id: VariableId) -> IndicatorDefinition | None: ...
-    def save_indicator_definition(self, defn: IndicatorDefinition) -> None: ...
-
-    def get_catalog_snapshot(self, dp_ids: set[DataProductId]) -> CatalogSnapshot: ...
 ```
 
-### QueryEngine
+### Other Ports
 
-```python
-class QueryEngine(Protocol):
-    """Port for executing validated query plans."""
-
-    def execute(self, plan: QueryPlan) -> RawQueryResult: ...
-    def estimate_cost(self, plan: QueryPlan) -> CostEstimate: ...
-```
-
-### IndicatorEngine
-
-```python
-class IndicatorEngine(Protocol):
-    """Port for indicator recomputation."""
-
-    def can_recompute(self, definition: IndicatorDefinition) -> bool: ...
-    def rewrite_plan(self, plan: QueryPlan, definition: IndicatorDefinition) -> QueryPlan: ...
-```
-
-### CrosswalkService
-
-```python
-class CrosswalkService(Protocol):
-    """Port for geography crosswalk resolution."""
-
-    def get_crosswalk(
-        self,
-        from_version: GeoVersionId,
-        to_version: GeoVersionId,
-    ) -> Crosswalk | None: ...
-
-    def apply_crosswalk(
-        self,
-        data: RawQueryResult,
-        crosswalk: Crosswalk,
-        method: CrosswalkMethod,
-    ) -> tuple[RawQueryResult, Disclosure]: ...
-```
-
-### SuppressionEngine
-
-```python
-class SuppressionEngine(Protocol):
-    """Port for applying suppression policies."""
-
-    def apply(
-        self,
-        data: RawQueryResult,
-        policy: SuppressionPolicy,
-    ) -> tuple[RawQueryResult, list[Disclosure]]: ...
-```
-
-### AuditLog
-
-```python
-class AuditLog(Protocol):
-    """Port for recording query audit trail."""
-
-    def record_query(
-        self,
-        query_id: str,
-        plan: QueryPlan,
-        validation: ValidationResult,
-        acknowledged: bool = False,
-    ) -> None: ...
-
-    def record_acknowledgment(
-        self,
-        query_id: str,
-        acknowledged_issues: list[str],
-        user_id: str | None = None,
-    ) -> None: ...
-
-    def record_execution(
-        self,
-        query_id: str,
-        success: bool,
-        error: str | None = None,
-        row_count: int | None = None,
-    ) -> None: ...
-```
-
-### Clock & IdGenerator
-
-```python
-class Clock(Protocol):
-    def now(self) -> datetime: ...
-    def today(self) -> date: ...
-
-class IdGenerator(Protocol):
-    def generate_study_id(self) -> StudyId: ...
-    def generate_dataset_id(self) -> DatasetId: ...
-    def generate_query_id(self) -> str: ...
-    # etc.
-```
-
-### AttributionProvider (NEW)
-
-Optional port for computing dimensional attributions. Default implementation returns empty attributions.
-
-```python
-@dataclass(frozen=True)
-class AttributionRequest:
-    """What the kernel asks for."""
-    issue_code: str
-    dataset_id: DatasetId
-    dimensions: tuple[AttributionDimension, ...]
-    filter_context: dict  # from query plan
-
-class AttributionProvider(Protocol):
-    """Optional port - adapters compute attributions from actual data."""
-
-    def compute_attribution(
-        self,
-        request: AttributionRequest,
-    ) -> Attribution:
-        """Compute attribution. Adapter decides how (SQL, pandas, etc.)."""
-        ...
-
-
-class NullAttributionProvider:
-    """Default: no attribution computation available."""
-
-    def compute_attribution(self, request: AttributionRequest) -> Attribution:
-        return Attribution(slices=(), method="unavailable")
-```
-
-**Scope boundary:** The interface is in scope. Actual computation (SQL queries, pandas aggregations) belongs in adapters.
-
-### CatalogStore Extensions (NEW)
-
-Extended to support freshness metadata:
-
-```python
-class CatalogStore(Protocol):
-    # ... existing methods ...
-
-    def get_freshness_metadata(
-        self,
-        dataset_id: DatasetId,
-    ) -> FreshnessMetadata | None:
-        """
-        Return freshness metadata if available.
-        Adapter determines how to obtain this (DB query, cache, etc.).
-        """
-        ...
-```
+| Port | Purpose |
+|------|---------|
+| `QueryEngine` | Execute query plans |
+| `IndicatorEngine` | Indicator recomputation |
+| `CrosswalkService` | Geography crosswalks |
+| `AttributionProvider` | Compute dimensional attributions |
+| `Clock` | Time abstraction (`now()`, `today()`) |
+| `IdGenerator` | Generate typed IDs |
 
 ---
 
 ## Use Cases
 
-### UC1: UpsertCatalog
+### Semantic Query Use Cases
 
-**Purpose:** Create or update catalog entities (studies, datasets, data products, variables).
+These are the primary use cases for the semantic layer:
 
-**Input:**
-- `CreateStudyRequest`, `CreateDatasetRequest`, `CreateDataProductRequest`, etc.
+#### ValidateSemanticQueryUseCase
 
-**Output:**
-- Created/updated entity DTO with ID
+**Purpose:** Validate a semantic query against the catalog and rules.
 
-**Steps:**
-1. Parse request, generate ID if new
-2. Load existing entity (if update)
-3. Construct/update domain entity
-4. Validate domain invariants
-5. Persist via CatalogStore
-6. Return DTO
+**Input:** `SemanticQueryRequest` (metrics, dimensions, filters, options)
 
----
+**Output:** `SemanticValidationResultDTO`
+- `is_valid`: Whether query can execute
+- `errors`: Blocking issues (BLOCK severity)
+- `warnings`: Non-blocking issues (WARN severity)
+- `resolved_metrics`: Successfully resolved metric names
 
-### UC2: GetCatalog
+**Validation Rules Applied:**
+1. `NameResolutionRule` - Metrics/dimensions exist
+2. `GeographyGrainRule` - Geographic rollup allowed
+3. `TimeGrainRule` - Time grain compatible
+4. `AdditivityRule` - Additive properties respected
+5. `ComparabilityValidationRule` - Methodological compatibility
+6. `JoinSafetyRule` - Join cardinality safe
 
-**Purpose:** Retrieve catalog entities by ID.
+```python
+from invariant.application.use_cases.validate_semantic_query import (
+    ValidateSemanticQueryUseCase,
+)
 
-**Input:**
-- Entity ID (study, dataset, data product, variable)
+use_case = ValidateSemanticQueryUseCase(asset_store=store)
+result = use_case.execute(query)
 
-**Output:**
-- Entity DTO or None
+if result.is_valid:
+    print("Query can execute")
+else:
+    for error in result.errors:
+        print(f"[{error.severity}] {error.code}: {error.message}")
+```
 
----
+#### ExecuteSemanticQueryUseCase
 
-### UC3–UC7: Documentation Use Cases
+**Purpose:** Validate, plan, compile, and execute a semantic query.
 
-**Purpose:** Retrieve detailed documentation for catalog entities.
+**Input:** `SemanticQueryRequest`
 
-| Use Case | Returns |
-|----------|---------|
-| `GetCatalogDocsIndex` | List of dataset/data product summaries |
-| `GetDatasetDoc` | Full dataset documentation (universe, geography, quality notes) |
-| `GetDataProductDoc` | Grain, variables, time dimension, public flag |
-| `GetVariableDoc` | Role, type, unit, domain, concept, indicator definition |
-| `GetConceptDoc` | Canonical meaning, unit |
-
----
-
-### UC8: BuildQueryPlan
-
-**Purpose:** Transform UI request into domain `QueryPlan`.
-
-**Input:**
-- `QueryRequest` (data products, dimensions, metrics, filters, combine intent)
-
-**Output:**
-- `QueryPlan` (domain object)
+**Output:** `SemanticQueryResultDTO`
+- `data`: Result rows as dictionaries
+- `schema`: Field schemas (name, type, unit)
+- `provenance`: Metric provenance (methodology, hash)
+- `warnings`: Non-blocking validation issues
+- `explain`: Optional explain info (if `options.explain=True`)
 
 **Steps:**
-1. Resolve variable names → VariableIds via CatalogStore
-2. Validate all referenced entities exist
-3. Construct `SelectOp`s with resolved IDs
-4. Construct `CombineOp` if multi-dataset
-5. Return `QueryPlan`
+1. Load catalog from store
+2. Validate query (raises `SemanticQueryValidationError` on blocking issues)
+3. Plan query via `QueryPlanner`
+4. Compile to SQL via `PostgresCompiler`
+5. Execute via `SqlExecutor`
+6. Build result with provenance and schema
+
+```python
+from invariant.application.use_cases.execute_semantic_query import (
+    ExecuteSemanticQueryUseCase,
+    SemanticQueryValidationError,
+)
+
+use_case = ExecuteSemanticQueryUseCase(
+    asset_store=store,
+    sql_executor=executor,
+)
+
+try:
+    result = use_case.execute(query)
+    for row in result.data:
+        print(row)
+except SemanticQueryValidationError as e:
+    for issue in e.issues:
+        print(f"Error: {issue.message}")
+```
+
+#### ExplainSemanticQueryUseCase
+
+**Purpose:** Explain query processing without execution.
+
+**Input:** `SemanticQueryRequest`
+
+**Output:** `ExplainResultDTO`
+- `validation_trace`: Trace of validation steps
+- `logical_plan_json`: Logical plan as JSON
+- `logical_plan_pretty`: Human-readable plan
+- `compiled_sql`: Generated SQL with comments
+- `materialization_decision`: Why materialization was/wasn't used
 
 ---
 
-### UC9: ValidateQueryPlan
+### Catalog Use Cases
 
-**Purpose:** Run the validation gate.
+#### SearchIndicatorsUseCase
 
-**Input:**
-- `QueryPlan`
-- Policy name (default: "standard")
+**Purpose:** Search for indicators by name, tag, or concept.
 
-**Output:**
-- `ValidationResultDTO`: status, issues, disclosures, can_execute flag
+**Input:** Search criteria (query string, tags, concept_id)
 
-**Steps:**
-1. Load policy (rule set)
-2. Get CatalogSnapshot for involved data products
-3. Create Validator with policy rules
-4. Run `validator.validate(plan, snapshot)`
-5. Map `ValidationResult` → `ValidationResultDTO`
+**Output:** List of matching indicators with metadata
 
----
+#### GetIndicatorDetailsUseCase
 
-### UC10: AcknowledgeValidation
+**Purpose:** Get detailed information about a specific indicator.
 
-**Purpose:** Record user acknowledgment for REQUIRE_ACK queries.
+**Input:** Indicator ID or name
 
-**Input:**
-- `AcknowledgmentRequest`: query_id, acknowledged issue codes
+**Output:** Full indicator definition with dependencies, provenance
 
-**Output:**
-- Acknowledgment token/confirmation
+#### ExportCatalogUseCase
 
-**Steps:**
-1. Verify query_id exists in pending state
-2. Verify all blocking issues acknowledged
-3. Record acknowledgment via AuditLog
-4. Return token for execute
+**Purpose:** Export catalog to various formats (JSON, YAML).
 
 ---
 
-### UC11: ExecuteQuery
+### Identity Component Use Cases
 
-**Purpose:** Execute a validated query plan.
+Located in `invariant/identity/application/use_cases/`:
 
-**Input:**
-- `query_id` + optional acknowledgment token
+#### ManageDomainUseCase
 
-**Output:**
-- `QueryResultDTO`: columns, rows, disclosures, metadata
+**Purpose:** Manage column domain lifecycle (create, update, propose).
 
-**Steps:**
-1. Re-validate (never trust client)
-2. Check status allows execution (or has valid acknowledgment)
-3. Apply rigor pipeline:
-   - Crosswalk (if geography mismatch)
-   - Indicator recomputation (if needed)
-   - Suppression (if policy enabled)
-4. Execute via QueryEngine
-5. Normalize result via ResultNormalizer
-6. Attach accumulated disclosures
-7. Record execution via AuditLog
-8. Return `QueryResultDTO`
+#### AssessCompatibilityUseCase
+
+**Purpose:** Evaluate if two items can be compared.
+
+#### AdjudicateProposalUseCase
+
+**Purpose:** Approve or reject domain proposals.
 
 ---
 
-### UC12: CompareDatasets
+## DTOs
 
-**Purpose:** Assess comparability between datasets.
+### SemanticQueryRequest
 
-**Input:**
-- `dataset_a_id`, `dataset_b_id`
-- Optional variable mappings
+Alias for `QuerySpec` - the domain value object for semantic queries:
 
-**Output:**
-- `ComparabilityReportDTO`: level (FULL/PARTIAL/NONE), reasons, suggested remediations
+```python
+@dataclass(frozen=True)
+class QuerySpec:
+    metrics: tuple[str, ...]
+    dimensions: tuple[str, ...]
+    filters: tuple[FilterSpec, ...]
+    group_by: tuple[GroupBySpec, ...] = ()
+    order_by: tuple[OrderBySpec, ...] = ()
+    options: QueryOptions = field(default_factory=QueryOptions)
+```
 
----
+### SemanticQueryResultDTO
 
-### UC13: CreateCuratedIndicator
+```python
+@dataclass(frozen=True)
+class SemanticQueryResultDTO:
+    data: tuple[dict[str, Any], ...]      # Result rows
+    schema: ResultSchemaDTO               # Field definitions
+    provenance: ProvenanceDTO             # Data lineage
+    warnings: tuple[SemanticIssueDTO, ...] # Non-blocking issues
+    explain: QueryExplainInfoDTO | None   # Explain info (optional)
+```
 
-**Purpose:** Generate a new indicator data product from existing measures.
+### SemanticValidationResultDTO
 
-**Input:**
-- Indicator definition (formula or numerator/denominator refs)
-- Target grain
-- Source data product(s)
+```python
+@dataclass(frozen=True)
+class SemanticValidationResultDTO:
+    is_valid: bool                        # Can query execute?
+    errors: tuple[SemanticIssueDTO, ...]  # Blocking issues
+    warnings: tuple[SemanticIssueDTO, ...] # Non-blocking issues
+    resolved_metrics: tuple[str, ...]     # Successfully resolved
+```
 
-**Output:**
-- New `DataProduct(kind=INDICATOR)` ID
+### SemanticIssueDTO
 
----
-
-### UC14: AnalyzeSemanticImpact (NEW)
-
-**Purpose:** Determine what breaks if a catalog entity changes.
-
-**Input:**
-- `entity_type`: dataset, indicator, geography_version, universe
-- `entity_id`: ID of the entity
-
-**Output:**
-- `ImpactReportDTO`: affected entities with relation type, summary, and severity
-
-**Steps:**
-1. Load entity from CatalogStore
-2. Traverse catalog graph:
-   - For dataset: find dependent data products, indicators using it
-   - For indicator: find queries referencing it, data products containing it
-   - For geography_version: find datasets using it, potential crosswalk requirements
-   - For universe: find datasets with this universe, incompatible joins
-3. Score severity based on relation type
-4. Return structured impact report
-
-**Use case:** AI agents asking "what happens if I change this?" before making updates.
-
----
-
-### UC15: EnrichWithAttribution (NEW)
-
-**Purpose:** Attach dimensional attributions to validation issues.
-
-**Input:**
-- `issues`: tuple of Issue objects from validation
-- `plan`: QueryPlan
-- `catalog`: CatalogSnapshot
-
-**Output:**
-- `issues`: same issues with attributions attached (where relevant)
-
-**Steps:**
-1. Filter issues that support attribution (SUPPRESSION_TRIGGERED, SMALL_CELL_WARNING, etc.)
-2. For each attributable issue:
-   - Get relevant dimensions from catalog
-   - Build AttributionRequest
-   - Call AttributionProvider.compute_attribution()
-   - Attach result to issue
-3. Return enriched issues
-
-**Note:** Uses optional AttributionProvider port. Default returns empty attributions.
-
----
-
-### UC16: ExecuteTool (NEW)
-
-**Purpose:** Dispatch semantic tool calls from AI agents or LLM interfaces.
-
-**Input:**
-- `tool_name`: name of the tool (validate_query, analyze_impact, explain_indicator, check_comparability)
-- `params`: dict of parameters
-
-**Output:**
-- `ToolResult`: success/error with typed data
-
-**Steps:**
-1. Look up tool in ToolRegistry
-2. Validate params against ToolContract
-3. Dispatch to appropriate use case
-4. Wrap result in ToolResult
-5. Project via ContextSliceProjector if needed
-
-**Available tools:**
-| Tool | Maps To |
-|------|---------|
-| `validate_query` | ValidateQueryPlan |
-| `analyze_impact` | AnalyzeSemanticImpact |
-| `explain_indicator` | GetVariableDoc (with indicator focus) |
-| `check_comparability` | CompareDatasets |
-
-**Scope boundary:** This use case is in scope. HTTP/MCP transport is not.
+```python
+@dataclass(frozen=True)
+class SemanticIssueDTO:
+    code: str           # e.g., "UNKNOWN_METRIC", "INVALID_GEO_LEVEL"
+    severity: str       # "BLOCK", "WARN", "REQUIRE_ACK", "INFO"
+    message: str        # Human-readable description
+    details: dict       # Structured context
+```
 
 ---
 
 ## Application Services
 
-### PlanCompiler
+### DtoTranslators
 
-Resolves `QueryRequest` → `QueryPlan`:
-- Variable name → VariableId resolution
-- Filter value validation
-- Grain consistency checks
-
-### ResultNormalizer
-
-Transforms raw engine results → DTOs:
-- Column metadata enrichment (labels, units)
-- Disclosure attachment
-- Suppression indicator formatting
-
-### RigorPipeline
-
-Orchestrates the validation-to-execution chain:
-1. Validate plan
-2. Check acknowledgment (if REQUIRE_ACK)
-3. Rewrite plan (indicator recomputation)
-4. Apply crosswalk (if geography mismatch)
-5. Execute
-6. Apply suppression
-7. Accumulate disclosures
-
-### SemanticImpactAnalyzer (NEW)
-
-Traverses catalog graph to determine impact of changes:
+Converts between domain objects and DTOs:
 
 ```python
-class SemanticImpactAnalyzer:
-    def __init__(self, catalog_store: CatalogStore):
-        self._catalog = catalog_store
+def issue_to_dto(issue: Issue) -> SemanticIssueDTO:
+    """Convert domain Issue to DTO."""
+    ...
+```
 
-    def analyze(
+### QueryPlanBuilder
+
+Builds query plans from semantic requests.
+
+### SchemaBuilder
+
+Builds result schemas from resolved metrics:
+
+```python
+class SchemaBuilder:
+    def build(
         self,
-        entity_type: str,
-        entity_id: str,
-    ) -> ImpactReport:
-        """
-        Traverse catalog relationships to find affected entities.
-        No infrastructure assumptions - pure graph walking.
-        """
+        request: SemanticQueryRequest,
+        resolved_metrics: list[Metric],
+    ) -> ResultSchemaDTO:
         ...
 ```
 
-**Relationships traversed:**
-- Dataset → DataProducts → Variables → IndicatorDefinitions
-- IndicatorDefinition → numerator/denominator refs
-- Dataset → universe, geography_version
-- Crosswalk → from_version, to_version
+### ProvenanceBuilder
 
-### ContextSliceProjector (NEW)
-
-Projects kernel results into LLM-safe, bounded context:
+Tracks data lineage:
 
 ```python
-class ContextSliceProjector:
-    @staticmethod
-    def validation_summary(result: ValidationResult, max_issues: int = 10) -> dict:
-        """Compact summary for LLM consumption."""
-        ...
-
-    @staticmethod
-    def indicator_explanation(indicator: IndicatorDefinition) -> dict:
-        """LLM-friendly indicator explanation."""
-        ...
-
-    @staticmethod
-    def comparability_report(report: ComparabilityReport) -> dict:
-        """Compact comparability summary."""
-        ...
-
-    @staticmethod
-    def dataset_summary(dataset: Dataset, catalog: CatalogSnapshot) -> dict:
-        """Dataset overview for context."""
+class ProvenanceBuilder:
+    def build(self, metrics: list[Metric]) -> ProvenanceDTO:
         ...
 ```
 
-**Design principle:** Avoid bloated outputs. Include only essential fields for the task at hand.
+### ExplainBuilder
 
-### ToolRegistry (NEW)
-
-Registry of semantic tool contracts the kernel exposes:
+Generates query explanations:
 
 ```python
-class ToolRegistry:
-    @staticmethod
-    def get_contracts() -> tuple[ToolContract, ...]:
-        """Return all available tool contracts."""
-        ...
-
-    @staticmethod
-    def get_contract(name: str) -> ToolContract | None:
-        """Look up a specific tool contract."""
+class ExplainBuilder:
+    def build(
+        self,
+        validation_result: QueryValidationResult,
+        plan: LogicalPlan,
+        sql: str,
+    ) -> QueryExplainInfoDTO:
         ...
 ```
-
-**Purpose:** AI agents and UIs can discover available operations without hardcoding.
 
 ---
 
-## Policy Packs
+## Testing with Fakes
 
-Policies configure which rules run and how strict they are.
-
-### Minimal (prototyping)
+All ports have fake implementations for testing:
 
 ```python
-MINIMAL_POLICY = Policy(
-    name="minimal",
-    rules=[GrainValidationRule(), MeasureTypeRule()],
-    require_universe=False,
-    require_crosswalk=False,
-    suppression_enabled=False,
+from tests.unit.application.fakes import (
+    FakeSemanticAssetStore,
+    FakeSqlExecutor,
 )
+
+# Set up fake store with test catalog
+store = FakeSemanticAssetStore()
+store._catalog = test_catalog
+
+# Set up fake executor with canned results
+executor = FakeSqlExecutor()
+executor.set_default_result(
+    columns=["geo_code", "population"],
+    rows=[{"geo_code": "ZA", "population": 60000000}],
+)
+
+# Run use case
+use_case = ExecuteSemanticQueryUseCase(
+    asset_store=store,
+    sql_executor=executor,
+)
+result = use_case.execute(query)
 ```
 
-### Standard (production)
-
-```python
-STANDARD_POLICY = Policy(
-    name="standard",
-    rules=[
-        GrainValidationRule(),
-        MeasureTypeRule(),
-        IndicatorAggregationRule(),
-        ComparabilityRule(),
-    ],
-    require_universe=False,
-    require_crosswalk=False,
-    suppression_enabled=True,
-)
-```
-
-### Strict (research)
-
-```python
-STRICT_POLICY = Policy(
-    name="strict",
-    rules=[
-        GrainValidationRule(),
-        MeasureTypeRule(),
-        IndicatorAggregationRule(),
-        ComparabilityRule(),
-        UniverseRequiredRule(),
-        CrosswalkRequiredRule(),
-        MethodologyMatchRule(),
-    ],
-    require_universe=True,
-    require_crosswalk=True,
-    suppression_enabled=True,
-)
-```
-
-### Regulated (NEW)
-
-For deployments with strict governance requirements:
-
-```python
-REGULATED_PACK = RulesetPack(
-    id="regulated",
-    version="1.0.0",
-    enabled_checks=(
-        "GRAIN_VALIDATION",
-        "MEASURE_TYPE",
-        "INDICATOR_AGGREGATION",
-        "COMPARABILITY",
-        "UNIVERSE_REQUIRED",
-        "CROSSWALK_REQUIRED",
-        "FRESHNESS",
-        "SUPPRESSION",
-    ),
-    severity_overrides={
-        "FRESHNESS_VIOLATED": Severity.BLOCK,
-        "SUPPRESSION_VIOLATED": Severity.BLOCK,
-    },
-    allow_rewrites=True,
-    require_ack_for=(
-        "GEO_VERSION_MISMATCH",
-        "UNIVERSE_CONFLICT",
-        "PARTIAL_COMPARABILITY",
-    ),
-)
-```
-
-Same kernel. Different rule packs.
+**Key principle:** Domain tests run without DB. Infrastructure is always faked.
 
 ---
 
-## RulesetPack Configuration (NEW)
+## Error Handling
 
-Ruleset packs are versioned bundles that configure validation behavior:
+### Application Exceptions
 
 ```python
-@dataclass(frozen=True)
-class RulesetPack:
-    id: str              # "core", "public-dashboard", "regulated"
-    version: str         # semver
-    enabled_checks: tuple[str, ...]  # check codes
-    severity_overrides: dict[str, Severity] = field(default_factory=dict)
-    allow_rewrites: bool = True
-    require_ack_for: tuple[str, ...] = ()  # issue codes
+class ApplicationError(Exception):
+    """Base class for application layer errors."""
+    def __init__(self, code: str, message: str):
+        self.code = code
+        super().__init__(message)
+
+class SemanticQueryValidationError(ApplicationError):
+    """Raised when semantic query validation fails."""
+    def __init__(self, issues: list[SemanticIssueDTO]):
+        self.issues = issues
+        super().__init__(
+            "SEMANTIC_QUERY_VALIDATION_FAILED",
+            f"Validation failed with {len(issues)} error(s)",
+        )
 ```
 
-**Benefits:**
-- Packs are data, not code (can be YAML/JSON)
-- Same kernel, different deployments
-- Version tracking for governance audits
-- Clear documentation of what's enforced
+### Exception Flow
 
-**Built-in packs:**
-| Pack | Use Case |
-|------|----------|
-| `core` | Minimum viable validation |
-| `public-dashboard` | Suppression enforced, partial comparability requires ack |
-| `strict` | Full semantic validation, crosswalks mandatory |
-| `regulated` | Freshness + suppression blocking, full audit trail |
+1. Domain invariant violations → `ValueError` in domain layer
+2. Entity not found → `EntityNotFoundError` (application layer)
+3. Validation failures → `ValidationError` with issues
+4. Port failures → Propagated from infrastructure
 
 ---
 

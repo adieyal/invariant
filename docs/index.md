@@ -141,12 +141,12 @@ Invariant uses a "two planes + gate" design:
 
 | Section | Description |
 |---------|-------------|
+| [User Guide](user-guide/index.md) | Complete guide with examples and API reference |
 | [Getting Started](developer/quickstart.md) | Install and run the sample project |
 | [Concepts](developer/concepts.md) | Domain model and key abstractions |
 | [Integration](developer/integrating.md) | Implement ports for your infrastructure |
-| [Architecture](03-architecture.md) | Two planes + gate design |
+| [Architecture](user-guide/architecture.md) | Component diagrams and data flow |
 | [Reference](generated/glossary.md) | Generated glossary and rule documentation |
-| [Internals](00-project-scope.md) | Scope boundaries and design decisions |
 
 ### Semantic Layer
 
@@ -156,3 +156,14 @@ Invariant uses a "two planes + gate" design:
 | [Validation Rules](developer/semantic-validation-rules.md) | How semantic queries are validated |
 | [YAML Assets](developer/yaml-assets.md) | Define assets in YAML files with CI validation |
 | [Golden Testing](developer/golden-testing.md) | Regression testing for SQL compilation |
+
+### Component Charters
+
+| Component | Description |
+|-----------|-------------|
+| [Catalog](charters/catalog-charter.md) | Physical data products and metadata |
+| [Identity](charters/identity-charter.md) | Semantic concepts and comparability |
+| [Semantic](charters/semantic-charter.md) | Metrics, dimensions, hierarchies |
+| [Query](charters/query-charter.md) | Query planning and IR |
+| [Validation](charters/validation-charter.md) | Rules, issues, disclosures |
+| [Reference](charters/reference-charter.md) | Reference systems and versioning |

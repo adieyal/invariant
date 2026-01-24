@@ -20,17 +20,6 @@ Invariant is a business layer, not a stack. It runs in-memory with fake reposito
 - [Use Cases](developer/use-cases/): Working with use cases
 - [Validation Rules](developer/validation-rules/): Understanding validation
 
-## Semantic Layer
-
-- [Semantic Layer Overview](developer/semantic-layer/): Metrics, dimensions, datasets, and query execution
-- [Semantic Validation Rules](developer/semantic-validation-rules/): Query validation (name resolution, grain constraints, additivity, comparability)
-- [YAML Asset Definitions](developer/yaml-assets/): Define assets in YAML files with CI validation
-- [Golden Testing](developer/golden-testing/): Regression testing for SQL compilation
-
-## Contrib Modules
-
-- [Data Dictionary](developer/data-dictionary-contrib/): Generate Markdown documentation from catalog content
-
 ## API & Implementation
 
 - [Data Model](05-data-model/): Domain entities and relationships
