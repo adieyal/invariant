@@ -11,7 +11,6 @@ from uuid import uuid4
 from invariant.catalog.domain.entities.data_product import DataProduct
 from invariant.catalog.domain.entities.dataset import Dataset
 from invariant.catalog.domain.entities.variable import Variable
-from invariant.identity.domain.entities.semantic import IndicatorDefinition
 from invariant.query.application.planning.query_plan import (
     Metric,
     PresentationSpec,
@@ -19,6 +18,7 @@ from invariant.query.application.planning.query_plan import (
     QueryPlan,
     SelectOp,
 )
+from invariant.semantic.domain.entities.indicator_definition import IndicatorDefinition
 from invariant.shared._adapters import (
     to_catalog_view,
     to_query_analysis,

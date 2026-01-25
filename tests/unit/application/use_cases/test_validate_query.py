@@ -14,7 +14,7 @@ from invariant.application.exceptions import (
 from invariant.application.use_cases.validate_query import ValidateQueryUseCase
 from invariant.catalog.domain.entities.data_product import DataProduct
 from invariant.catalog.domain.entities.variable import Variable
-from invariant.identity.domain.entities.semantic import IndicatorDefinition
+from invariant.semantic.domain.entities.indicator_definition import IndicatorDefinition
 from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,

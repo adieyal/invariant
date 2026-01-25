@@ -51,13 +51,13 @@ from invariant.semantic.domain.entities.semantic_dataset import (
 )
 from invariant.shared.contracts.enums import AggregationType, PresentationFormat
 from invariant.shared.contracts.ids import DataProductId, VariableId
-from invariant.validation.domain.entities.ruleset_pack import RulesetPack
-from invariant.validation.domain.entities.validation import (
+from invariant.validation import (
     Disclosure,
     Issue,
     Severity,
     ValidationStatus,
 )
+from invariant.validation.domain.entities.ruleset_pack import RulesetPack
 from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,

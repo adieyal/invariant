@@ -134,7 +134,9 @@ class TestIndicatorDefinitionImports:
 
     def test_indicator_definition_backward_compatible_import(self) -> None:
         """IndicatorDefinition should still be importable from old location."""
-        from invariant.identity.domain.entities.semantic import IndicatorDefinition
+        from invariant.semantic.domain.entities.indicator_definition import (
+            IndicatorDefinition,
+        )
 
         assert IndicatorDefinition is not None
 

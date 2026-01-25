@@ -55,8 +55,8 @@ from invariant.shared.contracts.ids import (
     UniverseId,
     VariableId,
 )
+from invariant.validation import Disclosure, ValidationResult
 from invariant.validation.application.ports import AuditLog, SuppressionEngine
-from invariant.validation.domain.entities.validation import Disclosure, ValidationResult
 from invariant.validation.domain.services.validator import CatalogSnapshot
 
 if TYPE_CHECKING:
@@ -64,11 +64,7 @@ if TYPE_CHECKING:
     from invariant.catalog.domain.entities.dataset import Dataset
     from invariant.catalog.domain.entities.study import Study
     from invariant.catalog.domain.entities.variable import Variable
-    from invariant.identity.domain.entities.semantic import (
-        Concept,
-        IndicatorDefinition,
-        Universe,
-    )
+    from invariant.identity.domain.entities import Concept, Universe
     from invariant.query.application.planning.query_plan import QueryPlan
     from invariant.query.domain.services.postgres_compiler import CompiledQuery
     from invariant.reference.domain.entities.reference_system import (
@@ -76,6 +72,9 @@ if TYPE_CHECKING:
         ReferenceSystemVersion,
     )
     from invariant.reference.domain.value_objects.geography import SuppressionPolicy
+    from invariant.semantic.domain.entities.indicator_definition import (
+        IndicatorDefinition,
+    )
 
 
 @dataclass

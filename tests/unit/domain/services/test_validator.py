@@ -1,6 +1,5 @@
 """Tests for Validator domain service."""
 
-from invariant.identity.domain.entities.semantic import IndicatorDefinition
 from invariant.query.application.planning.query_plan import (
     Metric,
     PresentationSpec,
@@ -8,6 +7,7 @@ from invariant.query.application.planning.query_plan import (
     QueryPlan,
     SelectOp,
 )
+from invariant.semantic.domain.entities.indicator_definition import IndicatorDefinition
 from invariant.shared.contracts.enums import (
     AggregationPolicy,
     AggregationType,
@@ -16,7 +16,7 @@ from invariant.shared.contracts.enums import (
     PresentationFormat,
 )
 from invariant.shared.contracts.ids import DataProductId
-from invariant.validation.domain.entities.validation import Severity, ValidationStatus
+from invariant.validation import Severity, ValidationStatus
 from invariant.validation.domain.services.validator import (
     CatalogSnapshot,
     IndicatorAggregationRule,

@@ -39,7 +39,7 @@ from invariant.shared.contracts.semantic_resolution import (
     ResolvedMetric,
     SemanticResolution,
 )
-from invariant.validation.domain.entities.validation_result import ValidationResult
+from invariant.validation import ValidationResult
 from invariant.validation.domain.value_objects.severity import ValidationStatus
 
 if TYPE_CHECKING:

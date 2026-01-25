@@ -34,7 +34,7 @@ from invariant.validation.domain.services.validator import (
     IndicatorAggregationRule,
     Validator,
 )
-from invariant.validation.domain.value_objects.validation_status import ValidationStatus
+from invariant.validation.domain.value_objects.severity import ValidationStatus
 
 if TYPE_CHECKING:
     from invariant.application.dto.query_request import QueryRequest

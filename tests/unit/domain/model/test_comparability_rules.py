@@ -14,7 +14,7 @@ from invariant.semantic.domain.entities.metric import (
     Metric,
 )
 from invariant.shared.contracts.ids import ComparabilityRuleId
-from invariant.validation.domain.entities.validation import Severity
+from invariant.validation import Severity
 
 
 class TestComparabilityPolicy:

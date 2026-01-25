@@ -9,7 +9,7 @@ from invariant.semantic.domain.entities.semantic_dataset import (
     SemanticDataset,
     TimeGrain,
 )
-from invariant.validation.domain.entities.validation import Severity
+from invariant.validation import Severity
 from invariant.validation.domain.services.time_series_validator import (
     TimeSeriesValidationRule,
 )

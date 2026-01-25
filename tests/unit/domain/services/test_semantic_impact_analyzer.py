@@ -3,7 +3,7 @@
 from invariant.catalog.domain.entities.data_product import DataProduct
 from invariant.catalog.domain.entities.dataset import Dataset
 from invariant.catalog.domain.entities.variable import Variable
-from invariant.identity.domain.entities.semantic import IndicatorDefinition
+from invariant.semantic.domain.entities.indicator_definition import IndicatorDefinition
 from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,

@@ -2,12 +2,12 @@
 
 import pytest
 
-from invariant.identity.domain.entities.semantic import (
+from invariant.identity.domain.entities import (
     Concept,
-    IndicatorDefinition,
     Universe,
     VariableSemantics,
 )
+from invariant.semantic.domain.entities.indicator_definition import IndicatorDefinition
 from invariant.shared.contracts.enums import (
     AggregationPolicy,
     IndicatorType,

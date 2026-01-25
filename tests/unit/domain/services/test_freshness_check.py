@@ -28,7 +28,7 @@ from invariant.shared.contracts.ids import (
     VariableId,
 )
 from invariant.shared.contracts.value_objects import GrainSpec
-from invariant.validation.domain.entities.validation import Severity
+from invariant.validation import Severity
 from invariant.validation.domain.services.freshness_check import (
     FreshnessCheck,
     FreshnessPolicy,

@@ -1,7 +1,7 @@
 """Tests for validation value objects."""
 
 from invariant.shared.contracts.ids import VariableId
-from invariant.validation.domain.entities.validation_result import ValidationResult
+from invariant.validation import ValidationResult
 from invariant.validation.domain.value_objects.attribution import (
     Attribution,
     AttributionDimension,

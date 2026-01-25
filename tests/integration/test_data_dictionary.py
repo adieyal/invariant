@@ -8,12 +8,12 @@ from invariant.catalog.domain.entities.data_product import DataProduct
 from invariant.catalog.domain.entities.dataset import Dataset
 from invariant.catalog.domain.entities.study import Study
 from invariant.catalog.domain.entities.variable import Variable
-from invariant.identity.domain.entities.semantic import (
+from invariant.identity.domain.entities import (
     Concept,
-    IndicatorDefinition,
     Universe,
 )
 from invariant.reference.domain.entities.reference_system import ReferenceSystemVersion
+from invariant.semantic.domain.entities.indicator_definition import IndicatorDefinition
 from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,
