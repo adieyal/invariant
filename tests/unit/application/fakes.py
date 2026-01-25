@@ -21,13 +21,15 @@ from invariant.application.ports.query_engine import (
 )
 from invariant.application.ports.semantic_asset_store import SemanticAssetStore
 from invariant.application.ports.sql_executor import ExecutionResult, SqlExecutor
-from invariant.domain.model.comparability_rules import (
+from invariant.identity.domain.entities.comparability_rules import (
     ComparabilityRules,
 )
-from invariant.domain.model.dimension import Dimension  # noqa: TC001
-from invariant.domain.model.geo_hierarchy import GeoHierarchy  # noqa: TC001
-from invariant.domain.model.materialization import Materialization  # noqa: TC001
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.dimension import Dimension  # noqa: TC001
+from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy  # noqa: TC001
+from invariant.semantic.domain.entities.materialization import (
+    Materialization,  # noqa: TC001
+)
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
@@ -36,13 +38,11 @@ from invariant.domain.model.metric import (
     RollupPolicy,
     SimpleAggSpec,
 )
-from invariant.domain.model.semantic_catalog import SemanticCatalog
-from invariant.domain.model.semantic_dataset import (
+from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+from invariant.semantic.domain.entities.semantic_dataset import (
     SemanticDataset,  # noqa: TC001
     TimeGrain,  # noqa: TC001
 )
-from invariant.domain.model.validation import Disclosure, ValidationResult
-from invariant.domain.services.validator import CatalogSnapshot
 from invariant.shared.contracts.ids import (
     ConceptId,
     CrosswalkId,
@@ -56,19 +56,25 @@ from invariant.shared.contracts.ids import (
     VariableId,
 )
 from invariant.validation.application.ports import AuditLog, SuppressionEngine
+from invariant.validation.domain.entities.validation import Disclosure, ValidationResult
+from invariant.validation.domain.services.validator import CatalogSnapshot
 
 if TYPE_CHECKING:
-    from invariant.domain.model.data_product import DataProduct
-    from invariant.domain.model.dataset import Dataset
-    from invariant.domain.model.query_plan import QueryPlan
-    from invariant.domain.model.reference_system import (
+    from invariant.catalog.domain.entities.data_product import DataProduct
+    from invariant.catalog.domain.entities.dataset import Dataset
+    from invariant.catalog.domain.entities.study import Study
+    from invariant.catalog.domain.entities.variable import Variable
+    from invariant.identity.domain.entities.semantic import (
+        Concept,
+        IndicatorDefinition,
+        Universe,
+    )
+    from invariant.query.application.planning.query_plan import QueryPlan
+    from invariant.query.domain.services.postgres_compiler import CompiledQuery
+    from invariant.reference.domain.entities.reference_system import (
         Crosswalk,
         ReferenceSystemVersion,
     )
-    from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
-    from invariant.domain.model.study import Study
-    from invariant.domain.model.variable import Variable
-    from invariant.domain.services.postgres_compiler import CompiledQuery
     from invariant.reference.domain.value_objects.geography import SuppressionPolicy
 
 

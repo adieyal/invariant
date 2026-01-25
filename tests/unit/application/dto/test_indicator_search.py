@@ -10,8 +10,8 @@ from invariant.application.dto.indicator_search import (
     IndicatorSearchResultDTO,
     IndicatorSummaryDTO,
 )
-from invariant.domain.model.metric import MetricKind
-from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.semantic.domain.entities.metric import MetricKind
+from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
 
 
 class TestIndicatorSearchRequest:

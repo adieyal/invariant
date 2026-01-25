@@ -3,7 +3,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from invariant.domain.model.study import Study
+from invariant.catalog.domain.entities.study import Study
 from invariant.shared.contracts.ids import StudyId
 from invariant_contrib.datadictionary.cli import GenerateDataDictionary
 from tests.unit.application.fakes import FakeCatalogStore

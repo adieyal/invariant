@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from invariant.domain.model.dataset import Dataset
+from invariant.catalog.domain.entities.dataset import Dataset
 from invariant.shared.contracts.ids import (
     DatasetId,
     ReferenceSystemId,

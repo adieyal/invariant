@@ -24,7 +24,7 @@ class TestGeoHierarchyImports:
 
     def test_geo_hierarchy_backward_compatible_import(self) -> None:
         """GeoHierarchy should still be importable from old location."""
-        from invariant.domain.model.geo_hierarchy import GeoHierarchy
+        from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy
 
         assert GeoHierarchy is not None
 
@@ -68,7 +68,7 @@ class TestSemanticDatasetImports:
 
     def test_semantic_dataset_backward_compatible_import(self) -> None:
         """SemanticDataset should still be importable from old location."""
-        from invariant.domain.model.semantic_dataset import SemanticDataset
+        from invariant.semantic.domain.entities.semantic_dataset import SemanticDataset
 
         assert SemanticDataset is not None
 
@@ -84,7 +84,7 @@ class TestSemanticCatalogImports:
 
     def test_semantic_catalog_backward_compatible_import(self) -> None:
         """SemanticCatalog should still be importable from old location."""
-        from invariant.domain.model.semantic_catalog import SemanticCatalog
+        from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
 
         assert SemanticCatalog is not None
 
@@ -118,7 +118,7 @@ class TestMaterializationImports:
 
     def test_materialization_backward_compatible_import(self) -> None:
         """Materialization should still be importable from old location."""
-        from invariant.domain.model.materialization import Materialization
+        from invariant.semantic.domain.entities.materialization import Materialization
 
         assert Materialization is not None
 
@@ -134,7 +134,7 @@ class TestIndicatorDefinitionImports:
 
     def test_indicator_definition_backward_compatible_import(self) -> None:
         """IndicatorDefinition should still be importable from old location."""
-        from invariant.domain.model.semantic import IndicatorDefinition
+        from invariant.identity.domain.entities.semantic import IndicatorDefinition
 
         assert IndicatorDefinition is not None
 

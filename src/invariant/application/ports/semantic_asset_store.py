@@ -5,13 +5,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from invariant.domain.model.comparability_rules import ComparabilityRules
-    from invariant.domain.model.dimension import Dimension
-    from invariant.domain.model.geo_hierarchy import GeoHierarchy
-    from invariant.domain.model.materialization import Materialization
-    from invariant.domain.model.metric import Metric
-    from invariant.domain.model.semantic_catalog import SemanticCatalog
-    from invariant.domain.model.semantic_dataset import SemanticDataset
+    from invariant.identity.domain.entities.comparability_rules import (
+        ComparabilityRules,
+    )
+    from invariant.semantic.domain.entities.dimension import Dimension
+    from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy
+    from invariant.semantic.domain.entities.materialization import Materialization
+    from invariant.semantic.domain.entities.metric import Metric
+    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+    from invariant.semantic.domain.entities.semantic_dataset import SemanticDataset
 
 
 class SemanticAssetStore(Protocol):

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from invariant.application.exceptions import VariableNotFoundError
-from invariant.domain.model.query_plan import (
+from invariant.query.application.planning.query_plan import (
     CombineMode,
     CombineOp,
     Filter,

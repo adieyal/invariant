@@ -12,14 +12,14 @@ from invariant.application.use_cases.execute_semantic_query import (
     ExecuteSemanticQueryUseCase,
     SemanticQueryValidationError,
 )
-from invariant.domain.model.dimension import (
+from invariant.semantic.domain.entities.dimension import (
     DataType,
     Dimension,
     DimensionAttribute,
     SemanticType,
 )
-from invariant.domain.model.geo_hierarchy import GeoHierarchy
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
@@ -27,7 +27,7 @@ from invariant.domain.model.metric import (
     Metric,
     MetricUnit,
 )
-from invariant.domain.model.semantic_dataset import (
+from invariant.semantic.domain.entities.semantic_dataset import (
     DatasetKind,
     GeographyConfig,
     GrainKeys,

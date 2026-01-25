@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.semantic_dataset import TimeGrain
+    from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
 
 from invariant.shared.contracts.ids import ConceptId, MetricId
 

@@ -1,9 +1,9 @@
 """Tests for SemanticImpactAnalyzer domain service."""
 
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.semantic import IndicatorDefinition
-from invariant.domain.model.variable import Variable
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.dataset import Dataset
+from invariant.catalog.domain.entities.variable import Variable
+from invariant.identity.domain.entities.semantic import IndicatorDefinition
 from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,

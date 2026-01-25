@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from invariant.domain.model.query_plan import QueryPlan
-    from invariant.domain.model.semantic import IndicatorDefinition
+    from invariant.identity.domain.entities.semantic import IndicatorDefinition
+    from invariant.query.application.planning.query_plan import QueryPlan
 
 
 class IndicatorEngine(Protocol):

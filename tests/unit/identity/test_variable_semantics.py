@@ -17,17 +17,17 @@ def test_variable_semantics_importable_from_identity():
 
 def test_variable_semantics_backward_compatible():
     """VariableSemantics still importable from old location."""
-    from invariant.domain.model.semantic import VariableSemantics
+    from invariant.identity.domain.entities.semantic import VariableSemantics
 
     assert VariableSemantics is not None
 
 
 def test_variable_semantics_same_class_both_locations():
     """Both import locations provide the same class."""
-    from invariant.domain.model.semantic import (
+    from invariant.identity import VariableSemantics as NewVariableSemantics
+    from invariant.identity.domain.entities.semantic import (
         VariableSemantics as OldVariableSemantics,
     )
-    from invariant.identity import VariableSemantics as NewVariableSemantics
 
     assert OldVariableSemantics is NewVariableSemantics
 

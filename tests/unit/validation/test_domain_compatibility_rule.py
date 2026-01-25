@@ -1,6 +1,10 @@
 """Tests for DomainCompatibilityRule."""
 
-from invariant.domain.model.query_plan import (
+from invariant.identity.domain.value_objects import (
+    CompatibilityKind,
+    CompatibilityResult,
+)
+from invariant.query.application.planning.query_plan import (
     CombineMode,
     CombineOp,
     Metric,
@@ -8,10 +12,6 @@ from invariant.domain.model.query_plan import (
     QueryIntent,
     QueryPlan,
     SelectOp,
-)
-from invariant.identity.domain.value_objects import (
-    CompatibilityKind,
-    CompatibilityResult,
 )
 from invariant.shared.contracts.enums import AggregationType, PresentationFormat
 from invariant.shared.contracts.ids import DataProductId, VariableId

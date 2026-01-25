@@ -7,22 +7,29 @@ from invariant.application.dto.semantic_query import (
     QueryOptions,
     SemanticQueryRequest,
 )
-from invariant.domain.model.comparability_rules import (
+from invariant.identity.domain.entities.comparability_rules import (
     ComparabilityPolicy,
     ComparabilityRules,
 )
-from invariant.domain.model.dimension import (
+from invariant.query.application.planning.query_plan import (
+    Metric,
+    PresentationSpec,
+    QueryIntent,
+    QueryPlan,
+    SelectOp,
+)
+from invariant.semantic.domain.entities.dimension import (
     DataType,
     Dimension,
     DimensionAttribute,
     SemanticType,
 )
-from invariant.domain.model.geo_hierarchy import (
+from invariant.semantic.domain.entities.geo_hierarchy import (
     GeoHierarchy,
     RollupOverride,
     RollupRules,
 )
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
@@ -30,18 +37,11 @@ from invariant.domain.model.metric import (
     JoinIntent,
     RollupPolicy,
 )
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     Metric as DomainMetric,
 )
-from invariant.domain.model.query_plan import (
-    Metric,
-    PresentationSpec,
-    QueryIntent,
-    QueryPlan,
-    SelectOp,
-)
-from invariant.domain.model.semantic_catalog import SemanticCatalog
-from invariant.domain.model.semantic_dataset import (
+from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+from invariant.semantic.domain.entities.semantic_dataset import (
     DatasetKind,
     GrainKeys,
     PhysicalRef,
@@ -49,13 +49,16 @@ from invariant.domain.model.semantic_dataset import (
     TimeConfig,
     TimeGrain,
 )
-from invariant.domain.model.validation import (
+from invariant.shared.contracts.enums import AggregationType, PresentationFormat
+from invariant.shared.contracts.ids import DataProductId, VariableId
+from invariant.validation.domain.entities.ruleset_pack import RulesetPack
+from invariant.validation.domain.entities.validation import (
     Disclosure,
     Issue,
     Severity,
     ValidationStatus,
 )
-from invariant.domain.services.semantic_validator import (
+from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
     GeographyGrainRule,
@@ -67,10 +70,7 @@ from invariant.domain.services.semantic_validator import (
     SemanticValidator,
     TimeGrainRule,
 )
-from invariant.domain.services.validator import CatalogSnapshot
-from invariant.shared.contracts.enums import AggregationType, PresentationFormat
-from invariant.shared.contracts.ids import DataProductId, VariableId
-from invariant.validation.domain.entities.ruleset_pack import RulesetPack
+from invariant.validation.domain.services.validator import CatalogSnapshot
 from invariant.validation.domain.value_objects.check_result import CheckResult
 from invariant.validation.domain.value_objects.remediation_action import (
     ActionType,

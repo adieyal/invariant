@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from invariant.application.ports.catalog_store import CatalogStore
-    from invariant.domain.model.query_plan import QueryPlan
+    from invariant.query.application.planning.query_plan import QueryPlan
 
 
 # Mapping from data product IDs to parquet files

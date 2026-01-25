@@ -4,8 +4,8 @@ import pytest
 
 from invariant.application.dto.indicator_search import IndicatorSearchRequest
 from invariant.application.use_cases.search_indicators import SearchIndicatorsUseCase
-from invariant.domain.model.metric import MetricKind
-from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.semantic.domain.entities.metric import MetricKind
+from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
 from tests.unit.application.fakes import FakeSemanticAssetStore, create_test_metric
 
 

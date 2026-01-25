@@ -8,16 +8,13 @@ from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.reference_system import (
-    ReferenceSystem,
-    ReferenceSystemVersion,
-)
-from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
-from invariant.domain.model.study import Study
-from invariant.domain.model.variable import Variable
-from invariant.domain.services.validator import CatalogSnapshot
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.dataset import Dataset
+from invariant.catalog.domain.entities.study import Study
+from invariant.catalog.domain.entities.variable import Variable
+from invariant.identity.domain.entities import Concept, Universe
+from invariant.reference.domain.entities import ReferenceSystem, ReferenceSystemVersion
+from invariant.semantic.domain.entities.indicator_definition import IndicatorDefinition
 from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,
@@ -39,11 +36,12 @@ from invariant.shared.contracts.ids import (
     VariableId,
 )
 from invariant.shared.contracts.value_objects import GrainSpec, VariableRef
+from invariant.validation.domain.services.validator import CatalogSnapshot
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from invariant.domain.model.reference_system import Crosswalk
+    from invariant.reference.domain.entities import Crosswalk
 
 
 @dataclass

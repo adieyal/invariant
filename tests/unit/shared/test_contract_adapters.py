@@ -8,18 +8,17 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.query_plan import (
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.dataset import Dataset
+from invariant.catalog.domain.entities.variable import Variable
+from invariant.identity.domain.entities.semantic import IndicatorDefinition
+from invariant.query.application.planning.query_plan import (
     Metric,
     PresentationSpec,
     QueryIntent,
     QueryPlan,
     SelectOp,
 )
-from invariant.domain.model.semantic import IndicatorDefinition
-from invariant.domain.model.variable import Variable
-from invariant.domain.services.validator import CatalogSnapshot
 from invariant.shared._adapters import (
     to_catalog_view,
     to_query_analysis,
@@ -46,6 +45,7 @@ from invariant.shared.contracts.ids import (
     VariableId,
 )
 from invariant.shared.contracts.value_objects import GrainSpec
+from invariant.validation.domain.services.validator import CatalogSnapshot
 
 # =============================================================================
 # Test Fixtures

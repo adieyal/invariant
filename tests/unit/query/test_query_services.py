@@ -53,7 +53,7 @@ def test_metric_graph_importable_from_query_domain():
 
 def test_backward_compatibility_query_planner():
     """QueryPlanner can still be imported from original location for backward compatibility."""
-    from invariant.domain.services.query_planner import (
+    from invariant.query.domain.services.query_planner import (
         LogicalPlan,
         QueryPlanner,
         QueryPlannerError,
@@ -66,7 +66,7 @@ def test_backward_compatibility_query_planner():
 
 def test_backward_compatibility_postgres_compiler():
     """PostgresCompiler can still be imported from original location for backward compatibility."""
-    from invariant.domain.services.postgres_compiler import (
+    from invariant.query.domain.services.postgres_compiler import (
         CompiledQuery,
         PostgresCompiler,
         PostgresCompilerError,
@@ -81,7 +81,7 @@ def test_backward_compatibility_postgres_compiler():
 
 def test_backward_compatibility_metric_graph():
     """MetricGraph can still be imported from original location for backward compatibility."""
-    from invariant.domain.services.metric_graph import (
+    from invariant.semantic.domain.services.metric_graph import (
         CyclicDependencyError,
         MetricGraph,
     )

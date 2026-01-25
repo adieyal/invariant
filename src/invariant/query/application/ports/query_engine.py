@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from invariant.domain.model.query_plan import QueryPlan
+    from invariant.query.application.planning.query_plan import QueryPlan
 
 
 @dataclass(frozen=True)

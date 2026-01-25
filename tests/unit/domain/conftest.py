@@ -1,8 +1,8 @@
 """Shared test fixtures for domain tests."""
 
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.variable import Variable
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.dataset import Dataset
+from invariant.catalog.domain.entities.variable import Variable
 from invariant.shared.contracts.enums import DataProductKind, DataType, VariableRole
 from invariant.shared.contracts.ids import (
     DataProductId,

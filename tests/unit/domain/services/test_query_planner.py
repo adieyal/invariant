@@ -12,24 +12,6 @@ from invariant.application.dto.semantic_query import (
     SemanticQueryRequest,
     SortDirection,
 )
-from invariant.domain.model.metric import (
-    Additivity,
-    AdditivityType,
-    AggregationFunction,
-    Metric,
-)
-from invariant.domain.model.semantic_catalog import SemanticCatalog
-from invariant.domain.model.semantic_dataset import (
-    DatasetKind,
-    GrainKeys,
-    PhysicalRef,
-    SemanticDataset,
-)
-from invariant.domain.services.query_planner import (
-    LogicalPlan,
-    QueryPlanner,
-    QueryPlannerError,
-)
 from invariant.query.domain.ir.plan_ir import (
     AggregateNode,
     FilterNode,
@@ -39,6 +21,24 @@ from invariant.query.domain.ir.plan_ir import (
     ProjectNode,
     ScanNode,
     SortNode,
+)
+from invariant.query.domain.services.query_planner import (
+    LogicalPlan,
+    QueryPlanner,
+    QueryPlannerError,
+)
+from invariant.semantic.domain.entities.metric import (
+    Additivity,
+    AdditivityType,
+    AggregationFunction,
+    Metric,
+)
+from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+from invariant.semantic.domain.entities.semantic_dataset import (
+    DatasetKind,
+    GrainKeys,
+    PhysicalRef,
+    SemanticDataset,
 )
 
 # --- Fixtures ---

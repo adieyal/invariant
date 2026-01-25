@@ -1,6 +1,6 @@
 """Tests for ComparabilityResolver domain service."""
 
-from invariant.domain.services.comparability import (
+from invariant.identity.domain.services.comparability import (
     ComparabilityCheck,
     ComparabilityReport,
     ComparabilityResolver,

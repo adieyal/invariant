@@ -2,7 +2,7 @@
 
 import pytest
 
-from invariant.domain.model.query_plan import (
+from invariant.query.application.planning.query_plan import (
     CombineMode,
     CombineOp,
     Filter,

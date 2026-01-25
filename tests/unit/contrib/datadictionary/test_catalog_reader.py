@@ -4,15 +4,15 @@ from datetime import date
 
 import pytest
 
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.reference_system import (
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.dataset import Dataset
+from invariant.catalog.domain.entities.study import Study
+from invariant.catalog.domain.entities.variable import Variable
+from invariant.identity.domain.entities.semantic import IndicatorDefinition, Universe
+from invariant.reference.domain.entities.reference_system import (
     ReferenceSystem,
     ReferenceSystemVersion,
 )
-from invariant.domain.model.semantic import IndicatorDefinition, Universe
-from invariant.domain.model.study import Study
-from invariant.domain.model.variable import Variable
 from invariant.shared.contracts.enums import (
     AggregationPolicy,
     DataProductKind,

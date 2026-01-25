@@ -2,19 +2,19 @@
 
 import pytest
 
-from invariant.domain.model.comparability_rules import (
+from invariant.identity.domain.entities.comparability_rules import (
     ComparabilityPolicy,
     ComparabilityRules,
 )
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
     Comparability,
     Metric,
 )
-from invariant.domain.model.validation import Severity
 from invariant.shared.contracts.ids import ComparabilityRuleId
+from invariant.validation.domain.entities.validation import Severity
 
 
 class TestComparabilityPolicy:

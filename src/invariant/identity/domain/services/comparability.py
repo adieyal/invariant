@@ -10,7 +10,7 @@ from invariant.shared.contracts.enums import ComparabilityLevel, Incompatibility
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.dataset import Dataset
+    from invariant.catalog.domain.entities.dataset import Dataset
     from invariant.shared.contracts.ids import DatasetId
 
 

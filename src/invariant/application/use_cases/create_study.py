@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from invariant.application.dto.catalog_read import StudyDTO
-from invariant.domain.model.study import Study
+from invariant.catalog.domain.entities.study import Study
 
 if TYPE_CHECKING:
     from invariant.application.dto.catalog_write import CreateStudyRequest

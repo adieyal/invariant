@@ -2,7 +2,7 @@
 
 import pytest
 
-from invariant.domain.model.dimension import (
+from invariant.semantic.domain.entities.dimension import (
     DataType,
     Dimension,
     DimensionAttribute,

@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from invariant.domain.model.comparability_rules import ComparabilityPolicy
-from invariant.domain.model.dimension import DataType, SemanticType
-from invariant.domain.model.metric import MetricKind, RatioFormat
-from invariant.domain.model.semantic_dataset import DatasetKind, TimeGrain
+from invariant.identity.domain.entities.comparability_rules import ComparabilityPolicy
+from invariant.semantic.domain.entities.dimension import DataType, SemanticType
+from invariant.semantic.domain.entities.metric import MetricKind, RatioFormat
+from invariant.semantic.domain.entities.semantic_dataset import DatasetKind, TimeGrain
 from invariant_contrib.wazimap.infrastructure.yaml_asset_store import (
     YamlLoadError,
     YamlSemanticAssetStore,

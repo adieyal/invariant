@@ -2,7 +2,7 @@
 
 import pytest
 
-from invariant.domain.model.geo_hierarchy import (
+from invariant.semantic.domain.entities.geo_hierarchy import (
     GeoHierarchy,
     ParentRelationship,
     RollupOverride,

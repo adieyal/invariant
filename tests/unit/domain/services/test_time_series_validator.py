@@ -2,17 +2,20 @@
 
 from datetime import date
 
-from invariant.domain.model.semantic_dataset import (
+from invariant.semantic.domain.entities.semantic_dataset import (
     DatasetKind,
     GrainKeys,
     PhysicalRef,
     SemanticDataset,
     TimeGrain,
 )
-from invariant.domain.model.time_series import TimeSeriesColumn, TimeSeriesSpec
-from invariant.domain.model.validation import Severity
+from invariant.validation.domain.entities.validation import Severity
 from invariant.validation.domain.services.time_series_validator import (
     TimeSeriesValidationRule,
+)
+from invariant.validation.domain.value_objects.time_series import (
+    TimeSeriesColumn,
+    TimeSeriesSpec,
 )
 
 

@@ -37,9 +37,12 @@ if TYPE_CHECKING:
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.query_plan import (
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.dataset import Dataset
+from invariant.catalog.domain.entities.study import Study
+from invariant.catalog.domain.entities.variable import Variable
+from invariant.identity.domain.entities import Concept, Universe, VariableSemantics
+from invariant.query.application.planning.query_plan import (
     CombineMode,
     CombineOp,
     Filter,
@@ -50,32 +53,13 @@ from invariant.domain.model.query_plan import (
     QueryPlan,
     SelectOp,
 )
-from invariant.domain.model.reference_system import (
+from invariant.reference.domain.entities import (
     Crosswalk,
     ReferenceSystem,
     ReferenceSystemVersion,
 )
-from invariant.domain.model.semantic import (
-    Concept,
-    IndicatorDefinition,
-    Universe,
-    VariableSemantics,
-)
-from invariant.domain.model.study import Study
-from invariant.domain.model.validation import (
-    Disclosure,
-    Issue,
-    Remediation,
-    Severity,
-    ValidationResult,
-    ValidationStatus,
-)
-from invariant.domain.model.variable import Variable
-from invariant.domain.services.validator import (
-    CatalogSnapshot,
-    IndicatorAggregationRule,
-)
 from invariant.reference.domain.value_objects.geography import GeographySystem
+from invariant.semantic.domain.entities.indicator_definition import IndicatorDefinition
 from invariant.shared.contracts.enums import (
     AggregationPolicy,
     AggregationType,
@@ -98,6 +82,18 @@ from invariant.shared.contracts.value_objects import (
     GrainSpec,
     RangeDomain,
     VariableRef,
+)
+from invariant.validation.domain.entities import ValidationResult
+from invariant.validation.domain.services.validator import (
+    CatalogSnapshot,
+    IndicatorAggregationRule,
+)
+from invariant.validation.domain.value_objects import (
+    Disclosure,
+    Issue,
+    Remediation,
+    Severity,
+    ValidationStatus,
 )
 
 # Paths

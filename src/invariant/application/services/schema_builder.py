@@ -13,8 +13,8 @@ from invariant.application.dto.semantic_query import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.metric import Metric
-    from invariant.domain.model.query_spec import QuerySpec
+    from invariant.query.domain.value_objects.query_spec import QuerySpec
+    from invariant.semantic.domain.entities.metric import Metric
 
 
 @dataclass

@@ -5,15 +5,6 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass
 
-from invariant.domain.model.metric import (
-    Metric,
-    MetricKind,
-    RatioFormat,
-    RatioSpec,
-    SimpleAggSpec,
-)
-from invariant.domain.model.semantic_catalog import SemanticCatalog  # noqa: TC001
-from invariant.domain.model.semantic_dataset import TimeGrain
 from invariant.query.domain.ir.plan_ir import (
     AggMeasure,
     AggregateNode,
@@ -27,6 +18,17 @@ from invariant.query.domain.ir.plan_ir import (
     SortNode,
 )
 from invariant.query.domain.services.query_planner import LogicalPlan  # noqa: TC001
+from invariant.semantic.domain.entities.metric import (
+    Metric,
+    MetricKind,
+    RatioFormat,
+    RatioSpec,
+    SimpleAggSpec,
+)
+from invariant.semantic.domain.entities.semantic_catalog import (
+    SemanticCatalog,  # noqa: TC001
+)
+from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
 
 # Type alias for SQL parameter values - covers all types that can be passed to parameterized queries
 ParameterValue = str | int | float | bool | None

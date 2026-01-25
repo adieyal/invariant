@@ -21,7 +21,7 @@ def test_query_plan_importable_from_planning():
 
 def test_query_plan_backward_compatible():
     """QueryPlan still importable from old location during migration."""
-    from invariant.domain.model.query_plan import QueryPlan
+    from invariant.query.application.planning.query_plan import QueryPlan
 
     assert QueryPlan is not None
 

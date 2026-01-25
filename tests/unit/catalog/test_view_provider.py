@@ -7,9 +7,9 @@ internal catalog entities to CatalogView contract types.
 from __future__ import annotations
 
 from invariant.catalog.application.services.view_provider import CatalogViewProvider
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.variable import Variable
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.dataset import Dataset
+from invariant.catalog.domain.entities.variable import Variable
 from invariant.shared.contracts.catalog_view import (
     CatalogView,
     DataProductView,

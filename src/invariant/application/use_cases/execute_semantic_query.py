@@ -14,9 +14,8 @@ from invariant.application.services.dto_translators import issue_to_dto
 from invariant.application.services.explain_builder import ExplainBuilder
 from invariant.application.services.provenance_builder import ProvenanceBuilder
 from invariant.application.services.schema_builder import SchemaBuilder
-from invariant.domain.model.validation import Severity
-from invariant.domain.services.postgres_compiler import PostgresCompiler
-from invariant.domain.services.query_planner import QueryPlanner
+from invariant.query.domain.services.postgres_compiler import PostgresCompiler
+from invariant.query.domain.services.query_planner import QueryPlanner
 from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
@@ -26,6 +25,7 @@ from invariant.validation.domain.services.semantic_validator import (
     QueryRuleValidator,
     TimeGrainRule,
 )
+from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
     from invariant.application.dto.semantic_query import SemanticQueryRequest

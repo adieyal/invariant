@@ -34,8 +34,8 @@ from invariant.application.dto.semantic_query import (
     SemanticQueryRequest,
     SortDirection,
 )
-from invariant.domain.services.postgres_compiler import PostgresCompiler
-from invariant.domain.services.query_planner import QueryPlanner
+from invariant.query.domain.services.postgres_compiler import PostgresCompiler
+from invariant.query.domain.services.query_planner import QueryPlanner
 from invariant_contrib.wazimap.infrastructure.yaml_asset_store import (
     YamlSemanticAssetStore,
 )

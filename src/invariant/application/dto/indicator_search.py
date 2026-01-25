@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.metric import MetricKind
-    from invariant.domain.model.semantic_dataset import TimeGrain
+    from invariant.semantic.domain.entities.metric import MetricKind
+    from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
 
 
 @dataclass(frozen=True)

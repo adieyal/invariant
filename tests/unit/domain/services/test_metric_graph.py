@@ -2,14 +2,17 @@
 
 import pytest
 
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
     Metric,
     RollupPolicy,
 )
-from invariant.domain.services.metric_graph import CyclicDependencyError, MetricGraph
+from invariant.semantic.domain.services.metric_graph import (
+    CyclicDependencyError,
+    MetricGraph,
+)
 
 
 def make_simple_metric(name: str) -> Metric:

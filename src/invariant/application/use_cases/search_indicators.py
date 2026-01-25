@@ -9,12 +9,12 @@ from invariant.application.dto.indicator_search import (
     IndicatorSearchResultDTO,
     IndicatorSummaryDTO,
 )
-from invariant.domain.model.metric import MetricKind, SimpleAggSpec
+from invariant.semantic.domain.entities.metric import MetricKind, SimpleAggSpec
 
 if TYPE_CHECKING:
     from invariant.application.dto.indicator_search import IndicatorSearchRequest
     from invariant.application.ports.semantic_asset_store import SemanticAssetStore
-    from invariant.domain.model.metric import Metric
+    from invariant.semantic.domain.entities.metric import Metric
 
 
 @dataclass

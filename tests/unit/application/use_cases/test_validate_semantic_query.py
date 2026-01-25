@@ -9,21 +9,21 @@ from invariant.application.dto.semantic_query import (
 from invariant.application.use_cases.validate_semantic_query import (
     ValidateSemanticQueryUseCase,
 )
-from invariant.domain.model.dimension import (
+from invariant.semantic.domain.entities.dimension import (
     DataType,
     Dimension,
     DimensionAttribute,
     SemanticType,
 )
-from invariant.domain.model.geo_hierarchy import GeoHierarchy
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
     Metric,
     RollupPolicy,
 )
-from invariant.domain.model.semantic_dataset import (
+from invariant.semantic.domain.entities.semantic_dataset import (
     DatasetKind,
     GeographyConfig,
     GrainKeys,

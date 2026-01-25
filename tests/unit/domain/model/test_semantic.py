@@ -2,7 +2,7 @@
 
 import pytest
 
-from invariant.domain.model.semantic import (
+from invariant.identity.domain.entities.semantic import (
     Concept,
     IndicatorDefinition,
     Universe,

@@ -12,7 +12,7 @@ def test_query_spec_importable_from_query():
 
 def test_query_spec_backward_compatible():
     """QuerySpec still importable from old location."""
-    from invariant.domain.model.query_spec import QuerySpec
+    from invariant.query.domain.value_objects.query_spec import QuerySpec
 
     assert QuerySpec is not None
 
@@ -184,11 +184,10 @@ def test_order_by_spec_string_direction():
 
 def test_backward_compat_all_types():
     """All types still importable from old location."""
-    from invariant.domain.model.query_spec import (
-        QuerySpec,
-    )
-
     # Verify they are the same types
     from invariant.query import QuerySpec as NewQuerySpec
+    from invariant.query.domain.value_objects.query_spec import (
+        QuerySpec,
+    )
 
     assert QuerySpec is NewQuerySpec

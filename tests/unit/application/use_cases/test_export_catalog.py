@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 from invariant.application.use_cases.export_catalog import ExportCatalogUseCase
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
@@ -17,7 +17,7 @@ from invariant.domain.model.metric import (
     RollupPolicy,
     SimpleAggSpec,
 )
-from invariant.domain.model.semantic_dataset import (
+from invariant.semantic.domain.entities.semantic_dataset import (
     DatasetKind,
     GrainKeys,
     PhysicalRef,
@@ -208,7 +208,7 @@ class TestExportCatalogUseCase:
 
     def test_exports_valid_geo_levels_and_time_grains(self) -> None:
         store = FakeSemanticAssetStore()
-        from invariant.domain.model.semantic_dataset import TimeGrain
+        from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
 
         metric = Metric(
             id=MetricId.create(),

@@ -12,7 +12,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-from invariant.domain.model.comparability_rules import ComparabilityRules  # noqa: TC001
+from invariant.identity.domain.entities.comparability_rules import (
+    ComparabilityRules,  # noqa: TC001
+)
 from invariant.semantic.domain.entities.dimension import Dimension  # noqa: TC001
 from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy  # noqa: TC001
 from invariant.semantic.domain.entities.materialization import (

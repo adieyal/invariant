@@ -29,21 +29,24 @@ from invariant.application.services.query_plan_builder import (
     build_query_plan,
     parse_data_product_id,
 )
-from invariant.domain.model.validation import ValidationStatus
 from invariant.validation.domain.services.validator import (
     CatalogSnapshot,
     IndicatorAggregationRule,
     Validator,
 )
+from invariant.validation.domain.value_objects.validation_status import ValidationStatus
 
 if TYPE_CHECKING:
     from invariant.application.dto.query_request import QueryRequest
     from invariant.application.ports.catalog_store import CatalogStore
     from invariant.application.ports.id_gen import IdGenerator
     from invariant.application.ports.query_engine import QueryEngine, RawQueryResult
-    from invariant.domain.model.query_plan import QueryPlan
-    from invariant.domain.model.validation import Disclosure, ValidationResult
+    from invariant.query.application.planning.query_plan import QueryPlan
     from invariant.validation.application.ports import AuditLog, SuppressionEngine
+    from invariant.validation.domain.value_objects.disclosure import Disclosure
+    from invariant.validation.domain.value_objects.validation_result import (
+        ValidationResult,
+    )
 
 
 class KernelProtocol(Protocol):

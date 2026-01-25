@@ -26,14 +26,14 @@ def test_universe_importable_from_identity():
 
 def test_concept_backward_compatible():
     """Concept still importable from old location."""
-    from invariant.domain.model.semantic import Concept
+    from invariant.identity.domain.entities.semantic import Concept
 
     assert Concept is not None
 
 
 def test_universe_backward_compatible():
     """Universe still importable from old location."""
-    from invariant.domain.model.semantic import Universe
+    from invariant.identity.domain.entities.semantic import Universe
 
     assert Universe is not None
 
@@ -164,15 +164,15 @@ def test_concept_version_is_frozen():
 
 def test_identity_same_as_semantic_concept():
     """Concept from identity is the same class as semantic.Concept."""
-    from invariant.domain.model.semantic import Concept as SemanticConcept
     from invariant.identity import Concept as IdentityConcept
+    from invariant.identity.domain.entities.semantic import Concept as SemanticConcept
 
     assert IdentityConcept is SemanticConcept
 
 
 def test_identity_same_as_semantic_universe():
     """Universe from identity is the same class as semantic.Universe."""
-    from invariant.domain.model.semantic import Universe as SemanticUniverse
     from invariant.identity import Universe as IdentityUniverse
+    from invariant.identity.domain.entities.semantic import Universe as SemanticUniverse
 
     assert IdentityUniverse is SemanticUniverse

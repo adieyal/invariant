@@ -17,7 +17,7 @@ from invariant.application.dto.catalog_export import (
     TimeSeriesColumnExportDTO,
     TimeSeriesExportDTO,
 )
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     DerivedSpec,
     RatioSpec,
     SimpleAggSpec,
@@ -26,12 +26,12 @@ from invariant.domain.model.metric import (
 
 if TYPE_CHECKING:
     from invariant.application.ports.semantic_asset_store import SemanticAssetStore
-    from invariant.domain.model.metric import Metric
-    from invariant.domain.model.semantic_dataset import (
+    from invariant.semantic.domain.entities.metric import Metric
+    from invariant.semantic.domain.entities.semantic_dataset import (
         ColumnDefinition,
         SemanticDataset,
     )
-    from invariant.domain.model.time_series import TimeSeriesSpec
+    from invariant.validation.domain.value_objects.time_series import TimeSeriesSpec
 
 
 @dataclass

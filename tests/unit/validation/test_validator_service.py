@@ -10,7 +10,7 @@ def test_validator_importable_from_validation():
 
 def test_validator_backward_compatible():
     """Validator can be imported from legacy location for backward compatibility."""
-    from invariant.domain.services.validator import Validator
+    from invariant.validation.domain.services.validator import Validator
 
     assert Validator is not None
 
@@ -24,7 +24,7 @@ def test_catalog_snapshot_importable_from_validation():
 
 def test_catalog_snapshot_backward_compatible():
     """CatalogSnapshot can be imported from legacy location."""
-    from invariant.domain.services.validator import CatalogSnapshot
+    from invariant.validation.domain.services.validator import CatalogSnapshot
 
     assert CatalogSnapshot is not None
 
@@ -52,7 +52,9 @@ def test_semantic_validator_importable_from_validation():
 
 def test_semantic_validator_backward_compatible():
     """SemanticValidator can be imported from legacy location."""
-    from invariant.domain.services.semantic_validator import SemanticValidator
+    from invariant.validation.domain.services.semantic_validator import (
+        SemanticValidator,
+    )
 
     assert SemanticValidator is not None
 

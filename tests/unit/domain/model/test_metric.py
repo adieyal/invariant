@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
@@ -20,7 +20,7 @@ from invariant.domain.model.metric import (
     SimpleAggSpec,
     WeightedAvgSpec,
 )
-from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
 from invariant.shared.contracts.ids import MetricId
 
 

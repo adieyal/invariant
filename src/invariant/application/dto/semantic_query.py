@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 # Re-export domain types for backward compatibility
 # These were moved to the domain layer to fix Clean Architecture boundary violations
-from invariant.domain.model.query_spec import (
+from invariant.query.domain.value_objects.query_spec import (
     FilterOperator,
     FilterSpec,  # noqa: F401
     GroupBySpec,  # noqa: F401

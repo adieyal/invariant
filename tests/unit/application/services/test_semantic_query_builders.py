@@ -10,7 +10,9 @@ from invariant.application.dto.semantic_query import (
     QueryExplainInfoDTO,
     SemanticQueryRequest,
 )
-from invariant.domain.model.metric import (
+from invariant.query.domain.ir.plan_ir import ScanNode
+from invariant.query.domain.services.query_planner import LogicalPlan
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
@@ -18,8 +20,6 @@ from invariant.domain.model.metric import (
     Metric,
     MetricUnit,
 )
-from invariant.domain.services.query_planner import LogicalPlan
-from invariant.query.domain.ir.plan_ir import ScanNode
 from invariant.shared.contracts.ids import MetricId
 from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity

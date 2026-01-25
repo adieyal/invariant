@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from invariant.domain.model.reference_system import (
+from invariant.reference.domain.entities.reference_system import (
     Crosswalk,
     ReferenceSystem,
     ReferenceSystemVersion,

@@ -35,36 +35,36 @@ def test_semantic_type_importable_from_semantic() -> None:
 
 def test_dimension_backward_compatible() -> None:
     """Dimension should still be importable from old location."""
-    from invariant.domain.model.dimension import Dimension
+    from invariant.semantic.domain.entities.dimension import Dimension
 
     assert Dimension is not None
 
 
 def test_dimension_attribute_backward_compatible() -> None:
     """DimensionAttribute should still be importable from old location."""
-    from invariant.domain.model.dimension import DimensionAttribute
+    from invariant.semantic.domain.entities.dimension import DimensionAttribute
 
     assert DimensionAttribute is not None
 
 
 def test_data_type_backward_compatible() -> None:
     """DataType should still be importable from old location."""
-    from invariant.domain.model.dimension import DataType
+    from invariant.semantic.domain.entities.dimension import DataType
 
     assert DataType is not None
 
 
 def test_semantic_type_backward_compatible() -> None:
     """SemanticType should still be importable from old location."""
-    from invariant.domain.model.dimension import SemanticType
+    from invariant.semantic.domain.entities.dimension import SemanticType
 
     assert SemanticType is not None
 
 
 def test_dimension_same_class_from_both_locations() -> None:
     """Dimension from both locations should be the same class."""
-    from invariant.domain.model.dimension import Dimension as OldDimension
     from invariant.semantic import Dimension as NewDimension
+    from invariant.semantic.domain.entities.dimension import Dimension as OldDimension
 
     assert OldDimension is NewDimension
 

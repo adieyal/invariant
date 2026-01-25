@@ -4,8 +4,11 @@ from datetime import date
 
 import pytest
 
-from invariant.domain.model.semantic_dataset import TimeGrain
-from invariant.domain.model.time_series import TimeSeriesColumn, TimeSeriesSpec
+from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
+from invariant.validation.domain.value_objects.time_series import (
+    TimeSeriesColumn,
+    TimeSeriesSpec,
+)
 
 
 class TestTimeSeriesColumn:

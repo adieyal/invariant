@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from invariant.application.dto.semantic_query import SemanticIssueDTO
 
 if TYPE_CHECKING:
-    from invariant.domain.model.validation import Issue
+    from invariant.validation.domain.value_objects.issue import Issue
 
 
 def issue_to_dto(issue: Issue) -> SemanticIssueDTO:

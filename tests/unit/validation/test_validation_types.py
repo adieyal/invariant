@@ -52,7 +52,7 @@ def test_issue_details_type_alias_importable_from_validation():
 
 def test_backward_compatible_imports():
     """Validation types still importable from original location."""
-    from invariant.domain.model.validation import (
+    from invariant.validation.domain.entities.validation import (
         Disclosure,
         Issue,
         IssueDetails,
@@ -73,12 +73,12 @@ def test_backward_compatible_imports():
 
 def test_types_are_same_objects():
     """Types from both locations are the same objects."""
-    from invariant.domain.model.validation import Issue as OldIssue
-    from invariant.domain.model.validation import Severity as OldSeverity
-    from invariant.domain.model.validation import (
+    from invariant.validation import Issue, Severity, ValidationResult
+    from invariant.validation.domain.entities.validation import Issue as OldIssue
+    from invariant.validation.domain.entities.validation import Severity as OldSeverity
+    from invariant.validation.domain.entities.validation import (
         ValidationResult as OldValidationResult,
     )
-    from invariant.validation import Issue, Severity, ValidationResult
 
     assert ValidationResult is OldValidationResult
     assert Issue is OldIssue

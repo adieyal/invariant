@@ -2,7 +2,7 @@
 
 import pytest
 
-from invariant.domain.model.materialization import (
+from invariant.semantic.domain.entities.materialization import (
     Materialization,
     MaterializationGrain,
     MaterializationSource,
@@ -11,7 +11,7 @@ from invariant.domain.model.materialization import (
     SourceType,
     StorageConfig,
 )
-from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
 from invariant.shared.contracts.ids import MaterializationId
 
 

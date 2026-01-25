@@ -8,16 +8,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-from invariant.domain.model.metric import (
-    DerivedSpec,
-    Metric,
-    MetricKind,
-    RatioSpec,
-    SimpleAggSpec,
-    WeightedAvgSpec,
-)
-from invariant.domain.model.semantic_catalog import SemanticCatalog  # noqa: TC001
-from invariant.domain.model.semantic_dataset import SemanticDataset  # noqa: TC001
 from invariant.query.domain.ir.plan_ir import (
     AggMeasure,
     AggregateNode,
@@ -38,6 +28,20 @@ from invariant.query.domain.value_objects.query_spec import (
     GroupBySpec,
     QuerySpec,
     SortOrder,
+)
+from invariant.semantic.domain.entities.metric import (
+    DerivedSpec,
+    Metric,
+    MetricKind,
+    RatioSpec,
+    SimpleAggSpec,
+    WeightedAvgSpec,
+)
+from invariant.semantic.domain.entities.semantic_catalog import (
+    SemanticCatalog,  # noqa: TC001
+)
+from invariant.semantic.domain.entities.semantic_dataset import (
+    SemanticDataset,  # noqa: TC001
 )
 from invariant.shared.contracts.ids import MetricId  # noqa: TC001
 

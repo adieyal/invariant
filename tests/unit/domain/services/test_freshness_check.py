@@ -4,17 +4,16 @@ from datetime import date, timedelta
 
 import pytest
 
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.query_plan import (
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.dataset import Dataset
+from invariant.catalog.domain.entities.variable import Variable
+from invariant.query.application.planning.query_plan import (
     Metric,
     PresentationSpec,
     QueryIntent,
     QueryPlan,
     SelectOp,
 )
-from invariant.domain.model.validation import Severity
-from invariant.domain.model.variable import Variable
 from invariant.shared.contracts.enums import (
     AggregationType,
     DataProductKind,
@@ -29,6 +28,7 @@ from invariant.shared.contracts.ids import (
     VariableId,
 )
 from invariant.shared.contracts.value_objects import GrainSpec
+from invariant.validation.domain.entities.validation import Severity
 from invariant.validation.domain.services.freshness_check import (
     FreshnessCheck,
     FreshnessPolicy,

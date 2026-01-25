@@ -2,7 +2,7 @@
 
 import pytest
 
-from invariant.domain.model.variable import Variable
+from invariant.catalog.domain.entities.variable import Variable
 from invariant.shared.contracts.enums import DataType, VariableRole
 from invariant.shared.contracts.ids import DataProductId, VariableId
 from invariant.shared.contracts.value_objects import EnumeratedDomain

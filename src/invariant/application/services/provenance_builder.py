@@ -10,12 +10,12 @@ from invariant.application.dto.semantic_query import (
     MetricProvenanceDTO,
     ProvenanceDTO,
 )
-from invariant.domain.model.metric import SimpleAggSpec
+from invariant.semantic.domain.entities.metric import SimpleAggSpec
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.metric import Metric
+    from invariant.semantic.domain.entities.metric import Metric
 
 
 @dataclass

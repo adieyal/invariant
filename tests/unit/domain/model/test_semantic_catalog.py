@@ -1,17 +1,17 @@
 """Tests for SemanticCatalog aggregate."""
 
-from invariant.domain.model.comparability_rules import (
+from invariant.identity.domain.entities.comparability_rules import (
     ComparabilityPolicy,
     ComparabilityRules,
 )
-from invariant.domain.model.dimension import (
+from invariant.semantic.domain.entities.dimension import (
     DataType,
     Dimension,
     DimensionAttribute,
     SemanticType,
 )
-from invariant.domain.model.geo_hierarchy import GeoHierarchy
-from invariant.domain.model.materialization import (
+from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy
+from invariant.semantic.domain.entities.materialization import (
     Materialization,
     MaterializationGrain,
     MaterializationSource,
@@ -20,14 +20,14 @@ from invariant.domain.model.materialization import (
     SourceType,
     StorageConfig,
 )
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
     Metric,
 )
-from invariant.domain.model.semantic_catalog import SemanticCatalog
-from invariant.domain.model.semantic_dataset import (
+from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+from invariant.semantic.domain.entities.semantic_dataset import (
     DatasetKind,
     GrainKeys,
     PhysicalRef,

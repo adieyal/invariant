@@ -16,10 +16,12 @@ from invariant.validation.domain.value_objects.remediation import Remediation
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.domain.model.data_product import DataProduct
-    from invariant.domain.model.dataset import Dataset
-    from invariant.domain.model.query_plan import QueryPlan
-    from invariant.domain.model.semantic import IndicatorDefinition
+    from invariant.catalog.domain.entities.data_product import DataProduct
+    from invariant.catalog.domain.entities.dataset import Dataset
+    from invariant.query.application.planning.query_plan import QueryPlan
+    from invariant.semantic.domain.entities.indicator_definition import (
+        IndicatorDefinition,
+    )
     from invariant.shared.contracts.ids import DataProductId, DatasetId, VariableId
 
 

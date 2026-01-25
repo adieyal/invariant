@@ -10,7 +10,7 @@ from invariant.application.dto.indicator_search import (
     ComparabilityDTO,
     IndicatorDetailsDTO,
 )
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     DerivedSpec,
     MetricKind,
     RatioSpec,
@@ -20,7 +20,7 @@ from invariant.domain.model.metric import (
 
 if TYPE_CHECKING:
     from invariant.application.ports.semantic_asset_store import SemanticAssetStore
-    from invariant.domain.model.metric import Metric
+    from invariant.semantic.domain.entities.metric import Metric
 
 
 @dataclass

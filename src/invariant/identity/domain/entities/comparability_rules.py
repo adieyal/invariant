@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.metric import Metric
+    from invariant.semantic.domain.entities.metric import Metric
 
 from invariant.shared.contracts.ids import ComparabilityRuleId
 from invariant.validation.domain.value_objects.issue import Issue

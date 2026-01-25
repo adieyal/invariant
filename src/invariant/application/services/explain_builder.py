@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from invariant.application.dto.semantic_query import QueryExplainInfoDTO
 
 if TYPE_CHECKING:
-    from invariant.domain.services.query_planner import LogicalPlan
+    from invariant.query.domain.services.query_planner import LogicalPlan
     from invariant.validation.domain.services.semantic_validator import (
         QueryValidationResult,
     )

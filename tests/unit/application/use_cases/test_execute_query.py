@@ -12,8 +12,8 @@ from invariant.application.exceptions import (
 )
 from invariant.application.ports.query_engine import RawQueryResult
 from invariant.application.use_cases.execute_query import ExecuteQueryUseCase
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.variable import Variable
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.variable import Variable
 from invariant.shared.contracts.enums import DataProductKind, DataType, VariableRole
 from invariant.shared.contracts.ids import DataProductId, DatasetId, VariableId
 from invariant.shared.contracts.value_objects import GrainSpec

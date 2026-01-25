@@ -16,7 +16,7 @@ def test_metric_importable_from_semantic() -> None:
 
 def test_metric_backward_compatible() -> None:
     """Metric should still be importable from original location."""
-    from invariant.domain.model.metric import Metric
+    from invariant.semantic.domain.entities.metric import Metric
 
     assert Metric is not None
 
@@ -60,14 +60,14 @@ def test_metric_version_is_frozen() -> None:
 
 def test_metric_references_concept_id() -> None:
     """Metric should have concept_id field linking to Identity component."""
-    from invariant.domain.model.metric import (
+    from invariant.semantic import Metric
+    from invariant.semantic.domain.entities.metric import (
         Additivity,
         AdditivityType,
         AggregationFunction,
         MetricKind,
         SimpleAggSpec,
     )
-    from invariant.semantic import Metric
     from invariant.shared.contracts.ids import ConceptId, MetricId
 
     concept_id = ConceptId.create()
@@ -89,14 +89,14 @@ def test_metric_references_concept_id() -> None:
 
 def test_metric_concept_id_optional() -> None:
     """Metric concept_id should be optional for backward compatibility."""
-    from invariant.domain.model.metric import (
+    from invariant.semantic import Metric
+    from invariant.semantic.domain.entities.metric import (
         Additivity,
         AdditivityType,
         AggregationFunction,
         MetricKind,
         SimpleAggSpec,
     )
-    from invariant.semantic import Metric
     from invariant.shared.contracts.ids import MetricId
 
     # Should work without concept_id

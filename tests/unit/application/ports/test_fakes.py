@@ -5,20 +5,23 @@ from datetime import date, datetime
 import pytest
 
 from invariant.application.ports.sql_executor import ExecutionResult
-from invariant.domain.model.comparability_rules import (
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.dataset import Dataset
+from invariant.catalog.domain.entities.study import Study
+from invariant.catalog.domain.entities.variable import Variable
+from invariant.identity.domain.entities.comparability_rules import (
     ComparabilityPolicy,
     ComparabilityRules,
 )
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.dataset import Dataset
-from invariant.domain.model.dimension import (
+from invariant.query.domain.services.postgres_compiler import CompiledQuery
+from invariant.semantic.domain.entities.dimension import (
     DataType,
     Dimension,
     DimensionAttribute,
     SemanticType,
 )
-from invariant.domain.model.geo_hierarchy import GeoHierarchy
-from invariant.domain.model.materialization import (
+from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy
+from invariant.semantic.domain.entities.materialization import (
     Materialization,
     MaterializationGrain,
     MaterializationSource,
@@ -27,21 +30,18 @@ from invariant.domain.model.materialization import (
     SourceType,
     StorageConfig,
 )
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
     AggregationFunction,
     Metric,
 )
-from invariant.domain.model.semantic_dataset import (
+from invariant.semantic.domain.entities.semantic_dataset import (
     DatasetKind,
     GrainKeys,
     PhysicalRef,
     SemanticDataset,
 )
-from invariant.domain.model.study import Study
-from invariant.domain.model.variable import Variable
-from invariant.domain.services.postgres_compiler import CompiledQuery
 from invariant.shared.contracts.enums import DataProductKind, VariableRole
 from invariant.shared.contracts.ids import (
     DataProductId,

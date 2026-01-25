@@ -9,16 +9,6 @@ from invariant.application.dto.semantic_query import (
     ExplainResultDTO,
     MaterializationDecision,
 )
-from invariant.domain.model.validation import Severity
-from invariant.domain.services.postgres_compiler import (
-    PostgresCompiler,
-    PostgresCompilerError,
-)
-from invariant.domain.services.query_planner import (
-    LogicalPlan,
-    QueryPlanner,
-    QueryPlannerError,
-)
 from invariant.query.domain.ir.plan_ir import (
     AggregateNode,
     FilterNode,
@@ -27,6 +17,15 @@ from invariant.query.domain.ir.plan_ir import (
     ProjectNode,
     ScanNode,
     SortNode,
+)
+from invariant.query.domain.services.postgres_compiler import (
+    PostgresCompiler,
+    PostgresCompilerError,
+)
+from invariant.query.domain.services.query_planner import (
+    LogicalPlan,
+    QueryPlanner,
+    QueryPlannerError,
 )
 from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
@@ -38,6 +37,7 @@ from invariant.validation.domain.services.semantic_validator import (
     QueryValidationResult,
     TimeGrainRule,
 )
+from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
     from invariant.application.dto.semantic_query import SemanticQueryRequest

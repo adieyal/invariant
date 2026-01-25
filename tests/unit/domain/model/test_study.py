@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from invariant.domain.model.study import Study
+from invariant.catalog.domain.entities.study import Study
 from invariant.shared.contracts.ids import StudyId
 
 

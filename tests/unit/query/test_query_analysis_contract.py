@@ -13,10 +13,9 @@ Contract tests verify:
 
 import pytest
 
-from invariant.domain.model.data_product import DataProduct
-from invariant.domain.model.semantic import IndicatorDefinition
-from invariant.domain.model.variable import Variable
-from invariant.domain.services.validator import CatalogSnapshot
+from invariant.catalog.domain.entities.data_product import DataProduct
+from invariant.catalog.domain.entities.variable import Variable
+from invariant.identity.domain.entities.semantic import IndicatorDefinition
 from invariant.query.application.planning.query_plan import (
     Filter,
     FilterOp,
@@ -44,6 +43,7 @@ from invariant.shared.contracts.query_analysis import (
     QueryIntent as AnalysisQueryIntent,
 )
 from invariant.shared.contracts.value_objects import GrainSpec, VariableRef
+from invariant.validation.domain.services.validator import CatalogSnapshot
 
 
 @pytest.fixture

@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 from invariant.application.dto.semantic_query import SemanticValidationResultDTO
 from invariant.application.services.dto_translators import issue_to_dto
-from invariant.domain.model.validation import Severity
 from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
@@ -18,6 +17,7 @@ from invariant.validation.domain.services.semantic_validator import (
     QueryValidationResult,
     TimeGrainRule,
 )
+from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
     from invariant.application.dto.semantic_query import SemanticQueryRequest
