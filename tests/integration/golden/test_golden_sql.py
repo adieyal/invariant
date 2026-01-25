@@ -35,6 +35,9 @@ from invariant.application.dto.semantic_query import (
     SortDirection,
 )
 from invariant.query.domain.services.query_planner import QueryPlanner
+from invariant.semantic.application.services.catalog_provider_adapter import (
+    SemanticCatalogProviderAdapter,
+)
 from invariant_contrib.postgres import PostgresCompiler
 from invariant_contrib.wazimap.infrastructure.yaml_asset_store import (
     YamlSemanticAssetStore,
@@ -220,7 +223,8 @@ def test_golden_sql(
 
     # Plan and compile the query
     planner = QueryPlanner()
-    plan = planner.plan(query, catalog)
+    catalog_provider = SemanticCatalogProviderAdapter(catalog)
+    plan = planner.plan(query, catalog_provider)
 
     compiler = PostgresCompiler()
     compiled = compiler.compile(plan, catalog)
