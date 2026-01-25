@@ -302,7 +302,7 @@ def generate_glossary() -> str:
         "> Source: `scripts/generate_docs.py`",
         "",
         "This glossary is generated from Python dataclass docstrings in the domain layer.",
-        "For explanatory context, see [Conceptual Model](../01-conceptual-model.md).",
+        "For explanatory context, see [Concepts](../concepts/index.md).",
         "",
     ]
 
@@ -481,16 +481,16 @@ def generate_examples() -> str:
 # Documentation structure for llms.txt generation
 # Each entry: (title, relative_path_in_docs, description)
 LLMS_CORE_DOCS = [
-    ("Project Scope", "00-project-scope.md", "What the kernel is (and isn't)"),
+    ("Project Overview", "index.md", "What the kernel is (and isn't)"),
     (
         "Conceptual Model",
-        "01-conceptual-model.md",
+        "concepts/index.md",
         "Universes, reference systems, variables, indicators",
     ),
-    ("Glossary", "02-glossary.md", "Term definitions"),
+    ("Getting Started", "getting-started/index.md", "Quick introduction"),
     (
         "Architecture",
-        "03-architecture.md",
+        "architecture/index.md",
         "Clean Architecture layers, ports, data flow",
     ),
 ]
@@ -505,10 +505,10 @@ LLMS_DEVELOPER_DOCS = [
 ]
 
 LLMS_API_DOCS = [
-    ("Data Model", "05-data-model.md", "Domain entities and relationships"),
-    ("Application Layer", "06-application-layer.md", "Use cases, DTOs, ports"),
-    ("API Contracts", "07-api-contracts.md", "Public interfaces"),
-    ("Capability Examples", "08-capability-examples.md", "Code patterns"),
+    ("Data Model", "reference/dtos.md", "Domain entities and DTOs"),
+    ("Application Layer", "reference/use-cases.md", "Use cases and orchestration"),
+    ("Ports", "reference/ports.md", "Port interfaces"),
+    ("Examples", "examples/index.md", "Code patterns"),
 ]
 
 LLMS_REFERENCE_DOCS = [

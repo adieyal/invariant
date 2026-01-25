@@ -21,10 +21,10 @@ A study may produce multiple datasets and involve multiple instruments.
 | `id` | `StudyId` |
 | `name` | `str` |
 | `owner_org` | `str` |
-| `description` | `str | None` |
-| `methodology_summary` | `str | None` |
-| `instrument_ref` | `str | None` |
-| `license` | `str | None` |
+| `description` | `str \| None` |
+| `methodology_summary` | `str \| None` |
+| `instrument_ref` | `str \| None` |
+| `license` | `str \| None` |
 | `created_at` | `datetime` |
 
 ### Dataset
@@ -44,16 +44,16 @@ Invariants:
 | `id` | `DatasetId` |
 | `study_id` | `StudyId` |
 | `name` | `str` |
-| `description` | `str | None` |
-| `source_ref` | `str | None` |
-| `release_date` | `date | None` |
-| `collection_start` | `date | None` |
-| `collection_end` | `date | None` |
-| `reference_date` | `date | None` |
-| `reference_system_id` | `ReferenceSystemId | None` |
-| `reference_system_version_id` | `ReferenceSystemVersionId | None` |
-| `universe_id` | `UniverseId | None` |
-| `quality_notes` | `str | None` |
+| `description` | `str \| None` |
+| `source_ref` | `str \| None` |
+| `release_date` | `date \| None` |
+| `collection_start` | `date \| None` |
+| `collection_end` | `date \| None` |
+| `reference_date` | `date \| None` |
+| `reference_system_id` | `ReferenceSystemId \| None` |
+| `reference_system_version_id` | `ReferenceSystemVersionId \| None` |
+| `universe_id` | `UniverseId \| None` |
+| `quality_notes` | `str \| None` |
 
 ### DataProduct
 
@@ -77,7 +77,7 @@ Invariants:
 | `kind` | `DataProductKind` |
 | `grain` | `GrainSpec` |
 | `variables` | `list[Variable]` |
-| `default_time_dimension_id` | `VariableId | None` |
+| `default_time_dimension_id` | `VariableId \| None` |
 | `is_public` | `bool` |
 | `_variables_by_name` | `dict[str, Variable]` |
 | `_variables_by_id` | `dict[VariableId, Variable]` |
@@ -101,9 +101,9 @@ Invariants:
 | `name` | `str` |
 | `role` | `VariableRole` |
 | `data_type` | `DataType` |
-| `domain` | `VariableDomain | None` |
-| `unit` | `str | None` |
-| `description` | `str | None` |
+| `domain` | `VariableDomain \| None` |
+| `unit` | `str \| None` |
+| `description` | `str \| None` |
 
 ## Reference Systems
 
@@ -138,8 +138,8 @@ This tracks which version of the unit set a dataset uses.
 | `id` | `ReferenceSystemVersionId` |
 | `reference_system_id` | `ReferenceSystemId` |
 | `label` | `str` |
-| `valid_from` | `date | None` |
-| `valid_to` | `date | None` |
+| `valid_from` | `date \| None` |
+| `valid_to` | `date \| None` |
 | `notes` | `str` |
 
 ### Crosswalk
@@ -207,7 +207,7 @@ across different datasets.
 | `id` | `ConceptId` |
 | `label` | `str` |
 | `description` | `str` |
-| `canonical_unit` | `str | None` |
+| `canonical_unit` | `str \| None` |
 
 ### VariableSemantics
 
@@ -221,9 +221,9 @@ Links a variable to a concept and provides additional context.
 |-------|------|
 | `variable_id` | `VariableId` |
 | `concept_id` | `ConceptId` |
-| `unit` | `str | None` |
-| `notes` | `str | None` |
-| `comparability_group` | `str | None` |
+| `unit` | `str \| None` |
+| `notes` | `str \| None` |
+| `comparability_group` | `str \| None` |
 
 ### IndicatorDefinition
 
@@ -240,11 +240,11 @@ Invariants:
 | `variable_id` | `VariableId` |
 | `indicator_type` | `IndicatorType` |
 | `aggregation_policy` | `AggregationPolicy` |
-| `numerator_ref` | `VariableRef | None` |
-| `denominator_ref` | `VariableRef | None` |
-| `formula` | `str | None` |
+| `numerator_ref` | `VariableRef \| None` |
+| `denominator_ref` | `VariableRef \| None` |
+| `formula` | `str \| None` |
 | `allowed_aggregations` | `tuple[AggregationType, ...]` |
-| `weighting_method` | `WeightingMethod | None` |
+| `weighting_method` | `WeightingMethod \| None` |
 
 ## Query Planning
 
@@ -263,7 +263,7 @@ Invariants:
 | `intent` | `QueryIntent` |
 | `operations` | `list[SelectOp]` |
 | `presentation` | `PresentationSpec` |
-| `combine` | `CombineOp | None` |
+| `combine` | `CombineOp \| None` |
 
 ### SelectOp
 
@@ -335,7 +335,7 @@ How to present the query results.
 | Field | Type |
 |-------|------|
 | `format` | `PresentationFormat` |
-| `units` | `str | None` |
+| `units` | `str \| None` |
 
 ## Validation
 
@@ -351,7 +351,7 @@ Result of validating a query plan.
 | `status` | `ValidationStatus` |
 | `issues` | `tuple[Issue, ...]` |
 | `disclosures` | `tuple[Disclosure, ...]` |
-| `rewritten_plan` | `QueryPlan | None` |
+| `rewritten_plan` | `QueryPlan \| None` |
 
 ### Issue
 
@@ -408,7 +408,7 @@ Using VariableId rather than names provides stability when variables are renamed
 | Field | Type |
 |-------|------|
 | `keys` | `tuple[VariableId, ...]` |
-| `time_axis` | `VariableId | None` |
+| `time_axis` | `VariableId \| None` |
 
 ### EnumeratedDomain
 

@@ -6,10 +6,10 @@ Invariant is a business layer, not a stack. It runs in-memory with fake reposito
 
 ## Core Concepts
 
-- [Project Scope](00-project-scope/): What the kernel is (and isn't)
-- [Conceptual Model](01-conceptual-model/): Universes, reference systems, variables, indicators
-- [Glossary](02-glossary/): Term definitions
-- [Architecture](03-architecture/): Clean Architecture layers, ports, data flow
+- [Project Overview](index/): What the kernel is (and isn't)
+- [Conceptual Model](concepts/index/): Universes, reference systems, variables, indicators
+- [Getting Started](getting-started/index/): Quick introduction
+- [Architecture](architecture/index/): Clean Architecture layers, ports, data flow
 
 ## Developer Guide
 
@@ -22,10 +22,10 @@ Invariant is a business layer, not a stack. It runs in-memory with fake reposito
 
 ## API & Implementation
 
-- [Data Model](05-data-model/): Domain entities and relationships
-- [Application Layer](06-application-layer/): Use cases, DTOs, ports
-- [API Contracts](07-api-contracts/): Public interfaces
-- [Capability Examples](08-capability-examples/): Code patterns
+- [Data Model](reference/dtos/): Domain entities and DTOs
+- [Application Layer](reference/use-cases/): Use cases and orchestration
+- [Ports](reference/ports/): Port interfaces
+- [Examples](examples/index/): Code patterns
 
 ## Optional
 

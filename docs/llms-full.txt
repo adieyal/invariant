@@ -8,17 +8,195 @@ Invariant is a business layer, not a stack. It runs in-memory with fake reposito
 
 # Core Concepts
 
-## Project Scope
-*Source: 00-project-scope.md (not found)*
+## Project Overview
+*Source: index.md*
+
+# Invariant Analytics Kernel
+
+**A type system for analytical data.**
+
+Just as a programming language's type system catches "you can't add a string to an integer" at compile time, Invariant catches "you can't sum a percentage" at query time.
+
+The goal: make invalid analytics unrepresentable—or at least, unexecutable.
+
+---
+
+## Documentation map
+
+| Section | Description | Start Here |
+|---------|-------------|------------|
+| **Getting Started** | First run + first failure | [Quickstart](getting-started/quickstart.md) |
+| **Examples** | What goes wrong in analytics | [Scenarios](examples/index.md) |
+| **Concepts** | Universe, variables, reference systems | [Model](concepts/index.md) |
+| **Integration** | Minimal wiring, progressive rigor | [Integrate](integration/index.md) |
+
+---
+
+## Who should read what
+
+| If you're... | You want to... | Start here |
+|--------------|----------------|------------|
+| **Evaluating** | See if this fits your platform | [Getting Started](getting-started/index.md) |
+| **Integrating** | Wire into your query lifecycle | [Integration](integration/index.md) |
+| **Implementing rigor** | Set up rule packs, checks, disclosures | [Concepts](concepts/index.md) |
+| **Building AI tools** | Use tool contracts and remediation | [AI Integration](ai/index.md) |
+
+---
+
+## What It Does
+
+Invariant sits between your data and your users. When someone tries to:
+
+- **Sum percentages** — Invariant blocks it and explains why
+- **Compare incompatible datasets** — Invariant warns and requires acknowledgment
+- **Query across boundary changes** — Invariant applies crosswalks or flags the mismatch
+- **Access suppressed cells** — Invariant enforces policy and attaches disclosures
+
+```
+Query: "Average unemployment rate across all provinces"
+
+Status: BLOCK
+Issue: INDICATOR_AGG_NOT_ALLOWED
+Message: Cannot AVG indicator 'unemployment_rate' because it is
+         a derived value. Indicators require recomputation, not
+         naive aggregation.
+
+Remediations:
+  → Define numerator/denominator so the system can recompute safely
+  → Use NONE (display as-is) instead of AVG
+```
+
+---
+
+## What Invariant Is Not
+
+Invariant is deliberately limited in scope:
+
+- **Not a database** — It doesn't store or query data. You provide adapters.
+- **Not a query engine** — It validates and plans queries. You execute them.
+- **Not a visualization layer** — It produces structured results. You render them.
+- **Not an ETL tool** — It defines metadata schemas. You populate them.
+
+The kernel runs entirely in-memory with fake repositories for testing. If it requires specific infrastructure, that's a scope violation.
+
+---
+
+## Is Invariant Right for Your Project?
+
+**Use Invariant if you check 3 or more:**
+
+- ✓ Multiple datasets that users compare or combine
+- ✓ Indicators (rates, percentages) that could be naively summed
+- ✓ Reference system boundaries that change over time
+- ✓ Census or survey data with suppression requirements
+- ✓ Users need to see where numbers came from
+- ✓ Public-facing analytics where accuracy matters
+- ✓ Need to explain why a query is invalid
+
+**Invariant is overkill if:**
+
+- Single dataset, simple slice-and-dice queries
+- All metrics are raw counts (no derived indicators)
+- Internal tool where speed matters more than rigor
+- Real-time streaming analytics
+
+---
 
 ## Conceptual Model
-*Source: 01-conceptual-model.md (not found)*
+*Source: concepts/index.md*
 
-## Glossary
-*Source: 02-glossary.md (not found)*
+# Concepts
+
+The domain model behind Invariant's validation rules.
+
+## Why semantics matter in analytics
+
+Most analytics errors aren't bugs — they're semantic mistakes. The code runs fine, but the results are meaningless because the operation doesn't make sense for the data type.
+
+Invariant encodes semantic knowledge about your data so these mistakes are caught before they reach users.
+
+## How Invariant models meaning
+
+Invariant tracks:
+
+- **What population** the data describes (universe)
+- **What kind of value** each variable represents (measure vs indicator)
+- **What grouping system** is used and when it changed (reference systems)
+- **What constraints** apply to operations (validation rules)
+
+## Core concepts
+
+| Concept | What it answers |
+|---------|-----------------|
+| [Universe](universe.md) | "What population does this data describe?" |
+| [Variables](variables.md) | "Can I sum this column? Average it?" |
+| [Reference Systems](reference-systems.md) | "Are these geographies comparable over time?" |
+| [Data Products](data-products.md) | "How is this data organized?" |
+| [Validation Gate](validation-gate.md) | "What happens when a rule is violated?" |
+
+## When to read this section
+
+Read Concepts after you've seen [Examples](../examples/index.md). The examples show *what* Invariant catches; Concepts explains *why*.
+
+## Next steps
+
+After understanding concepts, move to [Integration Guide](../integration/index.md) to connect Invariant to your system.
+
+---
+
+## Getting Started
+*Source: getting-started/index.md*
+
+--8<-- "_partials/templates/getting-started-section.md"
+
+---
 
 ## Architecture
-*Source: 03-architecture.md (not found)*
+*Source: architecture/index.md*
+
+# Architecture & Design
+
+How Invariant is built and why.
+
+## Design goals
+
+1. **Correctness over convenience** — Never produce silently wrong results
+2. **Explicit over implicit** — All constraints are declared, not inferred
+3. **In-memory determinism** — The kernel runs without infrastructure dependencies
+4. **Ports isolate I/O** — All external communication goes through defined interfaces
+
+## Non-goals
+
+Invariant deliberately does not:
+
+- Execute queries (you do that)
+- Store data (you provide repositories)
+- Optimize performance (that's downstream)
+- Render visualizations (that's your UI)
+
+## Where complexity lives
+
+| Layer | Responsibility |
+|-------|----------------|
+| **Domain** | Entities, value objects, invariants |
+| **Application** | Use cases, orchestration |
+| **Ports** | Interfaces to external systems |
+
+The domain layer has zero dependencies. Everything else depends inward.
+
+## Architecture topics
+
+| Topic | What it covers |
+|-------|----------------|
+| [Query, Rules, Gate](two-planes-and-gate.md) | The core validation model |
+| [Progressive Rigor](progressive-rigor.md) | Deployment profiles from minimal to strict |
+| [Scope Boundaries](scope-boundaries.md) | What's in and out of scope |
+
+## Next steps
+
+After understanding the architecture, see [Integration Guide](../integration/index.md) for practical implementation.
+
+---
 
 # Developer Guide
 
@@ -146,7 +324,7 @@ elif result.status == "BLOCK":
 
 - [Implementing Ports](integrating.md) — Detailed port interface documentation
 - [Use Cases](use-cases.md) — All available use cases
-- [Architecture](../03-architecture.md) — Design philosophy and the validation gate
+- [Architecture](../architecture/index.md) — Design philosophy and the validation gate
 - [Semantic Layer](semantic-layer.md) — Metrics-first query approach
 - [YAML Assets](yaml-assets.md) — Define assets declaratively
 
@@ -1818,16 +1996,407 @@ See `tests/unit/domain/services/test_validator.py` for examples.
 # API & Implementation
 
 ## Data Model
-*Source: 05-data-model.md (not found)*
+*Source: reference/dtos.md*
+
+---
+page_type: reference
+---
+
+# Reference: DTOs
+
+Request and response data structures.
+
+## Overview
+
+DTOs (Data Transfer Objects) are frozen dataclasses used for communication between layers. They contain no business logic.
+
+## Request DTOs
+
+### QueryRequest
+
+**Stability:** Stable
+
+```python
+@dataclass(frozen=True)
+class QueryRequest:
+    data_product_id: DataProductId
+    dimensions: list[VariableId]
+    measures: list[VariableId]
+    filters: list[Filter]
+    aggregations: dict[VariableId, Aggregation]
+```
+
+### CreateStudyRequest
+
+**Stability:** Stable
+
+```python
+@dataclass(frozen=True)
+class CreateStudyRequest:
+    name: str
+    description: str
+    universe_id: UniverseId
+```
+
+### AcknowledgeRequest
+
+**Stability:** Stable
+
+```python
+@dataclass(frozen=True)
+class AcknowledgeRequest:
+    validation_result_id: ValidationResultId
+    acknowledged_issues: list[IssueId]
+    acknowledged_by: UserId
+    reason: str | None
+```
+
+## Response DTOs
+
+### ValidationResultDTO
+
+**Stability:** Stable
+
+```python
+@dataclass(frozen=True)
+class ValidationResultDTO:
+    id: ValidationResultId
+    is_allowed: bool
+    is_blocked: bool
+    needs_acknowledgment: bool
+    issues: list[IssueDTO]
+    disclosures: list[DisclosureDTO]
+    query_plan: QueryPlanDTO | None
+```
+
+### IssueDTO
+
+**Stability:** Stable
+
+```python
+@dataclass(frozen=True)
+class IssueDTO:
+    id: IssueId
+    code: str
+    severity: Severity
+    message: str
+    evidence: dict[str, Any]
+    remediations: list[RemediationDTO]
+```
+
+### DisclosureDTO
+
+**Stability:** Stable
+
+```python
+@dataclass(frozen=True)
+class DisclosureDTO:
+    type: DisclosureType
+    message: str
+    affected_cells: list[CellReference]
+```
+
+### RemediationDTO
+
+**Stability:** Stable
+
+```python
+@dataclass(frozen=True)
+class RemediationDTO:
+    action: RemediationAction
+    description: str
+    parameters: dict[str, Any]
+```
+
+## Enums
+
+### Severity
+
+```python
+class Severity(Enum):
+    ALLOW = "allow"
+    WARN = "warn"
+    ACKNOWLEDGE = "acknowledge"
+    BLOCK = "block"
+```
+
+### DisclosureType
+
+```python
+class DisclosureType(Enum):
+    PARTIAL_COMPARABILITY = "partial_comparability"
+    SUPPRESSED_CELL = "suppressed_cell"
+    CROSSWALK_APPROXIMATION = "crosswalk_approximation"
+    INDICATOR_RECOMPUTED = "indicator_recomputed"
+```
+
+### RemediationAction
+
+```python
+class RemediationAction(Enum):
+    DEFINE_NUMERATOR_DENOMINATOR = "define_numerator_denominator"
+    USE_NONE_AGGREGATION = "use_none_aggregation"
+    APPLY_CROSSWALK = "apply_crosswalk"
+    AGGREGATE_TO_STABLE_LEVEL = "aggregate_to_stable_level"
+    ACKNOWLEDGE_DIFFERENCE = "acknowledge_difference"
+```
+
+---
 
 ## Application Layer
-*Source: 06-application-layer.md (not found)*
+*Source: reference/use-cases.md*
 
-## API Contracts
-*Source: 07-api-contracts.md (not found)*
+---
+page_type: reference
+---
 
-## Capability Examples
-*Source: 08-capability-examples.md (not found)*
+# Reference: Use Cases
+
+Application layer entry points.
+
+## Overview
+
+Use cases are the primary API for interacting with the kernel. Each use case has a single `execute` method that accepts a request DTO and returns a response DTO.
+
+## ValidateQueryUseCase
+
+**Stability:** Stable
+
+Validates a query against semantic rules.
+
+```python
+@dataclass
+class ValidateQueryUseCase:
+    catalog_store: CatalogStore
+
+    def execute(self, request: QueryRequest) -> ValidationResultDTO: ...
+```
+
+**Request:** `QueryRequest`
+**Response:** `ValidationResultDTO`
+
+## ExecuteQueryUseCase
+
+**Stability:** Beta
+
+Executes a validated query plan.
+
+```python
+@dataclass
+class ExecuteQueryUseCase:
+    catalog_store: CatalogStore
+    query_engine: QueryEngine
+
+    def execute(self, request: ExecuteQueryRequest) -> QueryResultDTO: ...
+```
+
+**Request:** `ExecuteQueryRequest`
+**Response:** `QueryResultDTO`
+
+## CreateStudyUseCase
+
+**Stability:** Stable
+
+Creates a new study in the catalog.
+
+```python
+@dataclass
+class CreateStudyUseCase:
+    catalog_store: CatalogStore
+
+    def execute(self, request: CreateStudyRequest) -> StudyDTO: ...
+```
+
+**Request:** `CreateStudyRequest`
+**Response:** `StudyDTO`
+
+## AcknowledgeIssuesUseCase
+
+**Stability:** Stable
+
+Records acknowledgment of validation issues.
+
+```python
+@dataclass
+class AcknowledgeIssuesUseCase:
+    catalog_store: CatalogStore
+    audit_log: AuditLog
+
+    def execute(self, request: AcknowledgeRequest) -> AcknowledgeResultDTO: ...
+```
+
+**Request:** `AcknowledgeRequest`
+**Response:** `AcknowledgeResultDTO`
+
+## Usage pattern
+
+```python
+# Wire up dependencies
+use_case = ValidateQueryUseCase(catalog_store=my_store)
+
+# Execute
+result = use_case.execute(QueryRequest(...))
+
+# Handle result
+if result.is_blocked:
+    handle_blocked(result.issues)
+```
+
+---
+
+## Ports
+*Source: reference/ports.md*
+
+---
+page_type: reference
+---
+
+# Reference: Ports
+
+Interface definitions for external adapters.
+
+## Overview
+
+Ports are Protocol classes that define how the kernel communicates with external systems. You implement these interfaces; the kernel calls them.
+
+## CatalogStore
+
+**Stability:** Stable
+
+Provides access to catalog metadata.
+
+```python
+class CatalogStore(Protocol):
+    def get_study(self, study_id: StudyId) -> Study | None: ...
+    def get_dataset(self, dataset_id: DatasetId) -> Dataset | None: ...
+    def get_data_product(self, product_id: DataProductId) -> DataProduct | None: ...
+    def save_study(self, study: Study) -> None: ...
+    def save_data_product(self, product: DataProduct) -> None: ...
+```
+
+## IndicatorEngine
+
+**Stability:** Stable
+
+Recomputes indicators from underlying measures.
+
+```python
+class IndicatorEngine(Protocol):
+    def recompute(
+        self,
+        indicator: Variable,
+        aggregation: Aggregation,
+        data: DataFrame
+    ) -> Series: ...
+```
+
+## CrosswalkService
+
+**Stability:** Stable
+
+Applies crosswalks between reference system versions.
+
+```python
+class CrosswalkService(Protocol):
+    def apply_crosswalk(
+        self,
+        data: DataFrame,
+        from_version: ReferenceSystemVersion,
+        to_version: ReferenceSystemVersion
+    ) -> DataFrame: ...
+
+    def get_crosswalk(
+        self,
+        from_version: ReferenceSystemVersion,
+        to_version: ReferenceSystemVersion
+    ) -> Crosswalk | None: ...
+```
+
+## SuppressionEngine
+
+**Stability:** Stable
+
+Applies suppression policies to protect small cells.
+
+```python
+class SuppressionEngine(Protocol):
+    def apply_suppression(
+        self,
+        data: DataFrame,
+        policy: SuppressionPolicy
+    ) -> tuple[DataFrame, list[Disclosure]]: ...
+```
+
+## AuditLog
+
+**Stability:** Stable
+
+Records validation decisions for audit.
+
+```python
+class AuditLog(Protocol):
+    def record(self, event: AuditEvent) -> None: ...
+```
+
+## Clock
+
+**Stability:** Stable
+
+Provides time for deterministic testing.
+
+```python
+class Clock(Protocol):
+    def now(self) -> datetime: ...
+```
+
+## Fake implementations
+
+All ports have fake implementations for testing:
+
+- `FakeCatalogStore`
+- `FakeIndicatorEngine`
+- `FakeCrosswalkService`
+- `FakeSuppressionEngine`
+- `FakeAuditLog`
+- `FakeClock`
+
+---
+
+## Examples
+*Source: examples/index.md*
+
+# Examples
+
+Learn from common analytics mistakes and how Invariant catches them.
+
+## What these examples show
+
+Each example follows the same pattern:
+
+1. **Scenario** — What someone tries to do
+2. **What they expect** — The intuitive (but wrong) result
+3. **Why it's wrong** — The semantic problem
+4. **How Invariant detects it** — The validation rule that fires
+5. **Typical remediations** — How to fix it
+
+## How to read them
+
+Start with [Indicator Aggregation](indicator-aggregation.md) — it's the most common mistake and the clearest example of what Invariant does.
+
+## Examples
+
+| Example | The mistake |
+|---------|-------------|
+| [Indicator Aggregation](indicator-aggregation.md) | Summing or averaging rates and percentages |
+| [Cross-dataset Comparison](cross-dataset-comparison.md) | Comparing datasets with different universes |
+| [Reference System Changes](reference-system-changes.md) | Querying across boundary changes without crosswalks |
+| [Suppression](suppression.md) | Small cell disclosure risk |
+
+## Next steps
+
+After exploring examples, read [Concepts](../concepts/index.md) to understand the domain model behind these rules.
+
+---
 
 # Reference
 
@@ -1840,7 +2409,7 @@ See `tests/unit/domain/services/test_validator.py` for examples.
 > Source: `scripts/generate_docs.py`
 
 This glossary is generated from Python dataclass docstrings in the domain layer.
-For explanatory context, see [Conceptual Model](../01-conceptual-model.md).
+For explanatory context, see [Concepts](../concepts/index.md).
 
 ## Catalog Primitives
 
