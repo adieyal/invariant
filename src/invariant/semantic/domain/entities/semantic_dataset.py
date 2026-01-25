@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, TypeVar
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
 
-    from invariant.validation.domain.value_objects.time_series import TimeSeriesSpec
+    from invariant.semantic.domain.value_objects.time_series import TimeSeriesSpec
 
 from invariant.shared.contracts.ids import DimensionId, SemanticDatasetId
 

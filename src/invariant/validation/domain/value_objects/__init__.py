@@ -31,10 +31,6 @@ from invariant.validation.domain.value_objects.severity import (
     ValidationStatus,
 )
 
-# Note: TimeSeriesColumn and TimeSeriesSpec are available from
-# invariant.validation.domain.value_objects.time_series
-# They are not imported here to avoid circular imports with the semantic module.
-
 __all__: list[str] = [
     "ActionType",
     "AffectedEntity",

@@ -19,7 +19,7 @@ from invariant.semantic.domain.entities.semantic_dataset import (
     TimeGrain,
 )
 from invariant.shared.contracts.ids import DimensionId, SemanticDatasetId
-from invariant.validation.domain.value_objects.time_series import (
+from invariant.semantic.domain.value_objects.time_series import (
     TimeSeriesColumn,
     TimeSeriesSpec,
 )

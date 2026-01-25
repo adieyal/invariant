@@ -31,7 +31,7 @@ if TYPE_CHECKING:
         ColumnDefinition,
         SemanticDataset,
     )
-    from invariant.validation.domain.value_objects.time_series import TimeSeriesSpec
+    from invariant.semantic.domain.value_objects.time_series import TimeSeriesSpec
 
 
 @dataclass

@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 
 from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
-from invariant.validation.domain.value_objects.time_series import (
+from invariant.semantic.domain.value_objects.time_series import (
     TimeSeriesColumn,
     TimeSeriesSpec,
 )

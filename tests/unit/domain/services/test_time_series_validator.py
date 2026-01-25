@@ -13,7 +13,7 @@ from invariant.validation import Severity
 from invariant.validation.domain.services.time_series_validator import (
     TimeSeriesValidationRule,
 )
-from invariant.validation.domain.value_objects.time_series import (
+from invariant.semantic.domain.value_objects.time_series import (
     TimeSeriesColumn,
     TimeSeriesSpec,
 )
