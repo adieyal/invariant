@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from invariant.domain.model.geo_hierarchy import (
+from invariant.semantic.domain.entities.geo_hierarchy import (
     GeoHierarchy,
     ParentRelationship,
     RollupOverride,

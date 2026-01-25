@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from invariant.domain.model.comparability_rules import ComparabilityRules
-from invariant.domain.model.semantic_catalog import SemanticCatalog
+from invariant.identity.domain.entities.comparability_rules import ComparabilityRules
+from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
 
 from .base import load_yaml_file
 from .comparability_parser import load_comparability_rules, parse_comparability_rules
@@ -18,11 +18,11 @@ from .materialization_parser import load_materializations, parse_materialization
 from .metric_parser import load_metrics, parse_metric
 
 if TYPE_CHECKING:
-    from invariant.domain.model.dimension import Dimension
-    from invariant.domain.model.geo_hierarchy import GeoHierarchy
-    from invariant.domain.model.materialization import Materialization
-    from invariant.domain.model.metric import Metric
-    from invariant.domain.model.semantic_dataset import SemanticDataset
+    from invariant.semantic.domain.entities.dimension import Dimension
+    from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy
+    from invariant.semantic.domain.entities.materialization import Materialization
+    from invariant.semantic.domain.entities.metric import Metric
+    from invariant.semantic.domain.entities.semantic_dataset import SemanticDataset
 
 
 @dataclass

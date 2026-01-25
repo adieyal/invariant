@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from invariant.domain.model.materialization import (
+from invariant.semantic.domain.entities.materialization import (
     Materialization,
     MaterializationGrain,
     MaterializationSource,
@@ -13,7 +13,7 @@ from invariant.domain.model.materialization import (
     SourceType,
     StorageConfig,
 )
-from invariant.domain.model.semantic_dataset import TimeGrain
+from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
 from invariant.shared.contracts.ids import MaterializationId
 
 from .base import YamlLoadError, load_yaml_files_from_dir

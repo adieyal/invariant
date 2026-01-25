@@ -19,11 +19,14 @@ from invariant_contrib.datadictionary.domain.models import (
 
 if TYPE_CHECKING:
     from invariant.application.ports.catalog_store import CatalogStore
-    from invariant.domain.model.data_product import DataProduct
-    from invariant.domain.model.dataset import Dataset
-    from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
-    from invariant.domain.model.study import Study
-    from invariant.domain.model.variable import Variable
+    from invariant.catalog.domain.entities.data_product import DataProduct
+    from invariant.catalog.domain.entities.dataset import Dataset
+    from invariant.catalog.domain.entities.study import Study
+    from invariant.catalog.domain.entities.variable import Variable
+    from invariant.identity.domain.entities import Concept, Universe
+    from invariant.semantic.domain.entities.indicator_definition import (
+        IndicatorDefinition,
+    )
     from invariant.shared.contracts.ids import ReferenceSystemId, StudyId
 
 
