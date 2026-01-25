@@ -21,7 +21,7 @@ QueryPlan + CatalogSnapshot
 The `Validator` runs all configured rules and combines their results:
 
 ```python
-from invariant.domain.services.validator import Validator, IndicatorAggregationRule
+from invariant.validation.domain.services import Validator, IndicatorAggregationRule
 
 validator = Validator(rules=[
     IndicatorAggregationRule(),
@@ -37,7 +37,7 @@ result = validator.validate(plan, catalog_snapshot)
 
 ### IndicatorAggregationRule
 
-**Location:** `invariant.domain.services.validator`
+**Location:** `invariant.validation.domain.services`
 
 **Purpose:** Blocks naive aggregation of indicators (percentages, rates, means).
 
@@ -100,9 +100,9 @@ The overall query status is the highest severity among all issues.
 Rules implement the `Rule` protocol:
 
 ```python
-from invariant.domain.services.validator import Rule, CatalogSnapshot
-from invariant.domain.model.query_plan import QueryPlan
-from invariant.domain.model.validation import Issue
+from invariant.validation.domain.services import Rule, CatalogSnapshot
+from invariant.query.application.planning.query_plan import QueryPlan
+from invariant.validation.domain.value_objects import Issue
 
 class MyCustomRule(Rule):
     """Enforces some domain constraint."""

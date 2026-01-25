@@ -43,38 +43,38 @@ Invariant follows Clean Architecture principles with a clear separation between 
 
 The domain layer contains pure business logic with no external dependencies. It defines:
 
-### Models (`invariant.domain.model`)
+### Domain Models (by component)
 
-Entities and value objects that represent the domain:
+Entities and value objects are organized by bounded context:
 
-| Module | Contents |
-|--------|----------|
-| `study.py` | Study entity |
-| `dataset.py` | Dataset entity |
-| `data_product.py` | DataProduct entity |
-| `variable.py` | Variable entity |
-| `semantic.py` | Universe, Concept, IndicatorDefinition |
-| `reference_system.py` | ReferenceSystem, Version, Crosswalk |
-| `query_plan.py` | QueryPlan, SelectOp, Metric, Filter |
-| `validation.py` | ValidationResult, Issue, Disclosure |
-| `ids.py` | Typed IDs (StudyId, DatasetId, etc.) |
-| `value_objects.py` | GrainSpec, VariableDomain, VariableRef |
-| `enums.py` | All domain enumerations |
+| Component | Module | Contents |
+|-----------|--------|----------|
+| `catalog` | `domain/entities/` | Study, Dataset, DataProduct, Variable |
+| `identity` | `domain/entities/` | Concept, Universe, ComparabilityRules |
+| `semantic` | `domain/entities/` | Metric, Dimension, GeoHierarchy, SemanticCatalog |
+| `query` | `domain/value_objects/` | QuerySpec, FilterSpec, GroupBySpec |
+| `query` | `application/planning/` | QueryPlan (internal) |
+| `validation` | `domain/value_objects/` | Issue, Severity, Disclosure |
+| `validation` | `domain/services/` | Validator, SemanticValidator |
+| `reference` | `domain/entities/` | ReferenceSystem, Crosswalk |
+| `shared` | `contracts/` | Typed IDs, shared enums, boundary types |
 
 All models are:
 - **Frozen dataclasses** (immutable)
 - **Self-validating** (invariants checked in `__post_init__`)
 - **Pure Python** (no I/O, no external dependencies)
 
-### Services (`invariant.domain.services`)
+### Domain Services (by component)
 
-Domain services that encode business rules:
+Domain services encode business rules and are organized by bounded context:
 
-| Service | Purpose |
-|---------|---------|
-| `Validator` | Runs validation rules against QueryPlan |
-| `IndicatorAggregationRule` | Blocks naive indicator aggregation |
-| `ComparabilityChecker` | Assesses dataset comparability |
+| Component | Service | Purpose |
+|-----------|---------|---------|
+| `validation` | `Validator` | Runs validation rules against QueryPlan |
+| `validation` | `SemanticValidator` | Validates semantic queries |
+| `validation` | `IndicatorAggregationRule` | Blocks naive indicator aggregation |
+| `identity` | `ComparabilityResolver` | Assesses dataset comparability |
+| `semantic` | `MetricGraph` | Resolves metric dependencies |
 
 Services are stateless and operate on domain models.
 

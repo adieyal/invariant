@@ -32,7 +32,7 @@ SemanticQueryRequest + SemanticCatalog
 ## Using the Validator
 
 ```python
-from invariant.domain.services.semantic_validator import (
+from invariant.validation.domain.services import (
     QueryRuleValidator,
     NameResolutionRule,
     GeographyGrainRule,
@@ -265,7 +265,7 @@ rate = Metric.create_ratio(
 **Configuration:**
 
 ```python
-from invariant.domain.model.comparability_rules import (
+from invariant.identity.domain.entities.comparability_rules import (
     ComparabilityRules,
     ComparabilityPolicy,
 )
@@ -343,7 +343,7 @@ request = SemanticQueryRequest(
 **Example:**
 
 ```python
-from invariant.domain.model.metric import JoinIntent
+from invariant.semantic.domain.entities import JoinIntent
 
 # Ratio metric joining two datasets with 1:n cardinality
 rate = Metric.create_ratio(
@@ -396,7 +396,7 @@ result = validator.validate(request, catalog)
 ## Issue Structure
 
 ```python
-from invariant.domain.model.validation import Issue, Severity
+from invariant.validation.domain.value_objects import Issue, Severity
 
 @dataclass(frozen=True)
 class Issue:
@@ -423,8 +423,8 @@ class Issue:
 Rules implement the `SemanticQueryRule` protocol:
 
 ```python
-from invariant.domain.services.semantic_validator import SemanticQueryRule
-from invariant.domain.model.validation import Issue, Severity
+from invariant.validation.domain.services import SemanticQueryRule
+from invariant.validation.domain.value_objects import Issue, Severity
 
 class MyCustomRule:
     """Enforce custom business constraint."""

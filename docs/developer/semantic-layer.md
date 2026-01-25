@@ -35,7 +35,7 @@ The semantic layer provides a metrics-first approach to defining and querying an
 A `SemanticDataset` represents a physical database table with semantic metadata.
 
 ```python
-from invariant.domain.model.semantic_dataset import (
+from invariant.semantic.domain.entities import (
     SemanticDataset,
     PhysicalRef,
     GrainKeys,
@@ -83,7 +83,7 @@ population_dataset = SemanticDataset.create(
 A `Dimension` defines attributes available for grouping and filtering.
 
 ```python
-from invariant.domain.model.dimension import (
+from invariant.semantic.domain.entities import (
     Dimension,
     DimensionAttribute,
     DataType,
@@ -126,7 +126,7 @@ geography = Dimension.create(
 A `GeoHierarchy` defines administrative geography levels and rollup rules.
 
 ```python
-from invariant.domain.model.geo_hierarchy import (
+from invariant.semantic.domain.entities import (
     GeoHierarchy,
     ParentRelationship,
     RollupRules,
@@ -164,7 +164,7 @@ Metrics are the core of the semantic layer. Four kinds are supported:
 #### Simple Aggregation
 
 ```python
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities import (
     Metric,
     Additivity,
     AdditivityType,
@@ -190,7 +190,7 @@ population = Metric.create_simple_agg(
 #### Ratio Metric
 
 ```python
-from invariant.domain.model.metric import (
+from invariant.semantic.domain.entities import (
     RatioFormat,
     RollupPolicy,
 )
@@ -260,7 +260,7 @@ avg_price = Metric.create_weighted_avg(
 A `Materialization` defines pre-computed aggregations for performance.
 
 ```python
-from invariant.domain.model.materialization import (
+from invariant.semantic.domain.entities import (
     Materialization,
     MaterializationSource,
     MaterializationGrain,
@@ -296,7 +296,7 @@ province_yearly = Materialization.create(
 Defines policies for handling methodology mismatches when comparing metrics.
 
 ```python
-from invariant.domain.model.comparability_rules import (
+from invariant.identity.domain.entities.comparability_rules import (
     ComparabilityRules,
     ComparabilityPolicy,
 )
@@ -313,7 +313,7 @@ rules = ComparabilityRules.create(
 The `SemanticCatalog` is the aggregate that holds all semantic assets.
 
 ```python
-from invariant.domain.model.semantic_catalog import SemanticCatalog
+from invariant.semantic.domain.entities import SemanticCatalog
 
 catalog = SemanticCatalog.create(
     datasets=[population_dataset],
