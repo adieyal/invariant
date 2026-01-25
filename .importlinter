@@ -5,16 +5,9 @@ include_external_packages = True
 # =============================================================================
 # LAYER CONTRACTS
 # =============================================================================
-# Enforce Clean Architecture layer boundaries within legacy modules
-
-[importlinter:contract:layers]
-name = Clean Architecture layer boundaries
-type = layers
-layers =
-    application
-    domain
-containers =
-    invariant
+# Enforce Clean Architecture layer boundaries within each component
+# NOTE: The legacy invariant.domain layer has been removed. Layer boundaries
+# are now enforced per-component (catalog, identity, semantic, etc.).
 
 # =============================================================================
 # SHARED CONTRACTS
@@ -26,7 +19,6 @@ name = Shared contracts have no component dependencies
 type = forbidden
 source_modules = invariant.shared.contracts
 forbidden_modules =
-    invariant.domain
     invariant.application
     invariant.catalog
     invariant.identity
@@ -154,10 +146,5 @@ forbidden_modules =
 # DOMAIN PURITY
 # =============================================================================
 # Domain layer must not depend on application layer
-
-[importlinter:contract:domain-purity]
-name = Domain has no application dependencies
-type = forbidden
-source_modules = invariant.domain
-forbidden_modules =
-    invariant.application
+# NOTE: The legacy invariant.domain has been removed. Domain purity is now
+# enforced per-component via the component layer contracts above.

@@ -11,7 +11,7 @@ from invariant.validation.domain.value_objects.disclosure import Disclosure
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.domain.model.query_plan import QueryPlan
+    from invariant.shared._adapters.query_plan_types import QueryPlan
     from invariant.validation.domain.services.validator import CatalogSnapshot
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from invariant.domain.model.query_plan import QueryPlan
+    from invariant.shared._adapters.query_plan_types import QueryPlan
     from invariant.validation.domain.entities.validation_result import ValidationResult
 
 

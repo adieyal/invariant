@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from invariant.domain.model.query_plan import QueryIntent as DomainQueryIntent
+from invariant.shared._adapters.query_plan_types import QueryIntent as DomainQueryIntent
 from invariant.shared.contracts import (
     AggregationRequest,
     DataSourceFact,
@@ -26,7 +26,7 @@ from invariant.shared.contracts.enums import (
 )
 
 if TYPE_CHECKING:
-    from invariant.domain.model.query_plan import QueryPlan
+    from invariant.shared._adapters.query_plan_types import QueryPlan
     from invariant.validation.domain.services.validator import CatalogSnapshot
 
 

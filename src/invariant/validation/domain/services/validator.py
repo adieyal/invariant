@@ -18,10 +18,10 @@ from invariant.validation.domain.value_objects.severity import Severity
 if TYPE_CHECKING:
     from invariant.catalog.domain.entities.data_product import DataProduct
     from invariant.catalog.domain.entities.dataset import Dataset
-    from invariant.domain.model.query_plan import QueryPlan
     from invariant.semantic.domain.entities.indicator_definition import (
         IndicatorDefinition,
     )
+    from invariant.shared._adapters.query_plan_types import QueryPlan
     from invariant.shared.contracts.ids import DataProductId, DatasetId, VariableId
 
 
