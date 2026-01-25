@@ -25,7 +25,8 @@ if TYPE_CHECKING:
     from invariant.application.dto.query_request import QueryRequest
     from invariant.application.ports.catalog_store import CatalogStore
     from invariant.application.ports.id_gen import IdGenerator
-    from invariant.domain.model.validation import Issue, ValidationResult
+    from invariant.validation.domain.entities.validation_result import ValidationResult
+    from invariant.validation.domain.value_objects.issue import Issue
 
 
 @dataclass

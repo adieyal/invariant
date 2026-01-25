@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from invariant.application.ports.query_engine import RawQueryResult
-    from invariant.domain.model.validation import Disclosure
     from invariant.reference.domain.value_objects.geography import SuppressionPolicy
+    from invariant.validation.domain.value_objects.disclosure import Disclosure
 
 
 class SuppressionEngine(Protocol):

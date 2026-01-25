@@ -8,12 +8,12 @@ from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.domain.model.geo_hierarchy import GeoHierarchy
-    from invariant.domain.model.metric import Metric
-    from invariant.domain.model.query_spec import QuerySpec
-    from invariant.domain.model.semantic_catalog import SemanticCatalog
+    from invariant.query.domain.value_objects.query_spec import QuerySpec
+    from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy
+    from invariant.semantic.domain.entities.metric import Metric
+    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
 
-from invariant.domain.model.metric import RollupPolicy
+from invariant.semantic.domain.entities.metric import RollupPolicy
 
 
 class GeographyGrainRule:

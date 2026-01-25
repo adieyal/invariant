@@ -9,8 +9,8 @@ from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.domain.model.semantic_dataset import SemanticDataset
-    from invariant.domain.model.time_series import TimeSeriesSpec
+    from invariant.semantic.domain.entities.semantic_dataset import SemanticDataset
+    from invariant.validation.domain.value_objects.time_series import TimeSeriesSpec
 
 
 @dataclass

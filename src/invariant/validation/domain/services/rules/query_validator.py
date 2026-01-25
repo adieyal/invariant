@@ -11,8 +11,8 @@ from invariant.validation.domain.value_objects.severity import Severity
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.domain.model.query_spec import QuerySpec
-    from invariant.domain.model.semantic_catalog import SemanticCatalog
+    from invariant.query.domain.value_objects.query_spec import QuerySpec
+    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
     from invariant.validation.domain.services.semantic_validator import (
         SemanticQueryRule,
     )

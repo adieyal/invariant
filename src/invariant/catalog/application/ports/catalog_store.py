@@ -5,15 +5,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from invariant.domain.model.data_product import DataProduct
-    from invariant.domain.model.dataset import Dataset
-    from invariant.domain.model.reference_system import (
+    from invariant.catalog.domain.entities.data_product import DataProduct
+    from invariant.catalog.domain.entities.dataset import Dataset
+    from invariant.catalog.domain.entities.study import Study
+    from invariant.catalog.domain.entities.variable import Variable
+    from invariant.identity.domain.entities import Concept, Universe
+    from invariant.reference.domain.entities import (
         Crosswalk,
         ReferenceSystemVersion,
     )
-    from invariant.domain.model.semantic import Concept, IndicatorDefinition, Universe
-    from invariant.domain.model.study import Study
-    from invariant.domain.model.variable import Variable
+    from invariant.semantic.domain.entities import IndicatorDefinition
     from invariant.shared.contracts.ids import (
         ConceptId,
         CrosswalkId,

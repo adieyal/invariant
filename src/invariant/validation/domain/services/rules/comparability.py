@@ -5,10 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from invariant.domain.model.comparability_rules import ComparabilityRules
-    from invariant.domain.model.metric import Metric
-    from invariant.domain.model.query_spec import QuerySpec
-    from invariant.domain.model.semantic_catalog import SemanticCatalog
+    from invariant.identity.domain.entities.comparability_rules import (
+        ComparabilityRules,
+    )
+    from invariant.query.domain.value_objects.query_spec import QuerySpec
+    from invariant.semantic.domain.entities.metric import Metric
+    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
     from invariant.validation.domain.value_objects.issue import Issue
 
 

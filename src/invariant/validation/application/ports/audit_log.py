@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from invariant.domain.model.query_plan import QueryPlan
-    from invariant.domain.model.validation import ValidationResult
+    from invariant.validation.domain.entities.validation_result import ValidationResult
 
 
 class AuditLog(Protocol):
