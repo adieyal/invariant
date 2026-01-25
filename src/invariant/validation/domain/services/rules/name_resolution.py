@@ -8,8 +8,7 @@ from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.shared.contracts import QuerySpec
-    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+    from invariant.shared.contracts import QuerySpec, SemanticCatalogProtocol
 
 
 class NameResolutionRule:
@@ -19,7 +18,9 @@ class NameResolutionRule:
     the semantic catalog and returns errors for unknown or ambiguous references.
     """
 
-    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
+    def evaluate(
+        self, query: QuerySpec, catalog: SemanticCatalogProtocol
+    ) -> list[Issue]:
         """Evaluate name resolution for the query.
 
         Args:

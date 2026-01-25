@@ -11,8 +11,7 @@ from invariant.validation.domain.value_objects.severity import Severity
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.shared.contracts import QuerySpec
-    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+    from invariant.shared.contracts import QuerySpec, SemanticCatalogProtocol
     from invariant.validation.domain.services.semantic_validator import (
         SemanticQueryRule,
     )
@@ -84,7 +83,7 @@ class QueryRuleValidator:
         self.rules = tuple(rules)
 
     def validate(
-        self, query: QuerySpec, catalog: SemanticCatalog
+        self, query: QuerySpec, catalog: SemanticCatalogProtocol
     ) -> QueryValidationResult:
         """Validate a semantic query against the catalog using all rules.
 

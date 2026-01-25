@@ -29,9 +29,8 @@ from invariant.validation.domain.value_objects.severity import (
 )
 
 if TYPE_CHECKING:
-    from invariant.shared.contracts import QuerySpec
-    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
     from invariant.shared._adapters.query_plan_types import QueryPlan
+    from invariant.shared.contracts import QuerySpec, SemanticCatalogProtocol
     from invariant.validation.domain.entities.ruleset_pack import RulesetPack
     from invariant.validation.domain.services.validator import CatalogSnapshot
     from invariant.validation.domain.value_objects.check_result import CheckResult
@@ -151,7 +150,9 @@ class SemanticQueryRule(Protocol):
     and return a list of issues found.
     """
 
-    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
+    def evaluate(
+        self, query: QuerySpec, catalog: SemanticCatalogProtocol
+    ) -> list[Issue]:
         """Evaluate the rule against the query and catalog.
 
         Args:

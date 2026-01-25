@@ -4,17 +4,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from invariant.semantic.domain.entities.semantic_dataset import TimeGrain
+from invariant.shared.contracts import TimeGrain
 from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.shared.contracts import GroupBySpec, QuerySpec
-    from invariant.semantic.domain.entities.metric import Metric
-    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
-    from invariant.semantic.domain.entities.semantic_dataset import SemanticDataset
+    from invariant.shared.contracts import (
+        GroupBySpec,
+        MetricProtocol,
+        QuerySpec,
+        SemanticCatalogProtocol,
+        SemanticDatasetProtocol,
+    )
 
-from invariant.semantic.domain.entities.metric import SimpleAggSpec
+
+def _has_dataset_name(spec: object) -> bool:
+    """Check if a metric spec has a dataset_name attribute (SimpleAggSpec)."""
+    return hasattr(spec, "dataset_name") and isinstance(spec.dataset_name, str)
 
 
 class TimeGrainRule:
@@ -36,7 +42,9 @@ class TimeGrainRule:
         """
         self._require_time_filter = require_time_filter
 
-    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
+    def evaluate(
+        self, query: QuerySpec, catalog: SemanticCatalogProtocol
+    ) -> list[Issue]:
         """Evaluate time grain constraints for the query.
 
         Args:
@@ -197,8 +205,8 @@ class TimeGrainRule:
         return False
 
     def _get_dataset_for_metric(
-        self, metric: Metric, catalog: SemanticCatalog
-    ) -> SemanticDataset | None:
+        self, metric: MetricProtocol, catalog: SemanticCatalogProtocol
+    ) -> SemanticDatasetProtocol | None:
         """Get the dataset associated with a metric.
 
         Args:
@@ -209,7 +217,7 @@ class TimeGrainRule:
             The dataset if found, None otherwise.
         """
         # Only SimpleAggSpec metrics have a direct dataset reference
-        if isinstance(metric.spec, SimpleAggSpec):
+        if _has_dataset_name(metric.spec):
             return catalog.get_dataset(metric.spec.dataset_name)
 
         return None

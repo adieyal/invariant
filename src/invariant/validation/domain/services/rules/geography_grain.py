@@ -4,16 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from invariant.shared.contracts import RollupPolicy
 from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.shared.contracts import QuerySpec
-    from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy
-    from invariant.semantic.domain.entities.metric import Metric
-    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
-
-from invariant.semantic.domain.entities.metric import RollupPolicy
+    from invariant.shared.contracts import (
+        GeoHierarchyProtocol,
+        MetricProtocol,
+        QuerySpec,
+        SemanticCatalogProtocol,
+    )
 
 
 class GeographyGrainRule:
@@ -25,7 +26,9 @@ class GeographyGrainRule:
     - Illegal rollups (averaging rates) are caught unless metric has RECOMPUTE policy
     """
 
-    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
+    def evaluate(
+        self, query: QuerySpec, catalog: SemanticCatalogProtocol
+    ) -> list[Issue]:
         """Evaluate geography grain constraints for the query.
 
         Args:
@@ -150,8 +153,8 @@ class GeographyGrainRule:
 
     def _get_source_geo_level(
         self,
-        metric: Metric,
-        geo_hierarchy: GeoHierarchy,
+        metric: MetricProtocol,
+        geo_hierarchy: GeoHierarchyProtocol,
         query_level: str,
     ) -> str | None:
         """Determine the source geo level for a metric.

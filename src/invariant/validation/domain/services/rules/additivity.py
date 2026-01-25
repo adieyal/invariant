@@ -4,20 +4,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from invariant.shared.contracts import (
+    AdditivityType,
+    MetricKind,
+    RollupPolicy,
+)
 from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.shared.contracts import QuerySpec
-    from invariant.semantic.domain.entities.metric import Metric
-    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+    from invariant.shared.contracts import (
+        MetricProtocol,
+        QuerySpec,
+        SemanticCatalogProtocol,
+    )
 
-from invariant.semantic.domain.entities.metric import (
-    AdditivityType,
-    MetricKind,
-    RollupPolicy,
-    SimpleAggSpec,
-)
+
+def _has_dataset_name(spec: object) -> bool:
+    """Check if a metric spec has a dataset_name attribute (SimpleAggSpec)."""
+    return hasattr(spec, "dataset_name") and isinstance(spec.dataset_name, str)
 
 
 class AdditivityRule:
@@ -30,7 +35,9 @@ class AdditivityRule:
     - Ratio metrics default to recompute behavior (never sum)
     """
 
-    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
+    def evaluate(
+        self, query: QuerySpec, catalog: SemanticCatalogProtocol
+    ) -> list[Issue]:
         """Evaluate additivity constraints for the query.
 
         Args:
@@ -105,8 +112,8 @@ class AdditivityRule:
 
     def _is_rollup_attempted(
         self,
-        metric: Metric,
-        catalog: SemanticCatalog,
+        metric: MetricProtocol,
+        catalog: SemanticCatalogProtocol,
         query_group_dimensions: set[str],
     ) -> bool:
         """Determine if a rollup is being attempted for a metric.
@@ -123,7 +130,7 @@ class AdditivityRule:
             True if a rollup is being attempted, False otherwise.
         """
         # Only SimpleAggSpec metrics have a direct dataset reference
-        if not isinstance(metric.spec, SimpleAggSpec):
+        if not _has_dataset_name(metric.spec):
             # For derived/weighted_avg metrics, check dependencies
             # For now, assume rollup is possible if dependencies allow it
             return True
@@ -163,7 +170,7 @@ class AdditivityRule:
 
     def _check_semi_additive_rollup(
         self,
-        metric: Metric,
+        metric: MetricProtocol,
         metric_name: str,
         query: QuerySpec,
     ) -> list[Issue]:

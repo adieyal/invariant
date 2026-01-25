@@ -4,19 +4,30 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from invariant.shared.contracts import JoinIntent
 from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.shared.contracts import QuerySpec
-    from invariant.semantic.domain.entities.metric import Metric
-    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+    from invariant.shared.contracts import (
+        MetricProtocol,
+        QuerySpec,
+        SemanticCatalogProtocol,
+    )
 
-from invariant.semantic.domain.entities.metric import (
-    JoinIntent,
-    RatioSpec,
-    SimpleAggSpec,
-)
+
+def _is_ratio_spec(spec: object) -> bool:
+    """Check if a metric spec is a RatioSpec (has numerator/denominator)."""
+    return (
+        hasattr(spec, "numerator")
+        and hasattr(spec, "denominator")
+        and hasattr(spec, "join_intent")
+    )
+
+
+def _has_dataset_name(spec: object) -> bool:
+    """Check if a metric spec has a dataset_name attribute (SimpleAggSpec)."""
+    return hasattr(spec, "dataset_name") and isinstance(spec.dataset_name, str)
 
 
 class JoinSafetyRule:
@@ -32,7 +43,9 @@ class JoinSafetyRule:
     - Validates that metrics requiring joins declare their join_intent
     """
 
-    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
+    def evaluate(
+        self, query: QuerySpec, catalog: SemanticCatalogProtocol
+    ) -> list[Issue]:
         """Evaluate join safety constraints for the query.
 
         Args:
@@ -51,7 +64,7 @@ class JoinSafetyRule:
                 continue
 
             # Only ratio metrics can require cross-dataset joins
-            if not isinstance(metric.spec, RatioSpec):
+            if not _is_ratio_spec(metric.spec):
                 continue
 
             ratio_spec = metric.spec
@@ -109,7 +122,7 @@ class JoinSafetyRule:
 
         return issues
 
-    def _get_dataset_name(self, metric: Metric) -> str | None:
+    def _get_dataset_name(self, metric: MetricProtocol) -> str | None:
         """Get the dataset name for a metric.
 
         Args:
@@ -118,7 +131,7 @@ class JoinSafetyRule:
         Returns:
             The dataset name if it's a SimpleAggSpec metric, None otherwise.
         """
-        if isinstance(metric.spec, SimpleAggSpec):
+        if _has_dataset_name(metric.spec):
             return metric.spec.dataset_name
         return None
 
@@ -126,7 +139,7 @@ class JoinSafetyRule:
         self,
         numerator_dataset: str,
         denominator_dataset: str,
-        catalog: SemanticCatalog,
+        catalog: SemanticCatalogProtocol,
     ) -> str:
         """Determine the join cardinality between two datasets.
 

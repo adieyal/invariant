@@ -3,14 +3,40 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
-if TYPE_CHECKING:
-    from invariant.semantic.domain.entities.semantic_dataset import SemanticDataset
-    from invariant.semantic.domain.value_objects.time_series import TimeSeriesSpec
+
+class TimeSeriesColumnProtocol(Protocol):
+    """Protocol for time series column used by validation."""
+
+    @property
+    def column_name(self) -> str: ...
+
+    @property
+    def period(self) -> object: ...  # date, but we don't need the type
+
+
+class TimeSeriesSpecProtocol(Protocol):
+    """Protocol for time series spec used by validation."""
+
+    @property
+    def base_name(self) -> str: ...
+
+    @property
+    def columns(self) -> tuple[TimeSeriesColumnProtocol, ...]: ...
+
+
+class SemanticDatasetForTimeSeriesProtocol(Protocol):
+    """Protocol for semantic dataset used by time series validation."""
+
+    @property
+    def name(self) -> str: ...
+
+    @property
+    def time_series(self) -> tuple[TimeSeriesSpecProtocol, ...]: ...
 
 
 @dataclass
@@ -33,7 +59,7 @@ class TimeSeriesValidationRule:
             print(f"[{issue.severity.name}] {issue.message}")
     """
 
-    def evaluate(self, dataset: SemanticDataset) -> list[Issue]:
+    def evaluate(self, dataset: SemanticDatasetForTimeSeriesProtocol) -> list[Issue]:
         """Evaluate time series validation rules against a dataset.
 
         Args:
@@ -56,7 +82,9 @@ class TimeSeriesValidationRule:
 
         return issues
 
-    def _check_duplicate_base_names(self, dataset: SemanticDataset) -> list[Issue]:
+    def _check_duplicate_base_names(
+        self, dataset: SemanticDatasetForTimeSeriesProtocol
+    ) -> list[Issue]:
         """Check for duplicate base_name values across time series.
 
         Args:
@@ -89,7 +117,7 @@ class TimeSeriesValidationRule:
         return issues
 
     def _check_duplicate_periods(
-        self, dataset: SemanticDataset, ts: TimeSeriesSpec
+        self, dataset: SemanticDatasetForTimeSeriesProtocol, ts: TimeSeriesSpecProtocol
     ) -> list[Issue]:
         """Check for duplicate periods within a time series.
 

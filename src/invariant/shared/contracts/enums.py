@@ -141,3 +141,67 @@ class EntityType(str, Enum):
     VARIABLE = "VARIABLE"
     INDICATOR = "INDICATOR"
     DATA_PRODUCT = "DATA_PRODUCT"
+
+
+class TimeGrain(str, Enum):
+    """Supported time granularities for queries and datasets."""
+
+    DAY = "DAY"
+    WEEK = "WEEK"
+    MONTH = "MONTH"
+    QUARTER = "QUARTER"
+    YEAR = "YEAR"
+
+
+class MetricKind(str, Enum):
+    """Kind of metric calculation."""
+
+    SIMPLE_AGG = "SIMPLE_AGG"
+    RATIO = "RATIO"
+    DERIVED = "DERIVED"
+    WEIGHTED_AVG = "WEIGHTED_AVG"
+
+
+class AdditivityType(str, Enum):
+    """Type of additivity for a metric."""
+
+    ADDITIVE = "ADDITIVE"
+    SEMI_ADDITIVE = "SEMI_ADDITIVE"
+    NON_ADDITIVE = "NON_ADDITIVE"
+
+
+class RollupPolicy(str, Enum):
+    """Policy for rolling up non-additive metrics."""
+
+    ALLOW = "ALLOW"
+    RECOMPUTE = "RECOMPUTE"
+    FORBID = "FORBID"
+
+
+class JoinIntent(str, Enum):
+    """Intent for join cardinality safety when metrics require cross-dataset joins."""
+
+    N_TO_1_ONLY = "N_TO_1_ONLY"
+    """Default: only n:1 joins are safe (many-to-one cardinality)."""
+
+    SAFE_ONE_TO_MANY = "SAFE_ONE_TO_MANY"
+    """Explicitly declared as safe for 1:n joins with rationale."""
+
+
+class CompatibilityKind(str, Enum):
+    """Classification of compatibility between two domains."""
+
+    EQUIVALENT = "EQUIVALENT"
+    """Domains are semantically identical."""
+
+    COMPATIBLE_WITH_TRANSFORM = "COMPATIBLE_WITH_TRANSFORM"
+    """Need a crosswalk or unit conversion to align."""
+
+    COMPATIBLE_WITH_CAVEAT = "COMPATIBLE_WITH_CAVEAT"
+    """Comparable but with caveats (e.g., universe mismatch)."""
+
+    INCOMPATIBLE = "INCOMPATIBLE"
+    """Cannot be compared."""
+
+    UNKNOWN = "UNKNOWN"
+    """Insufficient information to determine compatibility."""

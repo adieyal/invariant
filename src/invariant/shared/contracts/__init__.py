@@ -14,9 +14,25 @@ from invariant.shared.contracts.catalog_view import (
     DatasetView,
     VariableView,
 )
+from invariant.shared.contracts.comparability_rules_view import (
+    ComparabilityPolicyView,
+    ComparabilityRulesView,
+)
+from invariant.shared.contracts.comparable_dataset import ComparableDataset
+from invariant.shared.contracts.compatibility_view import (
+    CompatibilityResultView,
+)
 from invariant.shared.contracts.dataset_view import (
     GrainKeysView,
     SemanticDatasetView,
+)
+from invariant.shared.contracts.enums import (
+    AdditivityType,
+    CompatibilityKind,
+    JoinIntent,
+    MetricKind,
+    RollupPolicy,
+    TimeGrain,
 )
 from invariant.shared.contracts.identity_context import (
     ColumnDomainView,
@@ -42,6 +58,14 @@ from invariant.shared.contracts.ids import (
     StudyId,
     UniverseId,
     VariableId,
+)
+from invariant.shared.contracts.issue_view import (
+    IssueDetails,
+    IssueView,
+)
+from invariant.shared.contracts.metric_comparability_view import (
+    ComparabilityView,
+    MetricComparabilityView,
 )
 from invariant.shared.contracts.metric_view import (
     AggregationFunctionView,
@@ -76,6 +100,18 @@ from invariant.shared.contracts.query_spec import (
     ScalarValue,
     SortOrder,
 )
+from invariant.shared.contracts.semantic_catalog_view import (
+    AdditivityView,
+    ComparabilityRulesProtocol,
+    DimensionAttributeProtocol,
+    DimensionProtocol,
+    GeoHierarchyProtocol,
+    GrainKeysProtocol,
+    MetricProtocol,
+    SemanticCatalogProtocol,
+    SemanticDatasetProtocol,
+    TimeConfigProtocol,
+)
 from invariant.shared.contracts.semantic_resolution import (
     AmbiguousRef,
     MissingRef,
@@ -84,6 +120,9 @@ from invariant.shared.contracts.semantic_resolution import (
     ResolvedDimension,
     ResolvedMetric,
     SemanticResolution,
+)
+from invariant.shared.contracts.severity import (
+    Severity,
 )
 from invariant.shared.contracts.value_objects import (
     CodeListDomain,
@@ -95,13 +134,29 @@ from invariant.shared.contracts.value_objects import (
 )
 
 __all__: list[str] = [
+    # Enums
+    "AdditivityType",
+    "CompatibilityKind",
+    "JoinIntent",
+    "MetricKind",
+    "RollupPolicy",
+    "TimeGrain",
+    # Views and protocols
+    "AdditivityView",
+    "AggregationFunctionView",
     "AggregationRequest",
     "AmbiguousRef",
     "CatalogView",
     "CodeListDomain",
     "ColumnDomainView",
+    "ComparabilityPolicyView",
+    "ComparabilityResultView",
     "ComparabilityRuleId",
+    "ComparabilityRulesProtocol",
+    "ComparabilityRulesView",
     "ComparabilityStatus",
+    "ComparabilityView",
+    "ComparableDataset",
     "ConceptId",
     "ConceptView",
     "CrosswalkId",
@@ -110,7 +165,10 @@ __all__: list[str] = [
     "DataSourceFact",
     "DatasetId",
     "DatasetView",
+    "DerivedSpecView",
+    "DimensionAttributeProtocol",
     "DimensionId",
+    "DimensionProtocol",
     "DimensionRef",
     "EnumeratedDomain",
     "FilterFact",
@@ -119,13 +177,23 @@ __all__: list[str] = [
     "FilterValue",
     "GeoContext",
     "GeoHierarchyId",
+    "GeoHierarchyProtocol",
+    "GrainKeysProtocol",
+    "GrainKeysView",
     "GrainSpec",
     "GroupBySpec",
     "IdentityContext",
+    "IssueDetails",
+    "IssueView",
     "MaterializationId",
+    "MetricComparabilityView",
     "MetricId",
+    "MetricKindView",
+    "MetricProtocol",
     "MetricRef",
+    "MetricSpecView",
     "MetricVersionId",
+    "MetricView",
     "MissingRef",
     "OrderBySpec",
     "QueryAnalysis",
@@ -134,6 +202,7 @@ __all__: list[str] = [
     "QueryOptions",
     "QuerySpec",
     "RangeDomain",
+    "RatioSpecView",
     "RefType",
     "ReferenceSystemId",
     "ReferenceSystemVersionId",
@@ -141,10 +210,16 @@ __all__: list[str] = [
     "ResolvedDimension",
     "ResolvedMetric",
     "ScalarValue",
+    "SemanticCatalogProtocol",
     "SemanticDatasetId",
+    "SemanticDatasetProtocol",
+    "SemanticDatasetView",
     "SemanticResolution",
+    "Severity",
+    "SimpleAggSpecView",
     "SortOrder",
     "StudyId",
+    "TimeConfigProtocol",
     "TimeContext",
     "UniverseId",
     "VariableDomain",
@@ -152,4 +227,5 @@ __all__: list[str] = [
     "VariableRef",
     "VariableSemanticsView",
     "VariableView",
+    "WeightedAvgSpecView",
 ]

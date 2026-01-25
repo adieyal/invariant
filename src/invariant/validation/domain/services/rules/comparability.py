@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from invariant.identity.domain.entities.comparability_rules import (
-        ComparabilityRules,
+    from invariant.shared.contracts import (
+        ComparabilityRulesProtocol,
+        MetricProtocol,
+        QuerySpec,
+        SemanticCatalogProtocol,
     )
-    from invariant.shared.contracts import QuerySpec
-    from invariant.semantic.domain.entities.metric import Metric
-    from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
     from invariant.validation.domain.value_objects.issue import Issue
 
 
@@ -27,7 +27,9 @@ class ComparabilityValidationRule:
     - Respects allow_incomparable query option to override
     """
 
-    def __init__(self, comparability_rules: ComparabilityRules | None = None) -> None:
+    def __init__(
+        self, comparability_rules: ComparabilityRulesProtocol | None = None
+    ) -> None:
         """Initialize the comparability validation rule.
 
         Args:
@@ -36,7 +38,9 @@ class ComparabilityValidationRule:
         """
         self._rules = comparability_rules
 
-    def evaluate(self, query: QuerySpec, catalog: SemanticCatalog) -> list[Issue]:
+    def evaluate(
+        self, query: QuerySpec, catalog: SemanticCatalogProtocol
+    ) -> list[Issue]:
         """Evaluate comparability constraints for the query.
 
         Args:
@@ -56,7 +60,7 @@ class ComparabilityValidationRule:
             return []
 
         # Collect the metrics being queried
-        metrics: list[Metric] = []
+        metrics: list[MetricProtocol] = []
         for metric_name in query.metrics:
             metric = catalog.get_metric(metric_name)
             if metric is not None:
@@ -69,7 +73,9 @@ class ComparabilityValidationRule:
         # Use the ComparabilityRules entity to check compatibility
         return rules.check_compatibility(metrics)
 
-    def _get_rules(self, catalog: SemanticCatalog) -> ComparabilityRules | None:
+    def _get_rules(
+        self, catalog: SemanticCatalogProtocol
+    ) -> ComparabilityRulesProtocol | None:
         """Get the comparability rules to use.
 
         Args:

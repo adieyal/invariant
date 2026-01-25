@@ -1,9 +1,5 @@
 """Tests for DomainCompatibilityRule."""
 
-from invariant.identity.domain.value_objects import (
-    CompatibilityKind,
-    CompatibilityResult,
-)
 from invariant.query.application.planning.query_plan import (
     CombineMode,
     CombineOp,
@@ -13,6 +9,7 @@ from invariant.query.application.planning.query_plan import (
     QueryPlan,
     SelectOp,
 )
+from invariant.shared.contracts import CompatibilityKind, CompatibilityResultView
 from invariant.shared.contracts.enums import AggregationType, PresentationFormat
 from invariant.shared.contracts.ids import DataProductId, VariableId
 from invariant.validation.domain.services import CatalogSnapshot
@@ -32,14 +29,13 @@ def make_compatibility_result(
     reasons: tuple[str, ...] = (),
     required_transforms: tuple[str, ...] = (),
     caveats: tuple[str, ...] = (),
-) -> CompatibilityResult:
-    """Create a CompatibilityResult for testing."""
-    return CompatibilityResult(
+) -> CompatibilityResultView:
+    """Create a CompatibilityResultView for testing."""
+    return CompatibilityResultView(
         kind=kind,
         reasons=reasons,
         required_transforms=required_transforms,
         caveats=caveats,
-        evidence={},
     )
 
 
@@ -47,13 +43,13 @@ class FakeCompatibilityProvider:
     """Fake provider for compatibility results between variable pairs."""
 
     def __init__(self) -> None:
-        self._results: dict[tuple[str, str], CompatibilityResult] = {}
+        self._results: dict[tuple[str, str], CompatibilityResultView] = {}
 
     def set_compatibility(
         self,
         var_id_a: VariableId,
         var_id_b: VariableId,
-        result: CompatibilityResult,
+        result: CompatibilityResultView,
     ) -> None:
         """Set the compatibility result for a variable pair."""
         key = self._make_key(var_id_a, var_id_b)
@@ -63,7 +59,7 @@ class FakeCompatibilityProvider:
         self,
         var_id_a: VariableId,
         var_id_b: VariableId,
-    ) -> CompatibilityResult | None:
+    ) -> CompatibilityResultView | None:
         """Get the compatibility result for a variable pair."""
         key = self._make_key(var_id_a, var_id_b)
         return self._results.get(key)

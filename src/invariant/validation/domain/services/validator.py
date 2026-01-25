@@ -16,24 +16,60 @@ from invariant.validation.domain.value_objects.remediation import Remediation
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.catalog.domain.entities.data_product import DataProduct
-    from invariant.catalog.domain.entities.dataset import Dataset
-    from invariant.semantic.domain.entities.indicator_definition import (
-        IndicatorDefinition,
-    )
     from invariant.shared._adapters.query_plan_types import QueryPlan
     from invariant.shared.contracts.ids import DataProductId, DatasetId, VariableId
+
+
+class VariableProtocol(Protocol):
+    """Protocol for variables used by validation rules."""
+
+    @property
+    def id(self) -> VariableId: ...
+
+    @property
+    def name(self) -> str: ...
+
+    @property
+    def role(self) -> VariableRole: ...
+
+
+class DataProductProtocol(Protocol):
+    """Protocol for data products used by validation rules."""
+
+    def get_variable_by_id(self, var_id: VariableId) -> VariableProtocol | None:
+        """Get a variable by ID."""
+        ...
+
+
+class IndicatorDefinitionProtocol(Protocol):
+    """Protocol for indicator definitions used by validation rules."""
+
+    @property
+    def aggregation_policy(self) -> AggregationPolicy: ...
+
+    def can_aggregate_with(self, agg: AggregationType) -> bool:
+        """Check if this indicator can be aggregated with the given aggregation type."""
+        ...
+
+
+class DatasetProtocol(Protocol):
+    """Protocol for datasets used by validation rules."""
+
+    @property
+    def id(self) -> DatasetId: ...
 
 
 @dataclass
 class CatalogSnapshot:
     """A read-optimized snapshot of catalog data for validation."""
 
-    data_products: dict[DataProductId, DataProduct] = field(default_factory=dict)
-    indicator_definitions: dict[VariableId, IndicatorDefinition] = field(
+    data_products: dict[DataProductId, DataProductProtocol] = field(
         default_factory=dict
     )
-    datasets: dict[DatasetId, Dataset] = field(default_factory=dict)
+    indicator_definitions: dict[VariableId, IndicatorDefinitionProtocol] = field(
+        default_factory=dict
+    )
+    datasets: dict[DatasetId, DatasetProtocol] = field(default_factory=dict)
 
 
 class Rule(Protocol):

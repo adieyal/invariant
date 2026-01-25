@@ -9,10 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from invariant.identity.domain.value_objects import (
-    CompatibilityKind,
-    CompatibilityResult,
-)
+from invariant.shared.contracts import CompatibilityKind, CompatibilityResultView
 from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
@@ -29,7 +26,7 @@ class CompatibilityProvider(Protocol):
         self,
         var_id_a: VariableId,
         var_id_b: VariableId,
-    ) -> CompatibilityResult | None:
+    ) -> CompatibilityResultView | None:
         """Get compatibility result for a variable pair.
 
         Args:
@@ -37,7 +34,7 @@ class CompatibilityProvider(Protocol):
             var_id_b: Second variable ID.
 
         Returns:
-            CompatibilityResult if available, None if no information.
+            CompatibilityResultView if available, None if no information.
         """
         ...
 
@@ -166,7 +163,7 @@ class DomainCompatibilityRule:
         self,
         var_id_a: VariableId,
         var_id_b: VariableId,
-        compatibility: CompatibilityResult,
+        compatibility: CompatibilityResultView,
     ) -> Issue | None:
         """Create an issue based on the compatibility result.
 
