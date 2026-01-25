@@ -9,7 +9,7 @@ from invariant.validation.domain.value_objects.issue import Issue
 from invariant.validation.domain.value_objects.severity import Severity
 
 if TYPE_CHECKING:
-    from invariant.query.domain.value_objects.query_spec import GroupBySpec, QuerySpec
+    from invariant.shared.contracts import GroupBySpec, QuerySpec
     from invariant.semantic.domain.entities.metric import Metric
     from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
     from invariant.semantic.domain.entities.semantic_dataset import SemanticDataset

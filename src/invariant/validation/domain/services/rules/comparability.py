@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from invariant.identity.domain.entities.comparability_rules import (
         ComparabilityRules,
     )
-    from invariant.query.domain.value_objects.query_spec import QuerySpec
+    from invariant.shared.contracts import QuerySpec
     from invariant.semantic.domain.entities.metric import Metric
     from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
     from invariant.validation.domain.value_objects.issue import Issue

@@ -29,7 +29,7 @@ from invariant.validation.domain.value_objects.severity import (
 )
 
 if TYPE_CHECKING:
-    from invariant.query.domain.value_objects.query_spec import QuerySpec
+    from invariant.shared.contracts import QuerySpec
     from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
     from invariant.shared._adapters.query_plan_types import QueryPlan
     from invariant.validation.domain.entities.ruleset_pack import RulesetPack
