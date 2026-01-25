@@ -1,9 +1,5 @@
 """Tests for SemanticCatalog aggregate."""
 
-from invariant.identity.domain.entities.comparability_rules import (
-    ComparabilityPolicy,
-    ComparabilityRules,
-)
 from invariant.semantic.domain.entities.dimension import (
     DataType,
     Dimension,
@@ -32,6 +28,10 @@ from invariant.semantic.domain.entities.semantic_dataset import (
     GrainKeys,
     PhysicalRef,
     SemanticDataset,
+)
+from invariant.shared.contracts import (
+    ComparabilityPolicyView,
+    ComparabilityRulesView,
 )
 from invariant.shared.contracts.ids import ComparabilityRuleId
 
@@ -116,11 +116,11 @@ def make_materialization(
     )
 
 
-def make_comparability_rules() -> ComparabilityRules:
+def make_comparability_rules() -> ComparabilityRulesView:
     """Create comparability rules for testing."""
-    return ComparabilityRules(
-        id=ComparabilityRuleId.create(),
-        default_policy=ComparabilityPolicy.WARN,
+    return ComparabilityRulesView(
+        id=str(ComparabilityRuleId.create()),
+        default_policy=ComparabilityPolicyView.WARN,
     )
 
 

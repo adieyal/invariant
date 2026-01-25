@@ -18,14 +18,13 @@ from invariant.query.domain.ir.plan_ir import (
     ScanNode,
     SortNode,
 )
-from invariant.query.domain.services.postgres_compiler import (
-    PostgresCompiler,
-    PostgresCompilerError,
-)
 from invariant.query.domain.services.query_planner import (
     LogicalPlan,
     QueryPlanner,
     QueryPlannerError,
+)
+from invariant.semantic.application.services.catalog_provider_adapter import (
+    SemanticCatalogProviderAdapter,
 )
 from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
@@ -38,6 +37,10 @@ from invariant.validation.domain.services.semantic_validator import (
     TimeGrainRule,
 )
 from invariant.validation.domain.value_objects.severity import Severity
+from invariant_contrib.postgres import (
+    PostgresCompiler,
+    PostgresCompilerError,
+)
 
 if TYPE_CHECKING:
     from invariant.application.dto.semantic_query import SemanticQueryRequest
@@ -105,7 +108,8 @@ class ExplainSemanticQueryUseCase:
         # If validation has blocking errors, we still try to plan for explain purposes
         try:
             planner = QueryPlanner()
-            plan = planner.plan(request, catalog)
+            catalog_provider = SemanticCatalogProviderAdapter(catalog)
+            plan = planner.plan(request, catalog_provider)
 
             # Build logical plan representations
             logical_plan_json = self._plan_to_json(plan)

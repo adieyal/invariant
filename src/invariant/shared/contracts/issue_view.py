@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from invariant.shared.contracts.severity import Severity
-
+from invariant.shared.contracts.severity import Severity  # noqa: TC001
 
 # Type alias for issue details - supports common JSON-serializable types
 IssueDetails = dict[str, str | int | float | bool | list[str] | None]

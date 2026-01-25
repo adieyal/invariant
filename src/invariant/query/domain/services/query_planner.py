@@ -23,27 +23,25 @@ from invariant.query.domain.ir.plan_ir import (
     SortKey,
     SortNode,
 )
+from invariant.query.domain.ports.semantic_catalog_provider import (
+    SemanticCatalogProvider,  # noqa: TC001
+)
 from invariant.query.domain.value_objects.query_spec import (
     FilterOperator,
     GroupBySpec,
     QuerySpec,
     SortOrder,
 )
-from invariant.semantic.domain.entities.metric import (
-    DerivedSpec,
-    Metric,
-    MetricKind,
-    RatioSpec,
-    SimpleAggSpec,
-    WeightedAvgSpec,
-)
-from invariant.semantic.domain.entities.semantic_catalog import (
-    SemanticCatalog,  # noqa: TC001
-)
-from invariant.semantic.domain.entities.semantic_dataset import (
-    SemanticDataset,  # noqa: TC001
-)
+from invariant.shared.contracts.dataset_view import SemanticDatasetView  # noqa: TC001
 from invariant.shared.contracts.ids import MetricId  # noqa: TC001
+from invariant.shared.contracts.metric_view import (
+    DerivedSpecView,
+    MetricKindView,
+    MetricView,
+    RatioSpecView,
+    SimpleAggSpecView,
+    WeightedAvgSpecView,
+)
 
 
 @dataclass(frozen=True)
@@ -103,13 +101,13 @@ class QueryPlanner:
     def plan(
         self,
         query: QuerySpec,
-        catalog: SemanticCatalog,
+        catalog: SemanticCatalogProvider,
     ) -> LogicalPlan:
         """Build a logical plan from a semantic query.
 
         Args:
             query: The semantic query request
-            catalog: The semantic catalog containing asset definitions
+            catalog: The semantic catalog provider for accessing metrics/datasets
 
         Returns:
             A LogicalPlan representing the query execution strategy
@@ -126,8 +124,7 @@ class QueryPlanner:
             )
 
         # Get evaluation order (dependencies first)
-        graph = catalog._get_metric_graph()
-        eval_order = graph.evaluation_order()
+        eval_order = catalog.get_metric_evaluation_order()
         # Filter to only resolved metric IDs
         resolved_ids = {m.id for m in resolved_metrics}
         metrics_evaluation_order = [mid for mid in eval_order if mid in resolved_ids]
@@ -158,35 +155,37 @@ class QueryPlanner:
 
     def _determine_datasets(
         self,
-        metrics: list[Metric],
-        catalog: SemanticCatalog,
-    ) -> dict[str, SemanticDataset]:
+        metrics: list[MetricView],
+        catalog: SemanticCatalogProvider,
+    ) -> dict[str, SemanticDatasetView]:
         """Determine which datasets are needed for the metrics.
 
-        Returns a dict of dataset_name -> SemanticDataset.
+        Returns a dict of dataset_name -> SemanticDatasetView.
         """
-        datasets: dict[str, SemanticDataset] = {}
+        datasets: dict[str, SemanticDatasetView] = {}
 
         for metric in metrics:
-            # SimpleAggSpec has direct dataset reference
-            if isinstance(metric.spec, SimpleAggSpec):
+            # SimpleAggSpecView has direct dataset reference
+            if isinstance(metric.spec, SimpleAggSpecView):
                 dataset_name = metric.spec.dataset_name
                 if dataset_name not in datasets:
                     dataset = catalog.get_dataset(dataset_name)
                     if dataset is not None:
                         datasets[dataset_name] = dataset
 
-            # RatioSpec, DerivedSpec, and WeightedAvgSpec use dependent metrics
+            # RatioSpecView, DerivedSpecView, and WeightedAvgSpecView use dependent metrics
             # The actual datasets come from the dependent metrics
             # which should already be in the metrics list
-            elif isinstance(metric.spec, (RatioSpec, DerivedSpec, WeightedAvgSpec)):
+            elif isinstance(
+                metric.spec, (RatioSpecView, DerivedSpecView, WeightedAvgSpecView)
+            ):
                 pass
 
         return datasets
 
     def _determine_recompute(
         self,
-        metrics: list[Metric],
+        metrics: list[MetricView],
         query: QuerySpec,
     ) -> dict[str, bool]:
         """Determine which metrics require recomputation on rollup.
@@ -199,10 +198,10 @@ class QueryPlanner:
 
         for metric in metrics:
             # Ratios always require recompute (numerator and denominator computed separately)
-            if metric.kind == MetricKind.RATIO:
+            if metric.kind == MetricKindView.RATIO:
                 requires_recompute[metric.name] = True
             # Derived metrics depend on their underlying metrics
-            elif metric.kind == MetricKind.DERIVED:
+            elif metric.kind == MetricKindView.DERIVED:
                 requires_recompute[metric.name] = False
             # Simple agg metrics with RECOMPUTE policy
             elif metric.requires_recompute_on_rollup:
@@ -230,10 +229,10 @@ class QueryPlanner:
     def _build_plan_tree(
         self,
         query: QuerySpec,
-        resolved_metrics: list[Metric],
-        datasets_needed: dict[str, SemanticDataset],
+        resolved_metrics: list[MetricView],
+        datasets_needed: dict[str, SemanticDatasetView],
         group_keys: list[str],
-        catalog: SemanticCatalog,
+        catalog: SemanticCatalogProvider,
     ) -> PlanNode:
         """Build the plan tree with scans, joins, filters, aggregations.
 
@@ -250,9 +249,9 @@ class QueryPlanner:
         # If no datasets, we have only derived/ratio metrics
         # Use the first underlying dataset from resolved metrics
         if not scan_nodes:
-            # Find the first SimpleAggSpec to get a base dataset
+            # Find the first SimpleAggSpecView to get a base dataset
             for metric in resolved_metrics:
-                if isinstance(metric.spec, SimpleAggSpec):
+                if isinstance(metric.spec, SimpleAggSpecView):
                     dataset_name = metric.spec.dataset_name
                     dataset = catalog.get_dataset(dataset_name)
                     if dataset is not None:
@@ -311,8 +310,8 @@ class QueryPlanner:
     def _build_join_tree(
         self,
         scan_nodes: dict[str, ScanNode],
-        datasets_needed: dict[str, SemanticDataset],
-        catalog: SemanticCatalog,
+        datasets_needed: dict[str, SemanticDatasetView],
+        catalog: SemanticCatalogProvider,
     ) -> PlanNode:
         """Build a join tree from multiple scan nodes.
 
@@ -351,8 +350,8 @@ class QueryPlanner:
 
     def _determine_join_keys(
         self,
-        left: SemanticDataset,
-        right: SemanticDataset,
+        left: SemanticDatasetView,
+        right: SemanticDatasetView,
     ) -> list[str]:
         """Determine join keys between two datasets.
 
@@ -377,8 +376,8 @@ class QueryPlanner:
 
     def _determine_join_cardinality(
         self,
-        left: SemanticDataset,
-        right: SemanticDataset,
+        left: SemanticDatasetView,
+        right: SemanticDatasetView,
     ) -> JoinCardinality:
         """Determine join cardinality between two datasets.
 
@@ -463,7 +462,7 @@ class QueryPlanner:
 
     def _build_agg_measures(
         self,
-        resolved_metrics: list[Metric],
+        resolved_metrics: list[MetricView],
         requested_metric_names: tuple[str, ...],
     ) -> list[AggMeasure]:
         """Build aggregation measures from metrics.
@@ -473,9 +472,9 @@ class QueryPlanner:
         measures: list[AggMeasure] = []
 
         for metric in resolved_metrics:
-            # Only create measures for SimpleAggSpec metrics
+            # Only create measures for SimpleAggSpecView metrics
             # Ratio and derived metrics are computed in projection
-            if isinstance(metric.spec, SimpleAggSpec):
+            if isinstance(metric.spec, SimpleAggSpecView):
                 # Only include if it's requested or a dependency
                 measure = AggMeasure(
                     alias=metric.name,

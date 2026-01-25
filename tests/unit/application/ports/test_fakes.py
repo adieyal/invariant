@@ -13,7 +13,6 @@ from invariant.identity.domain.entities.comparability_rules import (
     ComparabilityPolicy,
     ComparabilityRules,
 )
-from invariant.query.domain.services.postgres_compiler import CompiledQuery
 from invariant.semantic.domain.entities.dimension import (
     DataType,
     Dimension,
@@ -42,6 +41,7 @@ from invariant.semantic.domain.entities.semantic_dataset import (
     PhysicalRef,
     SemanticDataset,
 )
+from invariant.shared.contracts import ComparabilityPolicyView
 from invariant.shared.contracts.enums import DataProductKind, VariableRole
 from invariant.shared.contracts.ids import (
     DataProductId,
@@ -51,6 +51,7 @@ from invariant.shared.contracts.ids import (
     VariableId,
 )
 from invariant.shared.contracts.value_objects import GrainSpec
+from invariant_contrib.postgres import CompiledQuery
 from tests.unit.application.fakes import (
     FakeAuditLog,
     FakeCatalogStore,
@@ -430,7 +431,9 @@ class TestFakeSemanticAssetStore:
         catalog = store.load_catalog()
 
         assert catalog.comparability_rules is not None
-        assert catalog.comparability_rules.default_policy == ComparabilityPolicy.FORBID
+        assert (
+            catalog.comparability_rules.default_policy == ComparabilityPolicyView.FORBID
+        )
 
     def test_load_catalog_without_comparability_rules(
         self, store: FakeSemanticAssetStore

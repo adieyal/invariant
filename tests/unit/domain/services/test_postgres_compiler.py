@@ -20,12 +20,6 @@ from invariant.query.domain.ir.plan_ir import (
     SortKey,
     SortNode,
 )
-from invariant.query.domain.services.postgres_compiler import (
-    CompiledQuery,
-    PostgresCompiler,
-    _quote_ident,
-    compile_time_grain,
-)
 from invariant.query.domain.services.query_planner import LogicalPlan
 from invariant.semantic.domain.entities.metric import (
     Additivity,
@@ -48,6 +42,12 @@ from invariant.semantic.domain.entities.semantic_dataset import (
     TimeGrain,
 )
 from invariant.shared.contracts.ids import MetricId, SemanticDatasetId
+from invariant_contrib.postgres import (
+    CompiledQuery,
+    PostgresCompiler,
+    compile_time_grain,
+)
+from invariant_contrib.postgres.compiler import _quote_ident
 
 # ============================================================================
 # CompiledQuery tests

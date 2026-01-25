@@ -12,10 +12,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-from invariant.identity.domain.entities.comparability_rules import (
-    ComparabilityRules,  # noqa: TC001
-)
 from invariant.semantic.domain.entities.dimension import Dimension  # noqa: TC001
+from invariant.shared.contracts import ComparabilityRulesView  # noqa: TC001
+
+if TYPE_CHECKING:
+    from invariant.semantic.domain.services.metric_graph import MetricGraph
 from invariant.semantic.domain.entities.geo_hierarchy import GeoHierarchy  # noqa: TC001
 from invariant.semantic.domain.entities.materialization import (
     Materialization,  # noqa: TC001
@@ -46,7 +47,7 @@ class SemanticCatalog:
     geo_hierarchies: list[GeoHierarchy]
     metrics: list[Metric]
     materializations: list[Materialization]
-    comparability_rules: ComparabilityRules | None
+    comparability_rules: ComparabilityRulesView | None
 
     # Internal index caches (private, non-authoritative)
     _datasets_by_name: dict[str, SemanticDataset] = field(
@@ -66,7 +67,7 @@ class SemanticCatalog:
         init=False, repr=False, compare=False
     )
     # Lazy-loaded MetricGraph to avoid circular imports
-    _metric_graph: object | None = field(
+    _metric_graph: MetricGraph | None = field(
         init=False, repr=False, compare=False, default=None
     )
 
@@ -106,7 +107,7 @@ class SemanticCatalog:
         # Lazily build metric graph (only when needed)
         object.__setattr__(self, "_metric_graph", None)
 
-    def _get_metric_graph(self) -> object:
+    def _get_metric_graph(self) -> MetricGraph:
         """Get or build the metric dependency graph.
 
         Uses lazy import to avoid circular dependencies.
@@ -118,7 +119,9 @@ class SemanticCatalog:
             # metric -> (both modules reference Metric during import resolution).
             from invariant.semantic.domain.services.metric_graph import MetricGraph
 
-            object.__setattr__(self, "_metric_graph", MetricGraph.build(self.metrics))
+            graph = MetricGraph.build(self.metrics)
+            object.__setattr__(self, "_metric_graph", graph)
+            return graph
         return self._metric_graph
 
     # Lookup methods
@@ -241,7 +244,7 @@ class SemanticCatalog:
         geo_hierarchies: Sequence[GeoHierarchy] | None = None,
         metrics: Sequence[Metric] | None = None,
         materializations: Sequence[Materialization] | None = None,
-        comparability_rules: ComparabilityRules | None = None,
+        comparability_rules: ComparabilityRulesView | None = None,
     ) -> SemanticCatalog:
         """Factory method to create a SemanticCatalog.
 

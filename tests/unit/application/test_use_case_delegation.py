@@ -196,6 +196,14 @@ class TestNoCrossComponentImports:
             "execute_query.py": {
                 "invariant.validation.application.ports",
             },
+            # execute_semantic_query.py uses catalog provider adapter for planner integration
+            "execute_semantic_query.py": {
+                "invariant.semantic.application.services.catalog_provider_adapter",
+            },
+            # explain_semantic_query.py uses catalog provider adapter for planner integration
+            "explain_semantic_query.py": {
+                "invariant.semantic.application.services.catalog_provider_adapter",
+            },
             # acknowledge_issues.py imports from validation ports for AuditLog
             "acknowledge_issues.py": {
                 "invariant.validation.application.ports",

@@ -43,6 +43,10 @@ from invariant.semantic.domain.entities.semantic_dataset import (
     SemanticDataset,  # noqa: TC001
     TimeGrain,  # noqa: TC001
 )
+from invariant.shared.contracts import (
+    ComparabilityPolicyView,
+    ComparabilityRulesView,
+)
 from invariant.shared.contracts.ids import (
     ConceptId,
     CrosswalkId,
@@ -66,7 +70,6 @@ if TYPE_CHECKING:
     from invariant.catalog.domain.entities.variable import Variable
     from invariant.identity.domain.entities import Concept, Universe
     from invariant.query.application.planning.query_plan import QueryPlan
-    from invariant.query.domain.services.postgres_compiler import CompiledQuery
     from invariant.reference.domain.entities.reference_system import (
         Crosswalk,
         ReferenceSystemVersion,
@@ -75,6 +78,7 @@ if TYPE_CHECKING:
     from invariant.semantic.domain.entities.indicator_definition import (
         IndicatorDefinition,
     )
+    from invariant_contrib.postgres import CompiledQuery
 
 
 @dataclass
@@ -468,13 +472,25 @@ class FakeSemanticAssetStore(SemanticAssetStore):
 
     def load_catalog(self) -> SemanticCatalog:
         """Load the complete semantic catalog from in-memory storage."""
+        # Convert ComparabilityRules to ComparabilityRulesView for SemanticCatalog
+        rules_view: ComparabilityRulesView | None = None
+        if self._comparability_rules is not None:
+            rules_view = ComparabilityRulesView(
+                id=str(self._comparability_rules.id),
+                default_policy=ComparabilityPolicyView(
+                    self._comparability_rules.default_policy.value
+                ),
+                forbid_on_mismatch=self._comparability_rules.forbid_on_mismatch,
+                warn_on_mismatch=self._comparability_rules.warn_on_mismatch,
+                allow_override_flag=self._comparability_rules.allow_override_flag,
+            )
         return SemanticCatalog(
             datasets=list(self._datasets.values()),
             dimensions=list(self._dimensions.values()),
             geo_hierarchies=list(self._geo_hierarchies.values()),
             metrics=list(self._metrics.values()),
             materializations=list(self._materializations.values()),
-            comparability_rules=self._comparability_rules,
+            comparability_rules=rules_view,
         )
 
     def get_dataset(self, name: str) -> SemanticDataset | None:

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
-    from invariant.query.domain.services.postgres_compiler import CompiledQuery
+    from invariant_contrib.postgres import CompiledQuery
 
 
 @dataclass(frozen=True)

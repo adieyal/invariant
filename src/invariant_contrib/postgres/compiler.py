@@ -1,4 +1,11 @@
-"""PostgresCompiler domain service for compiling logical plans to SQL."""
+"""PostgresCompiler for compiling logical plans to PostgreSQL SQL.
+
+This module provides SQL compilation for PostgreSQL. It lives in invariant_contrib
+rather than the kernel domain because:
+1. SQL generation is infrastructure-specific
+2. The kernel must run entirely in-memory without database dependencies
+3. Different database backends could have different compilers
+"""
 
 from __future__ import annotations
 
@@ -73,7 +80,7 @@ class PostgresCompilerError(Exception):
 
 @dataclass
 class PostgresCompiler:
-    """Domain service for compiling logical plans to PostgreSQL SQL.
+    """Service for compiling logical plans to PostgreSQL SQL.
 
     PostgresCompiler traverses a LogicalPlan and generates valid PostgreSQL
     SQL with proper identifier quoting, parameterized values, and Postgres-specific

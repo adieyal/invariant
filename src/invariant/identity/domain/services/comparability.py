@@ -10,7 +10,7 @@ from invariant.shared.contracts.enums import ComparabilityLevel, Incompatibility
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.catalog.domain.entities.dataset import Dataset
+    from invariant.shared.contracts.comparable_dataset import ComparableDataset
     from invariant.shared.contracts.ids import DatasetId
 
 
@@ -77,7 +77,9 @@ class ComparabilityResolver:
     compatibility for datasets that are actually incomparable.
     """
 
-    def check_datasets(self, source: Dataset, target: Dataset) -> ComparabilityCheck:
+    def check_datasets(
+        self, source: ComparableDataset, target: ComparableDataset
+    ) -> ComparabilityCheck:
         """Check if two datasets can be meaningfully compared.
 
         Returns a ComparabilityCheck with the level of compatibility,
@@ -106,7 +108,7 @@ class ComparabilityResolver:
         )
 
     def _check_universe(
-        self, source: Dataset, target: Dataset
+        self, source: ComparableDataset, target: ComparableDataset
     ) -> tuple[list[IncompatibilityReason], list[str]]:
         """Check universe compatibility."""
         reasons: list[IncompatibilityReason] = []
@@ -134,7 +136,7 @@ class ComparabilityResolver:
         return reasons, remediations
 
     def _check_reference_system(
-        self, source: Dataset, target: Dataset
+        self, source: ComparableDataset, target: ComparableDataset
     ) -> tuple[list[IncompatibilityReason], list[str]]:
         """Check reference system version compatibility."""
         reasons: list[IncompatibilityReason] = []

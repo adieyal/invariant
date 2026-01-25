@@ -27,6 +27,9 @@ from invariant.query.domain.services.query_planner import (
     QueryPlanner,
     QueryPlannerError,
 )
+from invariant.semantic.application.services.catalog_provider_adapter import (
+    SemanticCatalogProviderAdapter,
+)
 from invariant.semantic.domain.entities.metric import (
     Additivity,
     AdditivityType,
@@ -118,6 +121,11 @@ def _make_catalog(
     )
 
 
+def _make_provider(catalog: SemanticCatalog) -> SemanticCatalogProviderAdapter:
+    """Create a provider adapter wrapping the catalog."""
+    return SemanticCatalogProviderAdapter(catalog=catalog)
+
+
 # --- LogicalPlan Tests ---
 
 
@@ -204,10 +212,11 @@ class TestQueryPlannerSimpleAgg:
         metric = _make_simple_metric("total_value")
         dataset = _make_dataset()
         catalog = _make_catalog(datasets=[dataset], metrics=[metric])
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["total_value"])
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         assert plan is not None
         assert isinstance(plan.root, (ProjectNode, LimitNode, SortNode, AggregateNode))
@@ -219,13 +228,14 @@ class TestQueryPlannerSimpleAgg:
         metric = _make_simple_metric("total_value")
         dataset = _make_dataset(geo_keys=["geo_code"])
         catalog = _make_catalog(datasets=[dataset], metrics=[metric])
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(
             metrics=["total_value"],
             group_by=[GroupBySpec(dimension="location", attribute="geo_code")],
         )
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find the aggregate node
         node = plan.root
@@ -243,6 +253,7 @@ class TestQueryPlannerSimpleAgg:
         metric = _make_simple_metric("total_value")
         dataset = _make_dataset()
         catalog = _make_catalog(datasets=[dataset], metrics=[metric])
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(
             metrics=["total_value"],
@@ -253,7 +264,7 @@ class TestQueryPlannerSimpleAgg:
             ],
         )
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find the filter node
         node = plan.root
@@ -275,13 +286,14 @@ class TestQueryPlannerSimpleAgg:
         metric = _make_simple_metric("total_value")
         dataset = _make_dataset()
         catalog = _make_catalog(datasets=[dataset], metrics=[metric])
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(
             metrics=["total_value"],
             order_by=[OrderBySpec(field="total_value", direction=SortDirection.DESC)],
         )
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find the sort node
         node = plan.root
@@ -304,13 +316,14 @@ class TestQueryPlannerSimpleAgg:
         metric = _make_simple_metric("total_value")
         dataset = _make_dataset()
         catalog = _make_catalog(datasets=[dataset], metrics=[metric])
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(
             metrics=["total_value"],
             limit=10,
         )
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Root should be a LimitNode
         assert isinstance(plan.root, LimitNode)
@@ -332,10 +345,11 @@ class TestQueryPlannerRatio:
             datasets=[dataset],
             metrics=[numerator, denominator, ratio],
         )
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["ratio_metric"])
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         assert plan is not None
         # Ratio metrics always require recompute
@@ -354,10 +368,11 @@ class TestQueryPlannerRatio:
             datasets=[dataset],
             metrics=[numerator, denominator, ratio],
         )
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["ratio_a_b"])
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Evaluation order should include dependencies before ratio
         assert len(plan.metrics_evaluation_order) >= 3
@@ -380,10 +395,11 @@ class TestQueryPlannerDerived:
             datasets=[dataset],
             metrics=[base_a, base_b, derived],
         )
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["derived_metric"])
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         assert plan is not None
         # Derived metrics don't require recompute by default
@@ -401,10 +417,11 @@ class TestQueryPlannerDerived:
             datasets=[dataset],
             metrics=[base_a, base_b, derived],
         )
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["combined"])
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Evaluation order should include base metrics
         assert len(plan.metrics_evaluation_order) >= 3
@@ -423,10 +440,11 @@ class TestQueryPlannerMultiDataset:
             datasets=[dataset_a, dataset_b],
             metrics=[metric_a, metric_b],
         )
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["metric_a", "metric_b"])
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find the join node
         node = plan.root
@@ -456,10 +474,11 @@ class TestQueryPlannerMultiDataset:
             datasets=[dataset_a, dataset_b],
             metrics=[metric_a, metric_b],
         )
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["metric_a", "metric_b"])
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find the join node
         node = plan.root
@@ -480,22 +499,24 @@ class TestQueryPlannerErrors:
     def test_error_no_metrics_found(self) -> None:
         """Test error when no metrics found."""
         catalog = _make_catalog()  # Empty catalog
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["unknown_metric"])
         planner = QueryPlanner()
 
         with pytest.raises(QueryPlannerError, match="No metrics found"):
-            planner.plan(query, catalog)
+            planner.plan(query, provider)
 
     def test_error_details_include_requested_metrics(self) -> None:
         """Test that error details include requested metrics."""
         catalog = _make_catalog()
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["missing_metric"])
         planner = QueryPlanner()
 
         try:
-            planner.plan(query, catalog)
+            planner.plan(query, provider)
             pytest.fail("Expected QueryPlannerError")
         except QueryPlannerError as e:
             assert "missing_metric" in e.details.get("requested_metrics", [])
@@ -509,6 +530,7 @@ class TestQueryPlannerFilterPredicate:
         metric = _make_simple_metric("total_value")
         dataset = _make_dataset()
         catalog = _make_catalog(datasets=[dataset], metrics=[metric])
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(
             metrics=["total_value"],
@@ -519,7 +541,7 @@ class TestQueryPlannerFilterPredicate:
             ],
         )
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find filter node
         node = plan.root
@@ -537,6 +559,7 @@ class TestQueryPlannerFilterPredicate:
         metric = _make_simple_metric("total_value")
         dataset = _make_dataset()
         catalog = _make_catalog(datasets=[dataset], metrics=[metric])
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(
             metrics=["total_value"],
@@ -550,7 +573,7 @@ class TestQueryPlannerFilterPredicate:
             ],
         )
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find filter node
         node = plan.root
@@ -571,6 +594,7 @@ class TestQueryPlannerFilterPredicate:
         metric = _make_simple_metric("total_value")
         dataset = _make_dataset()
         catalog = _make_catalog(datasets=[dataset], metrics=[metric])
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(
             metrics=["total_value"],
@@ -584,7 +608,7 @@ class TestQueryPlannerFilterPredicate:
             ],
         )
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find filter node
         node = plan.root
@@ -602,6 +626,7 @@ class TestQueryPlannerFilterPredicate:
         metric = _make_simple_metric("total_value")
         dataset = _make_dataset()
         catalog = _make_catalog(datasets=[dataset], metrics=[metric])
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(
             metrics=["total_value"],
@@ -610,7 +635,7 @@ class TestQueryPlannerFilterPredicate:
             ],
         )
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find filter node
         node = plan.root
@@ -638,10 +663,11 @@ class TestQueryPlannerMetricsEvaluationOrder:
             datasets=[dataset],
             metrics=[base, derived],
         )
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["derived_metric"])
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Find indices in evaluation order
         base_idx = None
@@ -665,10 +691,11 @@ class TestQueryPlannerMetricsEvaluationOrder:
             datasets=[dataset],
             metrics=[metric_a, metric_b],
         )
+        provider = _make_provider(catalog)
 
         query = SemanticQueryRequest(metrics=["metric_a", "metric_b"])
         planner = QueryPlanner()
-        plan = planner.plan(query, catalog)
+        plan = planner.plan(query, provider)
 
         # Both metrics should be in evaluation order
         metric_ids = set(plan.metrics_evaluation_order)

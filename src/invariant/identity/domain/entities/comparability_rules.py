@@ -9,11 +9,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from invariant.semantic.domain.entities.metric import Metric
+    from invariant.shared.contracts import MetricComparabilityView
 
-from invariant.shared.contracts.ids import ComparabilityRuleId
-from invariant.validation.domain.value_objects.issue import Issue
-from invariant.validation.domain.value_objects.severity import Severity
+from invariant.shared.contracts import (
+    ComparabilityRuleId,
+    IssueView,
+    Severity,
+)
 
 
 class ComparabilityPolicy(str, Enum):
@@ -59,7 +61,9 @@ class ComparabilityRules:
         object.__setattr__(self, "warn_on_mismatch", tuple(warn_on_mismatch or []))
         object.__setattr__(self, "allow_override_flag", allow_override_flag)
 
-    def check_compatibility(self, metrics: Sequence[Metric]) -> list[Issue]:
+    def check_compatibility(
+        self, metrics: Sequence[MetricComparabilityView]
+    ) -> list[IssueView]:
         """Check compatibility across a sequence of metrics.
 
         Returns issues based on policy:
@@ -72,7 +76,7 @@ class ComparabilityRules:
         Returns:
             List of issues found during compatibility check.
         """
-        issues: list[Issue] = []
+        issues: list[IssueView] = []
 
         # Filter to metrics that have comparability metadata
         metrics_with_comparability = [m for m in metrics if m.comparability is not None]
@@ -88,9 +92,11 @@ class ComparabilityRules:
 
         return issues
 
-    def _compare_metrics(self, m1: Metric, m2: Metric) -> list[Issue]:
+    def _compare_metrics(
+        self, m1: MetricComparabilityView, m2: MetricComparabilityView
+    ) -> list[IssueView]:
         """Compare two metrics for compatibility issues."""
-        issues: list[Issue] = []
+        issues: list[IssueView] = []
 
         # Both must have comparability at this point
         c1 = m1.comparability
@@ -144,12 +150,12 @@ class ComparabilityRules:
         m2_name: str,
         m1_value: str,
         m2_value: str,
-    ) -> Issue:
+    ) -> IssueView:
         """Create an issue for a field mismatch."""
         severity = self._get_severity_for_field(field)
         severity_label = "error" if severity == Severity.BLOCK else "warning"
 
-        return Issue(
+        return IssueView(
             code=f"COMPARABILITY_{field.upper()}_MISMATCH",
             severity=severity,
             message=(

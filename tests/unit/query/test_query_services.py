@@ -25,9 +25,14 @@ def test_query_planner_importable_from_query_domain():
     assert QueryPlannerError is not None
 
 
-def test_postgres_compiler_importable_from_query_domain():
-    """PostgresCompiler can be imported from query domain services."""
-    from invariant.query.domain.services import (
+def test_postgres_compiler_importable_from_contrib():
+    """PostgresCompiler can be imported from invariant_contrib.postgres.
+
+    Note: PostgresCompiler was moved from query domain to contrib because
+    SQL generation is infrastructure code that violates the kernel's
+    "run entirely in-memory" rule.
+    """
+    from invariant_contrib.postgres import (
         CompiledQuery,
         PostgresCompiler,
         PostgresCompilerError,
@@ -62,21 +67,6 @@ def test_backward_compatibility_query_planner():
     assert QueryPlanner is not None
     assert LogicalPlan is not None
     assert QueryPlannerError is not None
-
-
-def test_backward_compatibility_postgres_compiler():
-    """PostgresCompiler can still be imported from original location for backward compatibility."""
-    from invariant.query.domain.services.postgres_compiler import (
-        CompiledQuery,
-        PostgresCompiler,
-        PostgresCompilerError,
-        compile_time_grain,
-    )
-
-    assert PostgresCompiler is not None
-    assert CompiledQuery is not None
-    assert PostgresCompilerError is not None
-    assert compile_time_grain is not None
 
 
 def test_backward_compatibility_metric_graph():

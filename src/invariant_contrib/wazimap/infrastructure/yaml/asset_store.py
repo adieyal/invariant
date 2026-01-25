@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from invariant.identity.domain.entities.comparability_rules import ComparabilityRules
 from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
+from invariant.shared.contracts import ComparabilityPolicyView, ComparabilityRulesView
 
 from .base import load_yaml_file
 from .comparability_parser import load_comparability_rules, parse_comparability_rules
@@ -233,13 +234,25 @@ class YamlSemanticAssetStore:
         self._ensure_loaded()
 
         if self._catalog is None:
+            # Convert ComparabilityRules to ComparabilityRulesView for SemanticCatalog
+            rules_view: ComparabilityRulesView | None = None
+            if self._comparability_rules is not None:
+                rules_view = ComparabilityRulesView(
+                    id=str(self._comparability_rules.id),
+                    default_policy=ComparabilityPolicyView(
+                        self._comparability_rules.default_policy.value
+                    ),
+                    forbid_on_mismatch=self._comparability_rules.forbid_on_mismatch,
+                    warn_on_mismatch=self._comparability_rules.warn_on_mismatch,
+                    allow_override_flag=self._comparability_rules.allow_override_flag,
+                )
             self._catalog = SemanticCatalog(
                 datasets=list(self._datasets.values()),
                 dimensions=list(self._dimensions.values()),
                 geo_hierarchies=list(self._geo_hierarchies.values()),
                 metrics=list(self._metrics.values()),
                 materializations=list(self._materializations.values()),
-                comparability_rules=self._comparability_rules,
+                comparability_rules=rules_view,
             )
 
         return self._catalog

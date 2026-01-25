@@ -14,8 +14,10 @@ from invariant.application.services.dto_translators import issue_to_dto
 from invariant.application.services.explain_builder import ExplainBuilder
 from invariant.application.services.provenance_builder import ProvenanceBuilder
 from invariant.application.services.schema_builder import SchemaBuilder
-from invariant.query.domain.services.postgres_compiler import PostgresCompiler
 from invariant.query.domain.services.query_planner import QueryPlanner
+from invariant.semantic.application.services.catalog_provider_adapter import (
+    SemanticCatalogProviderAdapter,
+)
 from invariant.validation.domain.services.semantic_validator import (
     AdditivityRule,
     ComparabilityValidationRule,
@@ -26,6 +28,7 @@ from invariant.validation.domain.services.semantic_validator import (
     TimeGrainRule,
 )
 from invariant.validation.domain.value_objects.severity import Severity
+from invariant_contrib.postgres import PostgresCompiler
 
 if TYPE_CHECKING:
     from invariant.application.dto.semantic_query import SemanticQueryRequest
@@ -136,7 +139,8 @@ class ExecuteSemanticQueryUseCase:
 
         # Step 2: Plan the query
         planner = QueryPlanner()
-        plan = planner.plan(request, catalog)
+        catalog_provider = SemanticCatalogProviderAdapter(catalog)
+        plan = planner.plan(request, catalog_provider)
 
         # Step 3: Compile to SQL
         compiler = PostgresCompiler()
