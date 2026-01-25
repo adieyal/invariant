@@ -14,6 +14,10 @@ from invariant.shared.contracts.catalog_view import (
     DatasetView,
     VariableView,
 )
+from invariant.shared.contracts.dataset_view import (
+    GrainKeysView,
+    SemanticDatasetView,
+)
 from invariant.shared.contracts.identity_context import (
     ColumnDomainView,
     ComparabilityStatus,
@@ -39,6 +43,16 @@ from invariant.shared.contracts.ids import (
     UniverseId,
     VariableId,
 )
+from invariant.shared.contracts.metric_view import (
+    AggregationFunctionView,
+    DerivedSpecView,
+    MetricKindView,
+    MetricSpecView,
+    MetricView,
+    RatioSpecView,
+    SimpleAggSpecView,
+    WeightedAvgSpecView,
+)
 from invariant.shared.contracts.query_analysis import (
     AggregationRequest,
     DataSourceFact,
@@ -50,6 +64,17 @@ from invariant.shared.contracts.query_analysis import (
     QueryId,
     QueryIntent,
     TimeContext,
+)
+from invariant.shared.contracts.query_spec import (
+    FilterOperator,
+    FilterSpec,
+    FilterValue,
+    GroupBySpec,
+    OrderBySpec,
+    QueryOptions,
+    QuerySpec,
+    ScalarValue,
+    SortOrder,
 )
 from invariant.shared.contracts.semantic_resolution import (
     AmbiguousRef,
@@ -89,18 +114,25 @@ __all__: list[str] = [
     "DimensionRef",
     "EnumeratedDomain",
     "FilterFact",
+    "FilterOperator",
+    "FilterSpec",
+    "FilterValue",
     "GeoContext",
     "GeoHierarchyId",
     "GrainSpec",
+    "GroupBySpec",
     "IdentityContext",
     "MaterializationId",
     "MetricId",
     "MetricRef",
     "MetricVersionId",
     "MissingRef",
+    "OrderBySpec",
     "QueryAnalysis",
     "QueryId",
     "QueryIntent",
+    "QueryOptions",
+    "QuerySpec",
     "RangeDomain",
     "RefType",
     "ReferenceSystemId",
@@ -108,8 +140,10 @@ __all__: list[str] = [
     "ResolutionStatus",
     "ResolvedDimension",
     "ResolvedMetric",
+    "ScalarValue",
     "SemanticDatasetId",
     "SemanticResolution",
+    "SortOrder",
     "StudyId",
     "TimeContext",
     "UniverseId",

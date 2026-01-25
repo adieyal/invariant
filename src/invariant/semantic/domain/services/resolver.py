@@ -11,11 +11,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from invariant.query.domain.value_objects.query_spec import QuerySpec
     from invariant.semantic.domain.entities.metric import Metric
     from invariant.semantic.domain.entities.semantic_catalog import SemanticCatalog
     from invariant.shared.contracts.catalog_view import CatalogView
     from invariant.shared.contracts.identity_context import IdentityContext
+    from invariant.shared.contracts.query_spec import QuerySpec
 
 from invariant.semantic.domain.services.metric_graph import (
     CyclicDependencyError,
