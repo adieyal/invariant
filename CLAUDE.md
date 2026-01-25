@@ -69,7 +69,6 @@ src/
 │   │   ├── contracts/            # Boundary contracts (ids, enums, value objects)
 │   │   └── _adapters/
 │   ├── kernel/                   # Facade entry point
-│   ├── domain/                   # Legacy (re-exports for backward compatibility)
 │   └── application/              # Shared application layer
 └── invariant_contrib/            # Optional extensions
     └── datadictionary/
