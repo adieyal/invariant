@@ -32,7 +32,7 @@ The domain layer has zero dependencies. Everything else depends inward.
 
 | Topic | What it covers |
 |-------|----------------|
-| [Two Planes and Gate](two-planes-and-gate.md) | The core validation model |
+| [Query, Rules, Gate](two-planes-and-gate.md) | The core validation model |
 | [Progressive Rigor](progressive-rigor.md) | Deployment profiles from minimal to strict |
 | [Scope Boundaries](scope-boundaries.md) | What's in and out of scope |
 

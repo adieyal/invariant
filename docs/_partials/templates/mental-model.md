@@ -1,52 +1,78 @@
 # Mental Model
 
-## The core insight
+## A type system for data
 
-Analytics errors happen when tools don't know what data means. A dashboard happily sums unemployment rates across regions—producing garbage—because it treats every number as just a number.
+Programming languages have type systems that catch errors at compile time:
 
-Invariant encodes meaning (semantics) so the system can catch mistakes before they reach users.
+```
+"hello" + 5  →  TypeError: cannot add string to integer
+```
 
-## Two planes
+Analytical tools don't. They'll happily compute nonsense:
+
+```
+AVG(unemployment_rate)  →  17.5%  (wrong answer, no error)
+```
+
+**Invariant is a type system for analytical data.** It catches semantic errors at query time—before they produce misleading results.
+
+## How it works
+
+Every column in your data gets a semantic type:
+
+| Type | Example | Can SUM? | Can AVG? |
+|------|---------|----------|----------|
+| **Measure** | Population count | Yes | Yes |
+| **Indicator** | Unemployment rate | No | No |
+| **Dimension** | Province name | No | No |
+
+When someone queries `SUM(unemployment_rate)`, Invariant checks the type, sees it's an Indicator, and blocks the query with an explanation.
+
+## Query, Rules, Gate
 
 ```mermaid
 graph LR
-    A[Plane A: Intent] --> Gate
-    B[Plane B: Rigor] --> Gate
+    Q[Query] --> Gate
+    R[Semantic Types] --> Gate
     Gate --> Result
 ```
 
-**Plane A (Dashboard Plane):** What the user wants to do. Queries, aggregations, filters, visualizations.
+**Queries:** What the user wants to do—aggregations, filters, joins.
 
-**Plane B (Rigor Plane):** What the data actually is. Metadata, constraints, rules, semantic definitions.
+**Semantic Types:** What operations are valid for each column.
 
-**The Gate:** Evaluates queries against rules. Returns one of four verdicts:
+**The Gate:** Checks queries against types. Returns one of four verdicts:
 
 - **ALLOW** — Query is valid, execute it
 - **WARN** — Query is valid but has caveats, attach disclosures
-- **REQUIRE_ACK** — Query is risky, user must acknowledge before execution
-- **BLOCK** — Query produces nonsense, refuse to execute
+- **REQUIRE_ACK** — Query is risky, user must acknowledge
+- **BLOCK** — Query is invalid, refuse to execute
+
+## Beyond column types
+
+Invariant's type system goes beyond individual columns:
+
+| Concept | What it types | Example error caught |
+|---------|---------------|---------------------|
+| **Variable roles** | Columns | "Can't sum a percentage" |
+| **Universes** | Datasets | "Can't compare all-adults to working-age-adults" |
+| **Reference systems** | Geographic boundaries | "Can't join 2011 wards with 2021 wards" |
+| **Grain** | Row definitions | "Can't aggregate beyond stored grain" |
 
 ## Key vocabulary
 
 | Term | Meaning |
 |------|---------|
-| Universe | The population a dataset describes (e.g., "all residents" vs "working-age adults") |
-| Indicator | A derived value like a rate or percentage—cannot be summed |
-| Measure | An additive fact like a count—can be summed |
-| Reference System | A set of geographic or administrative units (e.g., "2021 ward boundaries") |
-| Disclosure | A caveat that must accompany results (e.g., "data redistributed using area-weighted interpolation") |
+| **Measure** | An additive fact like a count—can be summed |
+| **Indicator** | A derived value like a rate or percentage—cannot be summed |
+| **Universe** | The population a dataset describes |
+| **Reference System** | A set of geographic or administrative units with versions |
+| **Disclosure** | A caveat that must accompany results |
 
 ## What Invariant is NOT
 
 - **Not a database** — It doesn't store your data
 - **Not a query engine** — It doesn't execute queries
 - **Not a visualization layer** — It doesn't render charts
-- **Not an ETL tool** — It doesn't transform data
 
-Invariant is a validation kernel. It sits between your catalog and your query layer, deciding what operations are semantically valid.
-
-## How to think about it
-
-Think of Invariant as a type system for analytics. Just as a programming language's type system catches "you can't add a string to an integer" at compile time, Invariant catches "you can't sum a percentage" at query time.
-
-The goal is to make invalid states unrepresentable—or at least, unexecutable.
+Invariant is pure validation logic. It sits between your catalog and your query engine, deciding what operations are semantically valid.

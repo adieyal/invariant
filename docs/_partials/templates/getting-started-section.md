@@ -8,18 +8,18 @@ This section helps you go from zero to a working Invariant integration.
 
     Install and run your first validated query in 5 minutes.
 
-    [:octicons-arrow-right-24: Quickstart](quickstart.md)
+    [Quickstart →](quickstart.md)
 
 - **Mental Model**
 
     Understand how Invariant thinks about validation.
 
-    [:octicons-arrow-right-24: Mental Model](mental-model.md)
+    [Mental Model →](mental-model.md)
 
 </div>
 
 ## Prerequisites
-- Python 3.10+
+- Python 3.12+
 - Basic understanding of analytics concepts (metrics, dimensions)
 
 ## What you'll learn

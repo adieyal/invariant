@@ -1,55 +1,29 @@
 /* ==========================================================================
-   Invariant Analytics Kernel - Custom Theme
-   A clean, technical documentation style with strong visual hierarchy
+   Invariant Analytics Kernel - Material Theme Customization
+   Clean typography, spacing discipline, single accent color
    ========================================================================== */
 
-/* DEBUG: Remove this once CSS is confirmed loading */
-/* If h1 is NOT 3rem, CSS is not loading */
-/*
-.md-typeset h1 {
-  font-size: 3rem !important;
-  letter-spacing: -0.03em !important;
-}
-*/
-
 /* --------------------------------------------------------------------------
-   CSS Custom Properties (Design Tokens)
+   CSS Variables - Material Theme Integration
    -------------------------------------------------------------------------- */
 :root {
-  /* Primary palette - Deep navy with warm accents */
-  --inv-primary: #1a365d;
-  --inv-primary-light: #2c5282;
-  --inv-primary-dark: #0f2540;
-  /* Header colors (separate from primary for dark mode) */
-  --inv-header: #1a365d;
-  --inv-header-dark: #0f2540;
+  /* Custom primary/accent colors */
+  --md-primary-fg-color: #212529;
+  --md-primary-fg-color--light: #495057;
+  --md-primary-fg-color--dark: #121416;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: #f8f9fa;
 
-  /* Accent - Warm amber for CTAs and highlights */
-  --inv-accent: #d69e2e;
-  --inv-accent-light: #ecc94b;
-  --inv-accent-dark: #b7791f;
+  --md-accent-fg-color: #ff3b30;
+  --md-accent-fg-color--transparent: rgba(255, 59, 48, 0.1);
+  --md-accent-bg-color: #ffffff;
+  --md-accent-bg-color--light: #fef5f4;
 
-  /* Semantic colors */
+  /* Invariant semantic colors */
   --inv-success: #38a169;
   --inv-warning: #dd6b20;
   --inv-error: #c53030;
   --inv-info: #3182ce;
-
-  /* Neutrals */
-  --inv-gray-50: #f7fafc;
-  --inv-gray-100: #edf2f7;
-  --inv-gray-200: #e2e8f0;
-  --inv-gray-300: #cbd5e0;
-  --inv-gray-400: #a0aec0;
-  --inv-gray-500: #718096;
-  --inv-gray-600: #4a5568;
-  --inv-gray-700: #2d3748;
-  --inv-gray-800: #1a202c;
-  --inv-gray-900: #171923;
-
-  /* Typography scale */
-  --inv-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --inv-font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
 
   /* Spacing */
   --inv-space-xs: 0.25rem;
@@ -62,564 +36,169 @@
   /* Border radius */
   --inv-radius-sm: 4px;
   --inv-radius-md: 6px;
-  --inv-radius-lg: 8px;
-
-  /* Shadows */
-  --inv-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --inv-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --inv-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --inv-radius-lg: 0.5rem;
 }
 
 /* Dark mode overrides */
 [data-md-color-scheme="slate"] {
-  /* Primary for links/accents - light blue for contrast on dark bg */
-  --inv-primary: #63b3ed;
-  --inv-primary-light: #90cdf4;
-  /* Keep header colors dark */
-  --inv-header-dark: #0d1520;
-  --inv-header: #1a2332;
-  --inv-accent: #ecc94b;
-  --inv-accent-light: #f6e05e;
-  /* Dark mode grays - keep numeric meaning (higher = darker) */
-  --inv-gray-50: #f7fafc;
-  --inv-gray-100: #edf2f7;
-  --inv-gray-200: #e2e8f0;
-  --inv-gray-300: #cbd5e0;
-  --inv-gray-400: #a0aec0;
-  --inv-gray-500: #718096;
-  --inv-gray-600: #4a5568;
-  --inv-gray-700: #2d3748;
-  --inv-gray-800: #1a202c;
-  --inv-gray-900: #171923;
-  /* Semantic colors for dark mode */
-  --inv-text: #e2e8f0;
-  --inv-text-muted: #a0aec0;
-  --inv-surface: #1a202c;
-  --inv-surface-raised: #2d3748;
+  --md-primary-fg-color: #f8f9fa;
+  --md-primary-fg-color--light: #adb5bd;
+  --md-primary-fg-color--dark: #ffffff;
+  --md-primary-bg-color: #1e1e1e;
+  --md-primary-bg-color--light: #2d2d2d;
+
+  --md-accent-fg-color: #ff6b61;
+  --md-accent-fg-color--transparent: rgba(255, 107, 97, 0.1);
+  --md-accent-bg-color: #2d2d2d;
+  --md-accent-bg-color--light: #3d2d2d;
 }
 
 /* --------------------------------------------------------------------------
-   Material Theme Overrides
+   Typography enhancements
    -------------------------------------------------------------------------- */
-
-/* Primary color scheme */
-[data-md-color-scheme="default"] {
-  --md-primary-fg-color: var(--inv-primary);
-  --md-primary-fg-color--light: var(--inv-primary-light);
-  --md-primary-fg-color--dark: var(--inv-primary-dark);
-  --md-accent-fg-color: var(--inv-accent);
-  --md-typeset-a-color: var(--inv-primary);
-}
-
-[data-md-color-scheme="slate"] {
-  --md-primary-fg-color: var(--inv-primary);
-  --md-accent-fg-color: var(--inv-accent);
-}
-
-/* --------------------------------------------------------------------------
-   Header & Logo Area
-   -------------------------------------------------------------------------- */
-
-/* Logo container with generous space */
-.md-header__button.md-logo {
-  padding: var(--inv-space-sm);
-  margin-right: var(--inv-space-md);
-}
-
-.md-header__button.md-logo img,
-.md-header__button.md-logo svg {
-  height: 2rem;
-  width: auto;
-  /* Brighten logo for visibility on dark header */
-  filter: brightness(0) invert(1);
-}
-
-/* Header styling */
-.md-header {
-  background: linear-gradient(135deg, var(--inv-header-dark) 0%, var(--inv-header) 100%);
-  box-shadow: var(--inv-shadow-md);
-}
-
-.md-header[data-md-state="shadow"] {
-  box-shadow: var(--inv-shadow-lg);
-}
-
-/* Site title styling */
-.md-header__title {
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-/* --------------------------------------------------------------------------
-   Typography - Optimized for Technical Documentation
-   -------------------------------------------------------------------------- */
-
-/* Base typography */
-.md-typeset {
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: var(--inv-gray-700);
-}
-
-[data-md-color-scheme="slate"] .md-typeset {
-  color: var(--inv-text);
-}
-
-/* Headings - Clear hierarchy */
 .md-typeset h1 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--inv-primary);
-  margin-top: 0;
-  margin-bottom: var(--inv-space-lg);
-  padding-bottom: var(--inv-space-md);
-  border-bottom: 3px solid var(--inv-accent);
-}
-
-[data-md-color-scheme="slate"] .md-typeset h1 {
-  color: var(--inv-gray-50);
-  border-bottom-color: var(--inv-accent);
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
 .md-typeset h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--inv-primary);
-  margin-top: var(--inv-space-2xl);
-  margin-bottom: var(--inv-space-md);
-  padding-bottom: var(--inv-space-sm);
-  border-bottom: 1px solid var(--inv-gray-200);
-}
-
-[data-md-color-scheme="slate"] .md-typeset h2 {
-  color: var(--inv-gray-100);
-  border-bottom-color: var(--inv-gray-600);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  padding-bottom: 0.3rem;
 }
 
 .md-typeset h3 {
-  font-size: 1.25rem;
   font-weight: 600;
-  color: var(--inv-gray-800);
-  margin-top: var(--inv-space-xl);
-  margin-bottom: var(--inv-space-sm);
-}
-
-[data-md-color-scheme="slate"] .md-typeset h3 {
-  color: var(--inv-gray-100);
 }
 
 .md-typeset h4 {
-  font-size: 1.1rem;
   font-weight: 600;
-  color: var(--inv-gray-700);
-  margin-top: var(--inv-space-lg);
-}
-
-/* Paragraphs - Comfortable reading */
-.md-typeset p {
-  margin-bottom: var(--inv-space-md);
-}
-
-/* Strong emphasis */
-.md-typeset strong {
-  font-weight: 600;
-  color: var(--inv-gray-800);
-}
-
-[data-md-color-scheme="slate"] .md-typeset strong {
-  color: var(--inv-gray-50);
 }
 
 /* --------------------------------------------------------------------------
-   Code Blocks - Technical clarity
+   Code blocks
    -------------------------------------------------------------------------- */
-
-/* Inline code */
 .md-typeset code {
-  font-family: var(--inv-font-mono);
-  font-size: 0.875em;
-  padding: 0.15em 0.4em;
-  background: var(--inv-gray-100);
   border-radius: var(--inv-radius-sm);
-  color: var(--inv-primary-dark);
-  border: 1px solid var(--inv-gray-200);
 }
 
-[data-md-color-scheme="slate"] .md-typeset code {
-  background: var(--inv-surface-raised);
-  color: var(--inv-accent-light);
-  border-color: var(--inv-gray-600);
-}
-
-/* Code blocks */
 .md-typeset pre {
   border-radius: var(--inv-radius-lg);
-  box-shadow: var(--inv-shadow-sm);
-  border: 1px solid var(--inv-gray-200);
-  margin: var(--inv-space-lg) 0;
-}
-
-[data-md-color-scheme="slate"] .md-typeset pre {
-  border-color: var(--inv-gray-600);
-}
-
-.md-typeset pre > code {
-  font-size: 0.85rem;
-  line-height: 1.6;
-  padding: var(--inv-space-lg);
-  border: none;
-  background: transparent;
 }
 
 /* --------------------------------------------------------------------------
-   Tables - Clean data presentation
+   Tables
    -------------------------------------------------------------------------- */
-
 .md-typeset table:not([class]) {
   font-size: 0.9rem;
-  border-collapse: collapse;
   border-radius: var(--inv-radius-lg);
   overflow: hidden;
-  box-shadow: var(--inv-shadow-sm);
-  border: 1px solid var(--inv-gray-200);
-  margin: var(--inv-space-lg) 0;
-}
-
-[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
-  border-color: var(--inv-gray-600);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .md-typeset table:not([class]) th {
-  background: var(--inv-primary);
-  color: white;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
-  padding: var(--inv-space-md) var(--inv-space-lg);
-  text-align: left;
-}
-
-[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
-  background: var(--inv-surface-raised);
-  color: var(--inv-text);
-}
-
-.md-typeset table:not([class]) td {
-  padding: var(--inv-space-md) var(--inv-space-lg);
-  border-bottom: 1px solid var(--inv-gray-100);
-}
-
-[data-md-color-scheme="slate"] .md-typeset table:not([class]) td {
-  border-bottom-color: var(--inv-gray-600);
-}
-
-.md-typeset table:not([class]) tr:hover td {
-  background: var(--inv-gray-50);
-}
-
-[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:hover td {
-  background: var(--inv-surface-raised);
 }
 
 /* --------------------------------------------------------------------------
-   Admonitions - Callout boxes
+   Blockquotes
    -------------------------------------------------------------------------- */
-
-.md-typeset .admonition,
-.md-typeset details {
-  border-radius: var(--inv-radius-lg);
-  box-shadow: var(--inv-shadow-sm);
-  border: none;
-  border-left: 4px solid;
-  margin: var(--inv-space-lg) 0;
-}
-
-.md-typeset .admonition-title,
-.md-typeset summary {
-  font-weight: 600;
-  padding: var(--inv-space-md) var(--inv-space-lg);
-}
-
-/* Note admonition */
-.md-typeset .admonition.note,
-.md-typeset details.note {
-  border-left-color: var(--inv-info);
-  background: rgba(49, 130, 206, 0.08);
-}
-
-/* Warning admonition */
-.md-typeset .admonition.warning,
-.md-typeset details.warning {
-  border-left-color: var(--inv-warning);
-  background: rgba(221, 107, 32, 0.08);
-}
-
-/* Tip/success admonition */
-.md-typeset .admonition.tip,
-.md-typeset details.tip,
-.md-typeset .admonition.success {
-  border-left-color: var(--inv-success);
-  background: rgba(56, 161, 105, 0.08);
-}
-
-/* Danger/error admonition */
-.md-typeset .admonition.danger,
-.md-typeset details.danger {
-  border-left-color: var(--inv-error);
-  background: rgba(197, 48, 48, 0.08);
-}
-
-/* --------------------------------------------------------------------------
-   Navigation - Clean sidebar
-   -------------------------------------------------------------------------- */
-
-/* Navigation sidebar */
-.md-nav--primary .md-nav__title {
-  font-weight: 600;
-  color: var(--inv-primary);
-}
-
-.md-nav__link {
-  font-size: 0.9rem;
-  transition: color 0.15s ease, padding-left 0.15s ease;
-}
-
-.md-nav__link:hover {
-  color: var(--inv-accent-dark);
-}
-
-.md-nav__link--active {
-  font-weight: 600;
-  color: var(--inv-primary);
-}
-
-/* Section labels in nav */
-.md-nav__item--nested > .md-nav__link {
-  font-weight: 600;
-  color: var(--inv-gray-600);
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-}
-
-/* --------------------------------------------------------------------------
-   Cards (for grid layouts)
-   -------------------------------------------------------------------------- */
-
-/* Grid layout on parent list */
-.md-typeset .grid.cards > ul,
-.md-typeset .grid.cards > ol {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.8rem;
-  padding-left: 0;
-  list-style: none;
-}
-
-/* Card items */
-.md-typeset .grid.cards > ul > li,
-.md-typeset .grid.cards > ol > li {
-  list-style: none;
-  margin: 0;
-  padding: var(--inv-space-lg);
-  border: 1px solid var(--inv-gray-200);
-  border-radius: var(--inv-radius-lg);
-  background: var(--md-default-bg-color);
-  box-shadow: var(--inv-shadow-sm);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.md-typeset .grid.cards > ul > li:hover,
-.md-typeset .grid.cards > ol > li:hover {
-  box-shadow: var(--inv-shadow-md);
-  transform: translateY(-2px);
-}
-
-[data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li,
-[data-md-color-scheme="slate"] .md-typeset .grid.cards > ol > li {
-  border-color: var(--inv-gray-600);
-  background: var(--inv-surface-raised);
-}
-
-/* Card first paragraph */
-.md-typeset .grid.cards > ul > li > p:first-child,
-.md-typeset .grid.cards > ol > li > p:first-child {
-  margin-top: 0;
-  font-weight: 600;
-}
-
-/* Card titles */
-.md-typeset .grid.cards > ul > li > p:first-child strong,
-.md-typeset .grid.cards > ol > li > p:first-child strong {
-  font-size: 1.1rem;
-  color: var(--inv-primary);
-}
-
-[data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li > p:first-child strong,
-[data-md-color-scheme="slate"] .md-typeset .grid.cards > ol > li > p:first-child strong {
-  color: var(--inv-accent);
-}
-
-/* --------------------------------------------------------------------------
-   Links
-   -------------------------------------------------------------------------- */
-
-.md-typeset a {
-  color: var(--inv-primary);
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-bottom-color 0.15s ease;
-}
-
-.md-typeset a:hover {
-  border-bottom-color: var(--inv-accent);
-}
-
-/* Arrow links */
-.md-typeset a[href$=".md"]:not(.md-nav__link)::after,
-.md-typeset a:has(> :last-child:empty):not(.md-nav__link) {
-  content: "";
-}
-
-/* --------------------------------------------------------------------------
-   Lists
-   -------------------------------------------------------------------------- */
-
-.md-typeset ul,
-.md-typeset ol {
-  margin-bottom: var(--inv-space-md);
-}
-
-.md-typeset li {
-  margin-bottom: var(--inv-space-xs);
-}
-
-/* Checklist styling */
-.md-typeset ul li:has(input[type="checkbox"]) {
-  list-style: none;
-  margin-left: -1.5em;
-}
-
-/* --------------------------------------------------------------------------
-   Blockquotes - For key principles
-   -------------------------------------------------------------------------- */
-
 .md-typeset blockquote {
-  border-left: 4px solid var(--inv-accent);
-  background: var(--inv-gray-50);
-  padding: var(--inv-space-md) var(--inv-space-lg);
-  margin: var(--inv-space-lg) 0;
-  border-radius: 0 var(--inv-radius-md) var(--inv-radius-md) 0;
-  font-style: italic;
-}
-
-[data-md-color-scheme="slate"] .md-typeset blockquote {
-  background: var(--inv-surface-raised);
-}
-
-.md-typeset blockquote p:last-child {
-  margin-bottom: 0;
+  border-left-color: var(--md-accent-fg-color);
 }
 
 /* --------------------------------------------------------------------------
-   Horizontal rules
+   Invariant Gate Severity Admonitions
    -------------------------------------------------------------------------- */
-
-.md-typeset hr {
-  border: none;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--inv-gray-300) 20%,
-    var(--inv-gray-300) 80%,
-    transparent
-  );
-  margin: var(--inv-space-2xl) 0;
+.md-typeset .admonition.invariant-allow,
+.md-typeset details.invariant-allow {
+  border-color: var(--inv-success);
 }
 
-/* --------------------------------------------------------------------------
-   Footer
-   -------------------------------------------------------------------------- */
-
-.md-footer {
-  background: var(--inv-gray-800);
+.md-typeset .invariant-allow > .admonition-title,
+.md-typeset .invariant-allow > summary {
+  background-color: rgba(56, 161, 105, 0.1);
 }
 
-.md-footer-meta {
-  background: var(--inv-gray-900);
+.md-typeset .invariant-allow > .admonition-title::before,
+.md-typeset .invariant-allow > summary::before {
+  background-color: var(--inv-success);
+  -webkit-mask-image: var(--md-admonition-icon--success);
+  mask-image: var(--md-admonition-icon--success);
 }
 
-/* --------------------------------------------------------------------------
-   Search
-   -------------------------------------------------------------------------- */
-
-.md-search__form {
-  border-radius: var(--inv-radius-lg);
+.md-typeset .admonition.invariant-warn,
+.md-typeset details.invariant-warn {
+  border-color: var(--inv-warning);
 }
 
-.md-search__input {
-  font-size: 0.9rem;
+.md-typeset .invariant-warn > .admonition-title,
+.md-typeset .invariant-warn > summary {
+  background-color: rgba(221, 107, 32, 0.1);
 }
 
-/* --------------------------------------------------------------------------
-   Table of Contents (Right sidebar)
-   -------------------------------------------------------------------------- */
-
-.md-nav--secondary .md-nav__link {
-  font-size: 0.85rem;
+.md-typeset .invariant-warn > .admonition-title::before,
+.md-typeset .invariant-warn > summary::before {
+  background-color: var(--inv-warning);
+  -webkit-mask-image: var(--md-admonition-icon--warning);
+  mask-image: var(--md-admonition-icon--warning);
 }
 
-.md-nav--secondary .md-nav__link--active {
-  color: var(--inv-accent-dark);
-  font-weight: 500;
+.md-typeset .admonition.invariant-ack,
+.md-typeset details.invariant-ack {
+  border-color: var(--inv-info);
 }
 
-/* --------------------------------------------------------------------------
-   Responsive adjustments
-   -------------------------------------------------------------------------- */
-
-@media screen and (max-width: 76.1875em) {
-  .md-typeset h1 {
-    font-size: 1.75rem;
-  }
-
-  .md-typeset h2 {
-    font-size: 1.35rem;
-  }
+.md-typeset .invariant-ack > .admonition-title,
+.md-typeset .invariant-ack > summary {
+  background-color: rgba(49, 130, 206, 0.1);
 }
 
-/* --------------------------------------------------------------------------
-   Print styles
-   -------------------------------------------------------------------------- */
+.md-typeset .invariant-ack > .admonition-title::before,
+.md-typeset .invariant-ack > summary::before {
+  background-color: var(--inv-info);
+  -webkit-mask-image: var(--md-admonition-icon--info);
+  mask-image: var(--md-admonition-icon--info);
+}
 
-@media print {
-  .md-typeset h1 {
-    color: black;
-    border-bottom-color: black;
-  }
+.md-typeset .admonition.invariant-block,
+.md-typeset details.invariant-block {
+  border-color: var(--inv-error);
+}
 
-  .md-typeset h2,
-  .md-typeset h3 {
-    color: black;
-  }
+.md-typeset .invariant-block > .admonition-title,
+.md-typeset .invariant-block > summary {
+  background-color: rgba(197, 48, 48, 0.1);
+}
 
-  .md-typeset a {
-    color: black;
-    text-decoration: underline;
-  }
+.md-typeset .invariant-block > .admonition-title::before,
+.md-typeset .invariant-block > summary::before {
+  background-color: var(--inv-error);
+  -webkit-mask-image: var(--md-admonition-icon--failure);
+  mask-image: var(--md-admonition-icon--failure);
 }
 
 /* --------------------------------------------------------------------------
    Custom utility classes
    -------------------------------------------------------------------------- */
 
-/* Concept highlight - for key terms */
+/* Micro label */
+.micro {
+  display: inline-block;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-accent-fg-color);
+  margin-bottom: 0.6rem;
+}
+
+/* Concept highlight */
 .concept {
-  background: linear-gradient(120deg, var(--inv-accent-light) 0%, var(--inv-accent-light) 100%);
+  background: linear-gradient(120deg, var(--md-accent-fg-color--transparent) 0%, var(--md-accent-fg-color--transparent) 100%);
   background-repeat: no-repeat;
   background-size: 100% 0.3em;
   background-position: 0 88%;
@@ -652,156 +231,37 @@
   color: white;
 }
 
-/* --------------------------------------------------------------------------
-   Manual Template - Additional Styles
-   -------------------------------------------------------------------------- */
-
 /* Utility classes */
-.md-typeset .small {
+.small {
   font-size: 0.9em;
   opacity: 0.85;
 }
 
-.md-typeset .muted {
+.muted {
   opacity: 0.75;
 }
 
 /* Casefile block */
-.md-typeset .casefile {
-  border: 1px solid var(--inv-gray-200);
+.casefile {
+  border: 1px solid var(--md-default-fg-color--lightest);
   border-radius: var(--inv-radius-lg);
   padding: 1rem;
   background: var(--md-default-bg-color);
   margin: var(--inv-space-lg) 0;
 }
-.md-typeset .casefile > :first-child {
+
+.casefile > :first-child {
   margin-top: 0;
 }
-.md-typeset .casefile .label {
+
+.casefile .label {
   font-size: 0.8em;
   letter-spacing: 0.03em;
   text-transform: uppercase;
   opacity: 0.75;
 }
 
-[data-md-color-scheme="slate"] .md-typeset .casefile {
-  border-color: var(--inv-gray-600);
-  background: var(--inv-surface-raised);
-}
-
-/* --------------------------------------------------------------------------
-   Invariant Gate Severity Admonitions
-   Usage:
-   !!! invariant-allow "Allowed"
-   !!! invariant-warn "Warn"
-   !!! invariant-ack "Acknowledge required"
-   !!! invariant-block "Blocked"
-   -------------------------------------------------------------------------- */
-
-:root {
-  /* Icons (Material uses SVG via mask) */
-  --md-admonition-icon--invariant-allow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M9 16.17 4.83 12 3.41 13.41 9 19 21 7 19.59 5.59z"/></svg>');
-  --md-admonition-icon--invariant-warn: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
-  --md-admonition-icon--invariant-ack: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>');
-  --md-admonition-icon--invariant-block: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M12 2a10 10 0 100 20 10 10 0 000-20zm5 10a5 5 0 01-8.66 3.54L15.54 8.34A4.98 4.98 0 0117 12zm-10 0a5 5 0 018.66-3.54L8.46 15.66A4.98 4.98 0 017 12z"/></svg>');
-}
-
-/* Base styling for custom types */
-.md-typeset .admonition.invariant-allow,
-.md-typeset details.invariant-allow,
-.md-typeset .admonition.invariant-warn,
-.md-typeset details.invariant-warn,
-.md-typeset .admonition.invariant-ack,
-.md-typeset details.invariant-ack,
-.md-typeset .admonition.invariant-block,
-.md-typeset details.invariant-block {
-  border-radius: var(--inv-radius-lg);
-}
-
-/* Icons */
-.md-typeset .admonition.invariant-allow > .admonition-title::before,
-.md-typeset details.invariant-allow > summary::before {
-  -webkit-mask-image: var(--md-admonition-icon--invariant-allow);
-          mask-image: var(--md-admonition-icon--invariant-allow);
-}
-.md-typeset .admonition.invariant-warn > .admonition-title::before,
-.md-typeset details.invariant-warn > summary::before {
-  -webkit-mask-image: var(--md-admonition-icon--invariant-warn);
-          mask-image: var(--md-admonition-icon--invariant-warn);
-}
-.md-typeset .admonition.invariant-ack > .admonition-title::before,
-.md-typeset details.invariant-ack > summary::before {
-  -webkit-mask-image: var(--md-admonition-icon--invariant-ack);
-          mask-image: var(--md-admonition-icon--invariant-ack);
-}
-.md-typeset .admonition.invariant-block > .admonition-title::before,
-.md-typeset details.invariant-block > summary::before {
-  -webkit-mask-image: var(--md-admonition-icon--invariant-block);
-          mask-image: var(--md-admonition-icon--invariant-block);
-}
-
-/* Visual identity - colors aligned with gate severity */
-.md-typeset .admonition.invariant-allow,
-.md-typeset details.invariant-allow {
-  border-color: var(--inv-success);
-  background: rgba(56, 161, 105, 0.08);
-}
-.md-typeset .admonition.invariant-allow > .admonition-title,
-.md-typeset details.invariant-allow > summary {
-  background: rgba(56, 161, 105, 0.12);
-}
-.md-typeset .admonition.invariant-allow > .admonition-title::before,
-.md-typeset details.invariant-allow > summary::before {
-  background-color: var(--inv-success);
-}
-
-.md-typeset .admonition.invariant-warn,
-.md-typeset details.invariant-warn {
-  border-color: var(--inv-warning);
-  background: rgba(221, 107, 32, 0.08);
-}
-.md-typeset .admonition.invariant-warn > .admonition-title,
-.md-typeset details.invariant-warn > summary {
-  background: rgba(221, 107, 32, 0.12);
-}
-.md-typeset .admonition.invariant-warn > .admonition-title::before,
-.md-typeset details.invariant-warn > summary::before {
-  background-color: var(--inv-warning);
-}
-
-.md-typeset .admonition.invariant-ack,
-.md-typeset details.invariant-ack {
-  border-color: var(--inv-info);
-  background: rgba(49, 130, 206, 0.08);
-}
-.md-typeset .admonition.invariant-ack > .admonition-title,
-.md-typeset details.invariant-ack > summary {
-  background: rgba(49, 130, 206, 0.12);
-}
-.md-typeset .admonition.invariant-ack > .admonition-title::before,
-.md-typeset details.invariant-ack > summary::before {
-  background-color: var(--inv-info);
-}
-
-.md-typeset .admonition.invariant-block,
-.md-typeset details.invariant-block {
-  border-color: var(--inv-error);
-  background: rgba(197, 48, 48, 0.08);
-}
-.md-typeset .admonition.invariant-block > .admonition-title,
-.md-typeset details.invariant-block > summary {
-  background: rgba(197, 48, 48, 0.12);
-}
-.md-typeset .admonition.invariant-block > .admonition-title::before,
-.md-typeset details.invariant-block > summary::before {
-  background-color: var(--inv-error);
-}
-
-/* --------------------------------------------------------------------------
-   Reference Badge
-   Add page meta: template: reference (see overrides/main.html)
-   -------------------------------------------------------------------------- */
-
+/* Reference badge */
 .reference-badge {
   display: inline-flex;
   align-items: center;
@@ -810,12 +270,56 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 0.2rem 0.5rem;
-  border: 1px solid var(--inv-gray-300);
+  border: 1px solid var(--md-default-fg-color--lightest);
   border-radius: 999px;
   opacity: 0.8;
   margin-bottom: var(--inv-space-md);
 }
 
-[data-md-color-scheme="slate"] .reference-badge {
-  border-color: var(--inv-gray-600);
+/* --------------------------------------------------------------------------
+   Navigation - Section vs Page differentiation
+   -------------------------------------------------------------------------- */
+
+/* Section headers in sidebar navigation */
+.md-nav--primary .md-nav__item--section > .md-nav__link {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--md-default-fg-color--light);
+  margin-top: 1rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* First section doesn't need top margin */
+.md-nav--primary .md-nav__item--section:first-child > .md-nav__link {
+  margin-top: 0;
+}
+
+/* Page links under sections */
+.md-nav--primary .md-nav__item--section .md-nav__item > .md-nav__link {
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* Active page link */
+.md-nav--primary .md-nav__item--section .md-nav__item .md-nav__link--active {
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Print styles
+   -------------------------------------------------------------------------- */
+@media print {
+  .md-typeset h1,
+  .md-typeset h2,
+  .md-typeset h3 {
+    color: black;
+  }
+
+  .md-typeset a {
+    color: black;
+    text-decoration: underline;
+  }
 }

@@ -1,12 +1,8 @@
---8<-- "_partials/templates/example-casefile.md"
-
-<!-- Real content for this example -->
-
 # Example: Indicator Aggregation
 
 The most common analytics mistake: naively summing or averaging derived values.
 
-<div class="casefile">
+<div class="casefile" markdown>
 <span class="label">Scenario</span>
 
 **What someone tries to do:**
@@ -36,14 +32,61 @@ Indicators (rates, percentages, ratios) are derived from underlying measures. Ag
 
 The "average" overstates unemployment because it treats provinces equally regardless of population size.
 
-## What Invariant detects
+## Try it yourself
 
-- **Claim violated:** Indicator cannot be aggregated with AVG/SUM
-- **Evidence:** Variable `unemployment_rate` has role `INDICATOR`
-- **Rule:** `IndicatorAggregationRule`
+Using the [Census Explorer](../appendix/sample-project.md) sample project (see [Quickstart](../getting-started/quickstart.md) for setup):
+
+```bash
+# This query will be BLOCKED
+census-explorer validate aa0e8400-e29b-41d4-a716-446655440002 \
+    -m unemployment_rate:SUM -d geography_code
+```
 
 !!! invariant-block "Blocked"
-    Cannot AVG indicator 'unemployment_rate' because it is a derived value. Indicators require recomputation, not naive aggregation.
+    ```
+    Status: BLOCK
+    Can Execute: No
+
+    Issues:
+      [INDICATOR_AGG_NOT_ALLOWED] Cannot aggregate indicator 'unemployment_rate' with SUM
+    ```
+
+Compare with a valid query on the same data product:
+
+```bash
+# This query will be ALLOWED (no aggregation)
+census-explorer validate aa0e8400-e29b-41d4-a716-446655440002 \
+    -m unemployment_rate:NONE -d geography_code
+```
+
+!!! invariant-allow "Allowed"
+    ```
+    Status: ALLOW
+    Can Execute: Yes
+    ```
+
+## What Invariant detects
+
+| Field | Value |
+|-------|-------|
+| Claim violated | Indicator cannot be aggregated with AVG/SUM |
+| Evidence | Variable `unemployment_rate` has role `INDICATOR` |
+| Rule | `IndicatorAggregationRule` |
+| Severity | BLOCK |
+
+## How it works
+
+When you define an indicator in your catalog, you specify an aggregation policy:
+
+```yaml
+variables:
+  - name: unemployment_rate
+    role: INDICATOR
+    indicator_type: PERCENT
+    aggregation_policy: NOT_AGGREGATABLE
+```
+
+Invariant checks every query against these policies. When someone tries to SUM or AVG an indicator marked `NOT_AGGREGATABLE`, the query is blocked.
 
 ## Typical remediations
 

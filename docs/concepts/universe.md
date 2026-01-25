@@ -1,8 +1,4 @@
---8<-- "_partials/templates/concept.md"
-
-<!-- Real content -->
-
-# Concept: Universe
+# Universe
 
 The population a dataset describes.
 

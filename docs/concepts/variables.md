@@ -1,8 +1,4 @@
---8<-- "_partials/templates/concept.md"
-
-<!-- Real content -->
-
-# Concept: Variables
+# Variables
 
 The types of values in your data and what operations they support.
 

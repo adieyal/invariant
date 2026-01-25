@@ -1,12 +1,8 @@
---8<-- "_partials/templates/example-casefile.md"
-
-<!-- Real content for this example -->
-
 # Example: Suppression
 
 Protecting against small cell disclosure risk.
 
-<div class="casefile">
+<div class="casefile" markdown>
 <span class="label">Scenario</span>
 
 **What someone tries to do:**

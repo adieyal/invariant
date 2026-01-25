@@ -4,29 +4,13 @@ Golden tests compare compiled SQL against known-good snapshots to detect regress
 
 ## Overview
 
-```
-query.json + catalog/
-        │
-        ▼
-   ┌─────────┐
-   │  Plan   │
-   └─────────┘
-        │
-        ▼
-   ┌─────────┐
-   │ Compile │
-   └─────────┘
-        │
-        ▼
-   actual.sql
-        │
-        ▼
-   ┌──────────────────┐
-   │ Compare against  │
-   │  expected.sql    │
-   └──────────────────┘
-        │
-     PASS / FAIL
+```mermaid
+flowchart TD
+    A["query.json + catalog/"] --> B[Plan]
+    B --> C[Compile]
+    C --> D["actual.sql"]
+    D --> E{"Compare against<br/>expected.sql"}
+    E --> F((PASS / FAIL))
 ```
 
 ## Fixture Structure

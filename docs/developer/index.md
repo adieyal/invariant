@@ -119,6 +119,6 @@ elif result.status == "BLOCK":
 
 - [Implementing Ports](integrating.md) — Detailed port interface documentation
 - [Use Cases](use-cases.md) — All available use cases
-- [Architecture](../03-architecture.md) — Design philosophy and the validation gate
+- [Architecture](../architecture/index.md) — Design philosophy and the validation gate
 - [Semantic Layer](semantic-layer.md) — Metrics-first query approach
 - [YAML Assets](yaml-assets.md) — Define assets declaratively

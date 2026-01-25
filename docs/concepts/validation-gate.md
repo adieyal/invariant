@@ -1,8 +1,4 @@
---8<-- "_partials/templates/concept.md"
-
-<!-- Real content -->
-
-# Concept: Validation Gate
+# Validation Gate
 
 How Invariant decides whether to allow, warn, require acknowledgment, or block a query.
 
@@ -75,6 +71,41 @@ Disclosure(
 
 Disclosures propagate through aggregations: if a source cell has a disclosure, any aggregate including that cell inherits it.
 
+## What rules are implemented
+
+| Rule | What it checks | Severity |
+|------|----------------|----------|
+| **Indicator Aggregation** | Can't SUM/AVG indicators (rates, percentages) | BLOCK |
+| **Additivity** | Non-additive metrics can't be rolled up | BLOCK/WARN |
+| **Universe Comparability** | Datasets with different populations need acknowledgment | REQUIRE_ACK |
+| **Reference System Version** | Queries across boundary versions need crosswalks | BLOCK/WARN |
+| **Time Grain** | Query grain must be in dataset's supported grains | BLOCK |
+| **Geography Grain** | Rollups must be permitted by hierarchy | BLOCK |
+| **Join Safety** | Prevents fanout from bad join cardinality | BLOCK/WARN |
+| **Name Resolution** | All referenced metrics/dimensions must exist | BLOCK |
+| **Methodology Comparability** | Different methodologies flagged | WARN |
+
+## Not yet implemented
+
+The following validations have infrastructure in place but rules aren't yet implemented:
+
+| Gap | Status |
+|-----|--------|
+| **Unit/concept compatibility** | Variables can be linked to Concepts with `canonical_unit`, but no rule checks that you can't add USD + EUR |
+| **Cross-concept aggregation** | Concepts exist to define "what this variable means", but aggregating incompatible concepts isn't blocked |
+
+This is a known gap. The type system infrastructure exists—it just needs validation rules.
+
+## Out of scope
+
+| Not supported | Why |
+|---------------|-----|
+| **Conversions** | Converting USD→EUR or meters→kilometers requires external rate/conversion data, which violates the in-memory kernel model |
+| **Custom business rules** | Invariant validates data semantics, not arbitrary business logic |
+| **Data quality checks** | Null checks, range validation, etc. are downstream concerns |
+
+The distinction: **checking compatibility** (blocking USD + EUR) is in scope and should be implemented. **Performing conversions** (turning USD into EUR) is out of scope.
+
 ## Common confusions
 
 **"Why not just document issues in footnotes?"**
@@ -84,6 +115,10 @@ Users ignore footnotes. Disclosures are machine-readable metadata that can be su
 **"Can I override blocks?"**
 
 Some blocks can be overridden with explicit acknowledgment and elevated permissions. This is a deployment configuration.
+
+**"Can I add custom rules?"**
+
+The rule set is fixed in the kernel. If you need custom validation, implement it in your application layer before or after calling Invariant.
 
 ## Related examples
 

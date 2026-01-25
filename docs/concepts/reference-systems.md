@@ -1,8 +1,4 @@
---8<-- "_partials/templates/concept.md"
-
-<!-- Real content -->
-
-# Concept: Reference Systems
+# Reference Systems
 
 The grouping systems your data uses, and how they change over time.
 

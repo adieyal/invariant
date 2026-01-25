@@ -6,48 +6,43 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
-  custom_dir: docs/overrides
-  features:
-    - navigation.sections
-    - navigation.expand
-    - navigation.top
-    - navigation.tabs
-    - navigation.indexes
-    - navigation.path
-    - navigation.tracking
-    - content.code.copy
-    - content.code.annotate
-    - content.action.edit
-    - content.action.view
-    - search.highlight
-    - search.suggest
-    - toc.follow
   palette:
-    # Light mode
-    - scheme: default
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
       primary: custom
       accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    # Dark mode
-    - scheme: slate
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       primary: custom
       accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-  font: false  # Using custom fonts via CSS
-  logo: assets/logo.png
-  favicon: assets/favicon.png
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
   icon:
     repo: fontawesome/brands/github
+  logo: assets/logo.png
+  favicon: assets/favicon.png
 
 extra_css:
   - stylesheets/custom.css
-
-extra_javascript:
-  - javascripts/mermaid-init.js
 
 nav:
   - Home: index.md
@@ -61,6 +56,7 @@ nav:
     - Cross-dataset Comparison: examples/cross-dataset-comparison.md
     - Reference System Changes: examples/reference-system-changes.md
     - Suppression: examples/suppression.md
+    - Executable Examples: generated/examples.md
   - Concepts:
     - concepts/index.md
     - Universe: concepts/universe.md
@@ -70,7 +66,7 @@ nav:
     - Validation Gate: concepts/validation-gate.md
   - Architecture:
     - architecture/index.md
-    - Two Planes and Gate: architecture/two-planes-and-gate.md
+    - Query, Rules, Gate: architecture/two-planes-and-gate.md
     - Progressive Rigor: architecture/progressive-rigor.md
     - Scope Boundaries: architecture/scope-boundaries.md
   - Integration:
@@ -82,6 +78,8 @@ nav:
   - Reference:
     - reference/index.md
     - Glossary: generated/glossary.md
+    - Validation Rules: generated/validation-rules.md
+    - Aggregation Rules: generated/aggregation-rules.md
     - Ports: reference/ports.md
     - Use Cases: reference/use-cases.md
     - DTOs: reference/dtos.md
@@ -89,6 +87,24 @@ nav:
     - ai/index.md
     - Tool Contracts: ai/tool-contracts.md
     - Remediation Actions: ai/remediation-actions.md
+  - Developer Guide:
+    - developer/index.md
+    - Quickstart: developer/quickstart.md
+    - Concepts: developer/concepts.md
+    - Architecture: developer/architecture.md
+    - Integrating: developer/integrating.md
+    - Use Cases: developer/use-cases.md
+    - Validation Rules: developer/validation-rules.md
+    - Semantic Layer: developer/semantic-layer.md
+    - Semantic Validation: developer/semantic-validation-rules.md
+    - YAML Assets: developer/yaml-assets.md
+    - CLI Patterns: developer/cli-patterns.md
+    - Golden Testing: developer/golden-testing.md
+    - Data Dictionary: developer/data-dictionary-contrib.md
+  - Architecture Decisions:
+    - adr/001-identity-owns-meaning-semantic-owns-calculation.md
+    - adr/002-three-boundary-contracts.md
+    - adr/003-orchestration-in-facade.md
   - Appendices:
     - Design Constraints: appendix/design-constraints.md
     - Capability Matrix: appendix/capability-matrix.md
@@ -101,9 +117,6 @@ markdown_extensions:
   - tables
   - admonition
   - footnotes
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
@@ -128,12 +141,6 @@ markdown_extensions:
   - toc:
       permalink: true
       toc_depth: 3
-
-extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/adieyal/invariant
-      name: Invariant on GitHub
 
 exclude_docs: |
   _partials/

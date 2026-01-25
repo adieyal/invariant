@@ -1,52 +1,32 @@
----
-hide:
-  - navigation
-  - toc
----
-
 # Invariant Analytics Kernel
 
-A semantic validation layer for statistical data platforms. Catches the mistakes that cause bad analysis—before they reach your users.
+**A type system for analytical data.**
+
+Just as a programming language's type system catches "you can't add a string to an integer" at compile time, Invariant catches "you can't sum a percentage" at query time.
+
+The goal: make invalid analytics unrepresentable—or at least, unexecutable.
+
+---
+
+## Documentation map
+
+| Section | Description | Start Here |
+|---------|-------------|------------|
+| **Getting Started** | First run + first failure | [Quickstart](getting-started/quickstart.md) |
+| **Examples** | What goes wrong in analytics | [Scenarios](examples/index.md) |
+| **Concepts** | Universe, variables, reference systems | [Model](concepts/index.md) |
+| **Integration** | Minimal wiring, progressive rigor | [Integrate](integration/index.md) |
 
 ---
 
 ## Who should read what
 
-<div class="grid cards" markdown>
-
--   :material-rocket-launch: **Evaluating**
-
-    ---
-
-    See if Invariant fits your needs
-
-    [:octicons-arrow-right-24: Getting Started](getting-started/index.md)
-
--   :material-bug: **Learning failure modes**
-
-    ---
-
-    See what can go wrong in analytics
-
-    [:octicons-arrow-right-24: Examples](examples/index.md)
-
--   :material-book-open-variant: **Understanding the domain**
-
-    ---
-
-    Learn universes, variables, and the gate
-
-    [:octicons-arrow-right-24: Concepts](concepts/index.md)
-
--   :material-puzzle: **Integrating**
-
-    ---
-
-    Connect Invariant to your system
-
-    [:octicons-arrow-right-24: Integration](integration/index.md)
-
-</div>
+| If you're... | You want to... | Start here |
+|--------------|----------------|------------|
+| **Evaluating** | See if this fits your platform | [Getting Started](getting-started/index.md) |
+| **Integrating** | Wire into your query lifecycle | [Integration](integration/index.md) |
+| **Implementing rigor** | Set up rule packs, checks, disclosures | [Concepts](concepts/index.md) |
+| **Building AI tools** | Use tool contracts and remediation | [AI Integration](ai/index.md) |
 
 ---
 
@@ -54,10 +34,10 @@ A semantic validation layer for statistical data platforms. Catches the mistakes
 
 Invariant sits between your data and your users. When someone tries to:
 
-- **Sum percentages** → Invariant blocks it and explains why
-- **Compare incompatible datasets** → Invariant warns and requires acknowledgment
-- **Query across boundary changes** → Invariant applies crosswalks or flags the mismatch
-- **Access suppressed cells** → Invariant enforces policy and attaches disclosures
+- **Sum percentages** — Invariant blocks it and explains why
+- **Compare incompatible datasets** — Invariant warns and requires acknowledgment
+- **Query across boundary changes** — Invariant applies crosswalks or flags the mismatch
+- **Access suppressed cells** — Invariant enforces policy and attaches disclosures
 
 ```
 Query: "Average unemployment rate across all provinces"
@@ -72,46 +52,6 @@ Remediations:
   → Define numerator/denominator so the system can recompute safely
   → Use NONE (display as-is) instead of AVG
 ```
-
----
-
-## Quick links
-
-<div class="grid cards" markdown>
-
--   **Quickstart**
-
-    ---
-
-    Run the sample project and see Invariant in action.
-
-    [Quickstart →](getting-started/quickstart.md)
-
--   **Examples**
-
-    ---
-
-    Learn from common analytics mistakes and how Invariant catches them.
-
-    [Examples →](examples/index.md)
-
--   **Concepts**
-
-    ---
-
-    Understand universes, variables, indicators, and the validation gate.
-
-    [Concepts →](concepts/index.md)
-
--   **Integration Guide**
-
-    ---
-
-    Implement ports to connect Invariant to your infrastructure.
-
-    [Integration →](integration/index.md)
-
-</div>
 
 ---
 
@@ -132,17 +72,13 @@ The kernel runs entirely in-memory with fake repositories for testing. If it req
 
 **Use Invariant if you check 3 or more:**
 
-<div class="grid cards" markdown>
-
--   :material-checkbox-marked: Multiple datasets that users compare or combine
--   :material-checkbox-marked: Indicators (rates, percentages) that could be naively summed
--   :material-checkbox-marked: Reference system boundaries that change over time
--   :material-checkbox-marked: Census or survey data with suppression requirements
--   :material-checkbox-marked: Users need to see where numbers came from
--   :material-checkbox-marked: Public-facing analytics where accuracy matters
--   :material-checkbox-marked: Need to explain why a query is invalid
-
-</div>
+- ✓ Multiple datasets that users compare or combine
+- ✓ Indicators (rates, percentages) that could be naively summed
+- ✓ Reference system boundaries that change over time
+- ✓ Census or survey data with suppression requirements
+- ✓ Users need to see where numbers came from
+- ✓ Public-facing analytics where accuracy matters
+- ✓ Need to explain why a query is invalid
 
 **Invariant is overkill if:**
 

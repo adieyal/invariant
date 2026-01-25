@@ -1,12 +1,8 @@
---8<-- "_partials/templates/example-casefile.md"
-
-<!-- Real content for this example -->
-
 # Example: Cross-dataset Comparison
 
 Comparing datasets that describe different populations.
 
-<div class="casefile">
+<div class="casefile" markdown>
 <span class="label">Scenario</span>
 
 **What someone tries to do:**
