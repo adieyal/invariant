@@ -8,6 +8,7 @@ from invariant.identity.application.ports.column_domain_store import (
     ColumnDomainProposalStore,
     ColumnDomainStore,
 )
+from invariant.identity.application.ports.id_generator import IdGenerator
 from invariant.identity.application.ports.stores import (
     ComparabilityStore,
     ConceptStore,
@@ -19,5 +20,6 @@ __all__ = [
     "ColumnDomainStore",
     "ComparabilityStore",
     "ConceptStore",
+    "IdGenerator",
     "VariableSemanticsStore",
 ]

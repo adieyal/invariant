@@ -35,8 +35,17 @@ class Universe:
         inclusions: Sequence[str] | None = None,
         exclusions: Sequence[str] | None = None,
     ) -> None:
+        inclusions_tuple = tuple(inclusions or [])
+        exclusions_tuple = tuple(exclusions or [])
+
+        if inclusions_tuple and exclusions_tuple:
+            raise ValueError(
+                "Universe cannot have both inclusions and exclusions; "
+                "use one or the other"
+            )
+
         self.id = id
         self.label = label
         self.definition = definition
-        self.inclusions = tuple(inclusions or [])
-        self.exclusions = tuple(exclusions or [])
+        self.inclusions = inclusions_tuple
+        self.exclusions = exclusions_tuple

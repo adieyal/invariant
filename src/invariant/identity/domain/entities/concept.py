@@ -25,3 +25,7 @@ class Concept:
     label: str
     description: str
     canonical_unit: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.label or not self.label.strip():
+            raise ValueError("Concept label cannot be empty")

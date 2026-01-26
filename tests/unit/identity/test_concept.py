@@ -99,8 +99,8 @@ def test_universe_creation():
     assert universe.exclusions == ()
 
 
-def test_universe_with_inclusions_and_exclusions():
-    """Universe can be created with inclusions and exclusions."""
+def test_universe_with_inclusions():
+    """Universe can be created with inclusions only."""
     from invariant.identity import Universe
     from invariant.shared.contracts.ids import UniverseId
 
@@ -110,10 +110,26 @@ def test_universe_with_inclusions_and_exclusions():
         label="Working Age Adults",
         definition="Adults of working age in South Africa",
         inclusions=["Citizens", "Permanent residents"],
-        exclusions=["Children under 15", "Elderly over 65"],
     )
 
     assert universe.inclusions == ("Citizens", "Permanent residents")
+    assert universe.exclusions == ()
+
+
+def test_universe_with_exclusions():
+    """Universe can be created with exclusions only."""
+    from invariant.identity import Universe
+    from invariant.shared.contracts.ids import UniverseId
+
+    universe_id = UniverseId.create()
+    universe = Universe(
+        id=universe_id,
+        label="Working Age Adults",
+        definition="Adults of working age in South Africa",
+        exclusions=["Children under 15", "Elderly over 65"],
+    )
+
+    assert universe.inclusions == ()
     assert universe.exclusions == ("Children under 15", "Elderly over 65")
 
 
@@ -176,3 +192,95 @@ def test_identity_same_as_semantic_universe():
     from invariant.identity.domain.entities import Universe as SemanticUniverse
 
     assert IdentityUniverse is SemanticUniverse
+
+
+# --- Invariant validation tests ---
+
+
+def test_universe_rejects_both_inclusions_and_exclusions():
+    """Universe cannot have both inclusions and exclusions."""
+    import pytest
+
+    from invariant.identity import Universe
+    from invariant.shared.contracts.ids import UniverseId
+
+    universe_id = UniverseId.create()
+
+    with pytest.raises(ValueError, match="cannot have both inclusions and exclusions"):
+        Universe(
+            id=universe_id,
+            label="Invalid Universe",
+            definition="This should fail",
+            inclusions=["Citizens"],
+            exclusions=["Non-citizens"],
+        )
+
+
+def test_concept_rejects_empty_label():
+    """Concept must have a non-empty label."""
+    import pytest
+
+    from invariant.identity import Concept
+    from invariant.shared.contracts.ids import ConceptId
+
+    concept_id = ConceptId.create()
+
+    with pytest.raises(ValueError, match="label cannot be empty"):
+        Concept(
+            id=concept_id,
+            label="",
+            description="Some description",
+        )
+
+
+def test_concept_rejects_whitespace_only_label():
+    """Concept label cannot be whitespace only."""
+    import pytest
+
+    from invariant.identity import Concept
+    from invariant.shared.contracts.ids import ConceptId
+
+    concept_id = ConceptId.create()
+
+    with pytest.raises(ValueError, match="label cannot be empty"):
+        Concept(
+            id=concept_id,
+            label="   ",
+            description="Some description",
+        )
+
+
+def test_id_generator_protocol_importable():
+    """IdGenerator protocol can be imported from ports."""
+    from invariant.identity.application.ports import IdGenerator
+
+    assert IdGenerator is not None
+
+
+def test_id_generator_fake_implementation():
+    """IdGenerator can be implemented with fake for testing."""
+    from dataclasses import dataclass, field
+    from typing import TYPE_CHECKING
+    from uuid import UUID
+
+    if TYPE_CHECKING:
+        from invariant.identity.application.ports import IdGenerator
+
+    @dataclass
+    class FakeIdGenerator:
+        """Fake implementation that returns predictable UUIDs."""
+
+        _counter: int = field(default=0)
+
+        def generate(self) -> UUID:
+            self._counter += 1
+            return UUID(int=self._counter)
+
+    # Verify it conforms to protocol
+    generator: IdGenerator = FakeIdGenerator()
+    first_id = generator.generate()
+    second_id = generator.generate()
+
+    assert first_id == UUID(int=1)
+    assert second_id == UUID(int=2)
+    assert first_id != second_id
