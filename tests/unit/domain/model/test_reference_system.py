@@ -94,7 +94,7 @@ class TestReferenceSystemVersion:
         assert version.valid_to == date(2023, 12, 31)
         assert version.notes == "Updated based on 2020 boundary changes"
 
-    def test_is_current_no_end_date(self) -> None:
+    def test_is_current_as_of_no_end_date(self) -> None:
         version = ReferenceSystemVersion(
             id=ReferenceSystemVersionId.create(),
             reference_system_id=ReferenceSystemId.create(),
@@ -102,9 +102,11 @@ class TestReferenceSystemVersion:
             valid_from=date(2020, 1, 1),
             valid_to=None,
         )
-        assert version.is_current is True
+        # Version with no end date is always current
+        assert version.is_current_as_of(date(2020, 1, 1)) is True
+        assert version.is_current_as_of(date(2099, 12, 31)) is True
 
-    def test_is_current_with_future_end_date(self) -> None:
+    def test_is_current_as_of_with_future_end_date(self) -> None:
         version = ReferenceSystemVersion(
             id=ReferenceSystemVersionId.create(),
             reference_system_id=ReferenceSystemId.create(),
@@ -112,9 +114,11 @@ class TestReferenceSystemVersion:
             valid_from=date(2020, 1, 1),
             valid_to=date(2099, 12, 31),
         )
-        assert version.is_current is True
+        # Version is current when as_of is within validity range
+        assert version.is_current_as_of(date(2025, 6, 15)) is True
+        assert version.is_current_as_of(date(2099, 12, 31)) is True
 
-    def test_is_current_with_past_end_date(self) -> None:
+    def test_is_current_as_of_with_past_end_date(self) -> None:
         version = ReferenceSystemVersion(
             id=ReferenceSystemVersionId.create(),
             reference_system_id=ReferenceSystemId.create(),
@@ -122,7 +126,10 @@ class TestReferenceSystemVersion:
             valid_from=date(2010, 1, 1),
             valid_to=date(2015, 12, 31),
         )
-        assert version.is_current is False
+        # Version is not current when as_of is after validity period
+        assert version.is_current_as_of(date(2020, 1, 1)) is False
+        # But it is current within its validity period
+        assert version.is_current_as_of(date(2012, 6, 15)) is True
 
 
 class TestCrosswalk:

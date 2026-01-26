@@ -912,7 +912,10 @@ def _make_dataset_with_time(
     time_config: TimeConfig | None = None,
 ) -> SemanticDataset:
     """Create a dataset for testing."""
-    grain_keys = GrainKeys(time=["date_col"]) if time_config else GrainKeys()
+    # grain_keys must be non-empty; use time col if time_config, else use other
+    grain_keys = (
+        GrainKeys(time=["date_col"]) if time_config else GrainKeys(other=["id"])
+    )
     return SemanticDataset.create(
         name=name,
         physical_ref=PhysicalRef(schema="public", table=name),

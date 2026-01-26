@@ -98,6 +98,9 @@ def _make_dataset(
     other_keys: list[str] | None = None,
 ) -> SemanticDataset:
     """Create a semantic dataset for testing."""
+    # Ensure at least one key exists (grain_keys must be non-empty)
+    if not geo_keys and not time_keys and not other_keys:
+        other_keys = ["id"]
     return SemanticDataset.create(
         name=name,
         physical_ref=PhysicalRef(schema="public", table=name),

@@ -334,6 +334,7 @@ class SemanticDataset:
     optional time and geography configurations, and dimension references.
 
     Invariants:
+    - grain_keys must be non-empty (at least one geo, time, or other key)
     - If time_config is present, grain_keys.time must be non-empty
     - If geography_config is present, grain_keys.geo must be non-empty
     - No duplicate base_name values in time_series
@@ -372,6 +373,11 @@ class SemanticDataset:
         """Validate domain invariants."""
         if not self.name:
             raise ValueError("name must not be empty")
+
+        if not self.grain_keys.all_keys:
+            raise ValueError(
+                "grain_keys must be non-empty (at least one geo, time, or other key required)"
+            )
 
         if self.time_config is not None and not self.grain_keys.time:
             raise ValueError(

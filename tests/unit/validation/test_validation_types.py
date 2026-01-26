@@ -164,3 +164,63 @@ def test_validation_result_creation():
     assert len(result.disclosures) == 1
     assert result.is_allowed
     assert result.has_issues
+
+
+def test_issue_rejects_empty_code():
+    """Issue raises ValueError when code is empty."""
+    import pytest
+
+    from invariant.validation import Issue, Severity
+
+    with pytest.raises(ValueError, match="Issue code must not be empty"):
+        Issue(code="", severity=Severity.WARN, message="Test message")
+
+
+def test_issue_rejects_whitespace_code():
+    """Issue raises ValueError when code is only whitespace."""
+    import pytest
+
+    from invariant.validation import Issue, Severity
+
+    with pytest.raises(ValueError, match="Issue code must not be empty"):
+        Issue(code="   ", severity=Severity.WARN, message="Test message")
+
+
+def test_issue_rejects_empty_message():
+    """Issue raises ValueError when message is empty."""
+    import pytest
+
+    from invariant.validation import Issue, Severity
+
+    with pytest.raises(ValueError, match="Issue message must not be empty"):
+        Issue(code="TEST_001", severity=Severity.WARN, message="")
+
+
+def test_issue_rejects_whitespace_message():
+    """Issue raises ValueError when message is only whitespace."""
+    import pytest
+
+    from invariant.validation import Issue, Severity
+
+    with pytest.raises(ValueError, match="Issue message must not be empty"):
+        Issue(code="TEST_001", severity=Severity.WARN, message="   ")
+
+
+def test_disclosure_rejects_empty_text():
+    """Disclosure raises ValueError when text is empty."""
+    import pytest
+
+    from invariant.validation import Disclosure
+
+    with pytest.raises(ValueError, match="Disclosure text must not be empty"):
+        Disclosure(disclosure_type="notice", text="")
+
+
+def test_disclosure_rejects_whitespace_text():
+    """Disclosure raises ValueError when text is only whitespace."""
+    import pytest
+
+    from invariant.validation import Disclosure
+
+    with pytest.raises(ValueError, match="Disclosure text must not be empty"):
+        Disclosure(disclosure_type="notice", text="   ")

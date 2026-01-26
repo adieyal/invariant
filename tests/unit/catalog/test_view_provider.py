@@ -181,13 +181,14 @@ class TestCatalogViewProvider:
 
         dp_id = DataProductId.create()
         dim = make_variable("region", dp_id, VariableRole.DIMENSION)
+        measure = make_variable("population", dp_id, VariableRole.MEASURE)
         dp = DataProduct(
             id=dp_id,
             dataset_id=dataset.id,
             name="Population Stats",
             kind=DataProductKind.FACT,
             grain=GrainSpec(keys=[dim.id]),
-            variables=[dim],
+            variables=[dim, measure],
         )
         store.save_data_product(dp)
 
@@ -229,26 +230,28 @@ class TestCatalogViewProvider:
         # Create first data product
         dp1_id = DataProductId.create()
         dim1 = make_variable("region", dp1_id, VariableRole.DIMENSION)
+        measure1 = make_variable("count", dp1_id, VariableRole.MEASURE)
         dp1 = DataProduct(
             id=dp1_id,
             dataset_id=dataset1.id,
             name="Product A",
             kind=DataProductKind.FACT,
             grain=GrainSpec(keys=[dim1.id]),
-            variables=[dim1],
+            variables=[dim1, measure1],
         )
         store.save_data_product(dp1)
 
         # Create second data product
         dp2_id = DataProductId.create()
         dim2 = make_variable("year", dp2_id, VariableRole.DIMENSION)
+        measure2 = make_variable("total", dp2_id, VariableRole.MEASURE)
         dp2 = DataProduct(
             id=dp2_id,
             dataset_id=dataset2.id,
             name="Product B",
             kind=DataProductKind.FACT,
             grain=GrainSpec(keys=[dim2.id]),
-            variables=[dim2],
+            variables=[dim2, measure2],
         )
         store.save_data_product(dp2)
 
@@ -266,7 +269,7 @@ class TestCatalogViewProvider:
         assert str(dataset2.id) in result.datasets
 
         # All variables should be included
-        assert len(result.variables) == 2
+        assert len(result.variables) == 4
 
     def test_provider_product_view_includes_variable_ids(self) -> None:
         """DataProductView includes correct variable IDs."""

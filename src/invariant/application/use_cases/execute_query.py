@@ -231,7 +231,7 @@ class ExecuteQueryUseCase:
         raw_result = self.query_engine.execute(plan)
 
         # Apply suppression
-        suppressed_result, disclosures = self.suppression_engine.apply(
+        suppressed_result, disclosures = self.suppression_engine.is_suppressed(
             raw_result,
             policy=None,  # Use default policy
         )

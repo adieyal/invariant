@@ -78,6 +78,7 @@ class GeoHierarchy:
     Invariants:
     - All levels referenced in parent_relationships must exist in levels
     - levels must be non-empty
+    - levels must form a valid tree (each level has at most one parent)
     """
 
     id: GeoHierarchyId
@@ -112,6 +113,29 @@ class GeoHierarchy:
                     f"parent_level '{relationship.parent_level}' for '{child_level}' "
                     "not found in levels"
                 )
+
+        # Validate that parent relationships form a valid tree (no cycles)
+        self._validate_no_cycles()
+
+    def _validate_no_cycles(self) -> None:
+        """Validate that parent relationships don't form cycles."""
+        for start_level in self.parent_relationships:
+            visited: set[str] = set()
+            current = start_level
+            while current in self.parent_relationships:
+                if current in visited:
+                    # Build cycle path for error message
+                    cycle_path = [start_level]
+                    trace = start_level
+                    while True:
+                        trace = self.parent_relationships[trace].parent_level
+                        cycle_path.append(trace)
+                        if trace == start_level:
+                            break
+                    cycle_str = " -> ".join(cycle_path)
+                    raise ValueError(f"parent_relationships form a cycle: {cycle_str}")
+                visited.add(current)
+                current = self.parent_relationships[current].parent_level
 
     def can_rollup(self, from_level: str, to_level: str) -> bool:
         """Check if rollup is permitted from one level to another.

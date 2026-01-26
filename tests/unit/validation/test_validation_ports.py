@@ -47,3 +47,14 @@ def test_suppression_engine_same_class_from_both_locations():
     from invariant.validation.application.ports import SuppressionEngine
 
     assert SuppressionEngine is SuppressionEngineCompat
+
+
+def test_suppression_engine_has_is_suppressed_method():
+    """SuppressionEngine protocol has is_suppressed method."""
+
+    from invariant.validation.application.ports import SuppressionEngine
+
+    # Check that is_suppressed is defined on the protocol
+    assert hasattr(SuppressionEngine, "is_suppressed")
+    # Verify it's callable
+    assert callable(getattr(SuppressionEngine, "is_suppressed", None))

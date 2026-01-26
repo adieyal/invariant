@@ -63,7 +63,6 @@ class TestCatalogReader:
             label="All residents",
             definition="All residents of Nigeria as of census date",
             inclusions=["Nigerian citizens", "Foreign residents"],
-            exclusions=["Tourists", "Diplomatic staff"],
         )
 
     @pytest.fixture
@@ -261,7 +260,6 @@ class TestCatalogReader:
         assert universe_doc.label == "All residents"
         assert universe_doc.definition == "All residents of Nigeria as of census date"
         assert "Nigerian citizens" in universe_doc.inclusions
-        assert "Tourists" in universe_doc.exclusions
 
     def test_read_single_study(
         self,

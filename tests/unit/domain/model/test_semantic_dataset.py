@@ -20,11 +20,11 @@ from invariant.semantic.domain.entities.semantic_dataset import (
     TimeGrain,
     _check_unique,
 )
-from invariant.shared.contracts.ids import DimensionId, SemanticDatasetId
 from invariant.semantic.domain.value_objects.time_series import (
     TimeSeriesColumn,
     TimeSeriesSpec,
 )
+from invariant.shared.contracts.ids import DimensionId, SemanticDatasetId
 
 
 class TestCheckUnique:
@@ -328,6 +328,19 @@ class TestSemanticDataset:
                 physical_ref=PhysicalRef(schema="public", table="census"),
                 kind=DatasetKind.FACT,
                 grain_keys=GrainKeys(other=["id"]),
+            )
+
+    def test_empty_grain_keys_raises(self) -> None:
+        with pytest.raises(
+            ValueError,
+            match=r"grain_keys must be non-empty",
+        ):
+            SemanticDataset(
+                id=SemanticDatasetId.create(),
+                name="census_population",
+                physical_ref=PhysicalRef(schema="public", table="census"),
+                kind=DatasetKind.FACT,
+                grain_keys=GrainKeys(),  # Empty grain keys
             )
 
     def test_time_config_without_time_grain_keys_raises(self) -> None:

@@ -22,7 +22,9 @@ class DataProduct:
 
     Invariants:
     - Must have at least one variable
+    - Variable names must be unique within the data product
     - Grain keys must reference existing dimension variables
+    - FACT kind must have at least one variable with role=MEASURE
     - INDICATOR kind must have at least one variable with role=INDICATOR
     """
 
@@ -60,6 +62,15 @@ class DataProduct:
                 f"DataProduct '{self.name}' must have at least one variable"
             )
 
+        # Variable names must be unique
+        seen_names: set[str] = set()
+        for var in self.variables:
+            if var.name in seen_names:
+                raise ValueError(
+                    f"DataProduct '{self.name}': duplicate variable name '{var.name}'"
+                )
+            seen_names.add(var.name)
+
         # Grain keys must reference existing dimension variables (by VariableId)
         for key_id in self.grain.keys:
             var = self._variables_by_id.get(key_id)
@@ -72,6 +83,15 @@ class DataProduct:
                 raise ValueError(
                     f"DataProduct '{self.name}': grain key '{var.name}' "
                     f"must be a DIMENSION variable, got {var.role.value}"
+                )
+
+        # FACT kind must have at least one measure variable
+        if self.kind == DataProductKind.FACT:
+            has_measure = any(v.is_measure for v in self.variables)
+            if not has_measure:
+                raise ValueError(
+                    f"DataProduct '{self.name}' with kind FACT "
+                    f"must have at least one variable with role=MEASURE"
                 )
 
         # INDICATOR kind must have at least one indicator variable

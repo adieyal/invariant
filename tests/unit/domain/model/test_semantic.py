@@ -34,16 +34,35 @@ class TestUniverse:
             universe.definition == "All persons residing in Nigeria as of census date"
         )
 
-    def test_create_with_inclusion_exclusion(self) -> None:
+    def test_create_with_inclusions(self) -> None:
         universe = Universe(
             id=UniverseId.create(),
             label="School attendees",
             definition="Children attending public schools",
             inclusions=["ages 6-10", "public schools only"],
-            exclusions=["private schools", "home schooled"],
         )
         assert universe.inclusions == ("ages 6-10", "public schools only")
+        assert universe.exclusions == ()
+
+    def test_create_with_exclusions(self) -> None:
+        universe = Universe(
+            id=UniverseId.create(),
+            label="School attendees",
+            definition="Children attending public schools",
+            exclusions=["private schools", "home schooled"],
+        )
+        assert universe.inclusions == ()
         assert universe.exclusions == ("private schools", "home schooled")
+
+    def test_rejects_both_inclusions_and_exclusions(self) -> None:
+        with pytest.raises(ValueError, match="cannot have both"):
+            Universe(
+                id=UniverseId.create(),
+                label="School attendees",
+                definition="Children attending public schools",
+                inclusions=["ages 6-10"],
+                exclusions=["private schools"],
+            )
 
 
 class TestConcept:

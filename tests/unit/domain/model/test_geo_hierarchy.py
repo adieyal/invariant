@@ -178,6 +178,38 @@ class TestGeoHierarchy:
                 },
             )
 
+    def test_parent_relationships_cycle_raises(self) -> None:
+        """Parent relationships forming a cycle should raise ValueError."""
+        with pytest.raises(
+            ValueError,
+            match=r"parent_relationships form a cycle",
+        ):
+            GeoHierarchy(
+                id=GeoHierarchyId.create(),
+                name="bad_hierarchy",
+                levels=("a", "b", "c"),
+                parent_relationships={
+                    "a": ParentRelationship("b"),
+                    "b": ParentRelationship("c"),
+                    "c": ParentRelationship("a"),
+                },
+            )
+
+    def test_parent_relationships_self_cycle_raises(self) -> None:
+        """A level pointing to itself as parent should raise ValueError."""
+        with pytest.raises(
+            ValueError,
+            match=r"parent_relationships form a cycle",
+        ):
+            GeoHierarchy(
+                id=GeoHierarchyId.create(),
+                name="bad_hierarchy",
+                levels=("a", "b"),
+                parent_relationships={
+                    "a": ParentRelationship("a"),
+                },
+            )
+
 
 class TestGeoHierarchyCanRollup:
     @pytest.fixture

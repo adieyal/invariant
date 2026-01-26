@@ -47,6 +47,10 @@ class Issue:
         remediation_actions: Sequence[RemediationAction] | None = None,
         context_links: Sequence[str] | None = None,
     ) -> None:
+        if not code or not code.strip():
+            raise ValueError("Issue code must not be empty")
+        if not message or not message.strip():
+            raise ValueError("Issue message must not be empty")
         object.__setattr__(self, "code", code)
         object.__setattr__(self, "severity", severity)
         object.__setattr__(self, "message", message)

@@ -332,13 +332,21 @@ class TestToCatalogViewConvertsSnapshot:
             description="Geographic identifier",
         )
 
+        measure_var = Variable(
+            id=VariableId.create(),
+            data_product_id=dp_id,
+            name="count",
+            role=VariableRole.MEASURE,
+            data_type=DataType.INT,
+        )
+
         dp = DataProduct(
             id=dp_id,
             dataset_id=dataset_id,
             name="test",
             kind=DataProductKind.FACT,
             grain=GrainSpec(keys=[geo_var.id]),
-            variables=[geo_var],
+            variables=[geo_var, measure_var],
         )
 
         snapshot = CatalogSnapshot(

@@ -437,7 +437,7 @@ class FakeSuppressionEngine(SuppressionEngine):
 
     _suppression_count: int = 0
 
-    def apply(
+    def is_suppressed(
         self, data: RawQueryResult, policy: SuppressionPolicy | None
     ) -> tuple[RawQueryResult, list[Disclosure]]:
         disclosures = []

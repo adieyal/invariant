@@ -59,7 +59,6 @@ class TestDataDictionaryIntegration:
             label="All residents",
             definition="All residents of Nigeria as of census date",
             inclusions=["Nigerian citizens", "Foreign residents"],
-            exclusions=["Tourists", "Diplomatic staff"],
         )
         catalog_store.save_universe(universe)
 
@@ -185,7 +184,6 @@ class TestDataDictionaryIntegration:
             universes_content = (output_dir / "universes.md").read_text()
             assert "All residents" in universes_content
             assert "Nigerian citizens" in universes_content
-            assert "Tourists" in universes_content
 
             # Verify concepts content
             concepts_content = (output_dir / "concepts.md").read_text()

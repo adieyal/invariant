@@ -25,7 +25,9 @@ class CyclicDependencyError(Exception):
 
     def __init__(self, cycle: list[str]) -> None:
         self.cycle = cycle
-        cycle_str = " -> ".join(cycle)
+        # Format: "A -> B -> C -> A" (show the cycle returning to start)
+        cycle_display = [*cycle, cycle[0]] if cycle and cycle[0] != cycle[-1] else cycle
+        cycle_str = " -> ".join(cycle_display)
         super().__init__(f"Cyclic dependency detected: {cycle_str}")
 
 

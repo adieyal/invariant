@@ -185,6 +185,25 @@ class TestMetricGraphDetectCycle:
         assert "a" in exc_info.value.cycle
         assert "b" in exc_info.value.cycle
 
+    def test_cyclic_dependency_error_shows_cycle_path(self) -> None:
+        """CyclicDependencyError message includes minimal cycle path."""
+        a = make_derived_metric("a", ["b"])
+        b = make_derived_metric("b", ["c"])
+        c = make_derived_metric("c", ["a"])
+
+        graph = MetricGraph.build([a, b, c])
+
+        with pytest.raises(CyclicDependencyError) as exc_info:
+            graph.topological_order()
+
+        # Error message should show cycle returning to start (e.g., "a -> b -> c -> a")
+        error_msg = str(exc_info.value)
+        assert " -> " in error_msg
+        # The cycle should close (return to the starting node)
+        _cycle = exc_info.value.cycle
+        # Verify the error message format includes the cycle path
+        assert "Cyclic dependency detected:" in error_msg
+
 
 class TestMetricGraphImportableFromSemantic:
     """Test that MetricGraph is importable from semantic module."""

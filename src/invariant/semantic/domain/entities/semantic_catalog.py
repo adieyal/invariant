@@ -38,6 +38,9 @@ class SemanticCatalog:
     (datasets, dimensions, geo hierarchies, metrics, materializations)
     with efficient lookup by name and dependency resolution.
 
+    Invariants:
+    - Metric names must be unique
+
     Internal index caches are maintained for fast lookup but are
     non-authoritative - the canonical state is the primary collections.
     """
@@ -72,7 +75,23 @@ class SemanticCatalog:
     )
 
     def __post_init__(self) -> None:
+        self._validate_invariants()
         self._rebuild_indexes()
+
+    def _validate_invariants(self) -> None:
+        """Validate domain invariants."""
+        # Metric names must be unique
+        metric_names = [m.name for m in self.metrics]
+        if len(metric_names) != len(set(metric_names)):
+            seen: set[str] = set()
+            duplicates: list[str] = []
+            for name in metric_names:
+                if name in seen and name not in duplicates:
+                    duplicates.append(name)
+                seen.add(name)
+            raise ValueError(
+                f"metric names must be unique; duplicates found: {duplicates}"
+            )
 
     def _rebuild_indexes(self) -> None:
         """Rebuild all internal index caches."""

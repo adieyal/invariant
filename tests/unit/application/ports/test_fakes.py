@@ -14,7 +14,9 @@ from invariant.identity.domain.entities.comparability_rules import (
     ComparabilityRules,
 )
 from invariant.semantic.domain.entities.dimension import (
-    DataType,
+    DataType as DimensionDataType,
+)
+from invariant.semantic.domain.entities.dimension import (
     Dimension,
     DimensionAttribute,
     SemanticType,
@@ -42,7 +44,7 @@ from invariant.semantic.domain.entities.semantic_dataset import (
     SemanticDataset,
 )
 from invariant.shared.contracts import ComparabilityPolicyView
-from invariant.shared.contracts.enums import DataProductKind, VariableRole
+from invariant.shared.contracts.enums import DataProductKind, DataType, VariableRole
 from invariant.shared.contracts.ids import (
     DataProductId,
     DatasetId,
@@ -185,20 +187,27 @@ class TestFakeCatalogStore:
     def test_save_and_get_data_product(self, store: FakeCatalogStore) -> None:
         dp_id = DataProductId.create()
         dataset_id = DatasetId.create()
-        var = Variable(
+        dim_var = Variable(
             id=VariableId.create(),
             data_product_id=dp_id,
             name="geo",
             role=VariableRole.DIMENSION,
             data_type=DataType.STRING,
         )
+        measure_var = Variable(
+            id=VariableId.create(),
+            data_product_id=dp_id,
+            name="population",
+            role=VariableRole.MEASURE,
+            data_type=DataType.INT,
+        )
         dp = DataProduct(
             id=dp_id,
             dataset_id=dataset_id,
             name="Pop by Geo",
             kind=DataProductKind.FACT,
-            grain=GrainSpec(keys=[var.id]),
-            variables=[var],
+            grain=GrainSpec(keys=[dim_var.id]),
+            variables=[dim_var, measure_var],
         )
         store.save_data_product(dp)
         retrieved = store.get_data_product(dp_id)
@@ -208,20 +217,27 @@ class TestFakeCatalogStore:
     def test_get_catalog_snapshot(self, store: FakeCatalogStore) -> None:
         dp_id = DataProductId.create()
         dataset_id = DatasetId.create()
-        var = Variable(
+        dim_var = Variable(
             id=VariableId.create(),
             data_product_id=dp_id,
             name="geo",
             role=VariableRole.DIMENSION,
             data_type=DataType.STRING,
         )
+        measure_var = Variable(
+            id=VariableId.create(),
+            data_product_id=dp_id,
+            name="count",
+            role=VariableRole.MEASURE,
+            data_type=DataType.INT,
+        )
         dp = DataProduct(
             id=dp_id,
             dataset_id=dataset_id,
             name="Test DP",
             kind=DataProductKind.FACT,
-            grain=GrainSpec(keys=[var.id]),
-            variables=[var],
+            grain=GrainSpec(keys=[dim_var.id]),
+            variables=[dim_var, measure_var],
         )
         store.save_data_product(dp)
 
@@ -262,10 +278,10 @@ class TestFakeSemanticAssetStore:
             name="gender",
             attributes={
                 "code": DimensionAttribute(
-                    "code", DataType.STRING, SemanticType.CATEGORY
+                    "code", DimensionDataType.STRING, SemanticType.CATEGORY
                 ),
                 "label": DimensionAttribute(
-                    "label", DataType.STRING, SemanticType.CATEGORY
+                    "label", DimensionDataType.STRING, SemanticType.CATEGORY
                 ),
             },
         )

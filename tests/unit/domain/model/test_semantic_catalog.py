@@ -136,6 +136,31 @@ class TestSemanticCatalogConstruction:
         assert catalog.materializations == []
         assert catalog.comparability_rules is None
 
+    def test_duplicate_metric_names_raises(self) -> None:
+        """Metrics with duplicate names should raise ValueError."""
+        import pytest
+
+        metric1 = make_simple_metric("revenue", "sales")
+        metric2 = make_simple_metric("revenue", "orders")  # Duplicate name
+
+        with pytest.raises(
+            ValueError,
+            match=r"metric names must be unique; duplicates found: \['revenue'\]",
+        ):
+            SemanticCatalog.create(metrics=[metric1, metric2])
+
+    def test_multiple_duplicate_metric_names_raises(self) -> None:
+        """Multiple duplicate metric names should all be listed."""
+        import pytest
+
+        m1 = make_simple_metric("a", "ds1")
+        m2 = make_simple_metric("a", "ds2")  # Duplicate
+        m3 = make_simple_metric("b", "ds1")
+        m4 = make_simple_metric("b", "ds2")  # Duplicate
+
+        with pytest.raises(ValueError, match=r"metric names must be unique"):
+            SemanticCatalog.create(metrics=[m1, m2, m3, m4])
+
     def test_create_with_all_assets(self) -> None:
         dataset = make_dataset("sales")
         dimension = make_dimension("product")

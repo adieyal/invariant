@@ -17,13 +17,14 @@ class SuppressionEngine(Protocol):
     and disclosure generation.
     """
 
-    def apply(
+    def is_suppressed(
         self, data: RawQueryResult, policy: SuppressionPolicy
     ) -> tuple[RawQueryResult, list[Disclosure]]:
-        """Apply a suppression policy to query results.
+        """Check and apply suppression to query results.
 
-        Suppresses small cells according to the policy and
-        applies complementary suppression to prevent back-calculation.
+        Determines which cells need suppression according to the policy,
+        applies small cell suppression and complementary suppression
+        to prevent back-calculation.
 
         Returns the suppressed data and disclosures explaining
         what was suppressed.
