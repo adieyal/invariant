@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from invariant.application.dto.catalog_export import (
@@ -63,7 +63,7 @@ class ExportCatalogUseCase:
         catalog = self.asset_store.load_catalog()
 
         if timestamp is None:
-            timestamp = datetime.now(UTC)
+            timestamp = datetime.now(timezone.utc)  # noqa: UP017
 
         datasets = [self._export_dataset(ds) for ds in catalog.datasets]
         indicators = [self._export_metric(m) for m in catalog.metrics]
