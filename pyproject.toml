@@ -27,7 +27,7 @@ Issues = "https://github.com/adieyal/invariant/issues"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0",
+    "pytest>=9.0.3",
     "pyyaml>=6.0",
     "ruff>=0.8",
     "import-linter>=2.0",
